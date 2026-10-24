@@ -9,13 +9,11 @@
 <script src="{{ asset('theme/layouts/assets/libs/sweetalert2/sweetalert2.min.js') }}"></script>
 <!-- dropzone js -->
 <script src="{{ asset('theme/layouts/assets/libs/dropzone/dropzone-min.js') }}"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/choices.js/10.2.1/choices.min.js"></script>
+<script src="{{ asset('vendor/choices/choices.min.js') }}"></script>
 <!-- Axios -->
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="{{ asset('vendor/axios/axios.min.js') }}"></script>
 
 
-<!-- User list init js (load after list.js and dependencies) -->
-<script src="{{ asset('theme/layouts/assets/js/pages/idcard-list.init.js') }}"></script>
 <!-- App js -->
 {{-- <script src="{{ asset('theme/layouts/assets/js/app.js') }}"></script> — already loaded by layouts/master --}}
 

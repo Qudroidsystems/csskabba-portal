@@ -2,31 +2,29 @@
 
 namespace App\Models;
 
-use Laravel\Sanctum\HasApiTokens;
-use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Spatie\Permission\PermissionRegistrar;
+use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, HasRoles, Notifiable;
+    use HasFactory, HasRoles, Notifiable;
 
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
-        'student_id',
         'phone_number',
         'gender',
         'date_of_birth',
-        'profile_image',
+        'nationality',
+        'address',
         'avatar',
+        'is_disabled',
+        'must_change_password',
+        'last_login_at',
     ];
 
     protected $hidden = [
@@ -35,155 +33,96 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
-        'email_verified_at' => 'datetime',
-        'date_of_birth' => 'date',
+        'email_verified_at'    => 'datetime',
+        'date_of_birth'        => 'date',
         'must_change_password' => 'boolean',
-        'is_disabled' => 'boolean',
-        'last_login_at' => 'datetime',
-        'credentials_sent_at' => 'datetime',
+        'is_disabled'          => 'boolean',
+        'last_login_at'        => 'datetime',
     ];
 
-    /** This user's staff record (staffbioinfo). */
-    public function staff(): HasOne
-    {
-        return $this->hasOne(Staff::class, 'userid', 'id');
-    }
+    /** Folder (on the public disk) that profile pictures are stored in. */
+    public const AVATAR_DIR = 'avatars';
 
-    /** Parent portal: children linked to this parent account. */
-    public function parentChildren(): BelongsToMany
-    {
-        return $this->belongsToMany(Student::class, 'parent_student', 'user_id', 'student_id')
-            ->withPivot('relationship', 'source')->withTimestamps();
-    }
-
-    // Staff picture relationship
-    public function staffPicture(): HasOne
-    {
-        return $this->hasOne(Staffpicture::class, 'staffId', 'id');
-    }
-
-    // Staff employment details
-    public function staffemploymentDetails(): HasOne
-    {
-        return $this->hasOne(Staff::class, 'userid', 'id');
-    }
-
-    // Bio information
-    public function bio(): HasOne
-    {
-        return $this->hasOne(BioModel::class, 'user_id');
-    }
-
-    // Qualifications (for staff)
-    public function qualifications(): HasMany
-    {
-        return $this->hasMany(StaffQualification::class, 'user_id');
-    }
-
-    // Student record (if user is a student)
-    public function student(): HasOne
-    {
-        return $this->hasOne(Student::class, 'id', 'student_id');
-    }
-
-    // ADD THIS RELATIONSHIP - Subject teachings for teachers
-    public function subjectTeachings(): HasMany
-    {
-        return $this->hasMany(SubjectTeacher::class, 'staffid', 'id');
-    }
-
-    // Alternative relationship if you need to get subjects directly
-    public function subjects()
-    {
-        return $this->belongsToMany(Subject::class, 'subjectteacher', 'staffid', 'subjectid')
-                    ->withPivot('termid', 'sessionid')
-                    ->withTimestamps();
-    }
-
-    // Check if user has Staff role
-    public function isStaff(): bool
-    {
-        return $this->hasRole('Staff');
-    }
-
-    // Check if user has Student role
-    public function isStudent(): bool
-    {
-        return $this->hasRole('Student') || !is_null($this->student_id);
-    }
-
-    // Get user's first name
     public function getFirstNameAttribute(): string
     {
-        $parts = explode(' ', trim($this->name));
-        return $parts[0] ?? '';
+        return explode(' ', trim((string) $this->name))[0] ?? '';
     }
 
-    // Get user's last name
     public function getLastNameAttribute(): string
     {
-        $parts = explode(' ', trim($this->name));
-        return isset($parts[1]) ? $parts[1] : '';
+        $parts = preg_split('/\s+/', trim((string) $this->name));
+        return count($parts) > 1 ? end($parts) : '';
     }
 
-    // Get avatar URL (safe fallback)
+    /** Two-letter initials for avatar placeholders, e.g. "John Adeyemi" → "JA". */
+    public function getInitialsAttribute(): string
+    {
+        $initials = collect(preg_split('/\s+/', trim((string) $this->name)))
+            ->filter()
+            ->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))
+            ->take(2)
+            ->implode('');
+
+        return $initials !== '' ? $initials : 'U';
+    }
+
+    /** Generated letter avatar used when no picture has been uploaded. */
+    /** Initials on a coloured circle, drawn locally (no outside service, works without internet). */
+    public function getFallbackAvatarUrlAttribute(): string
+    {
+        $palette = ['#1e4a7e', '#0d9488', '#7c3aed', '#ea580c', '#0284c7', '#16a34a', '#db2777', '#475569'];
+        $bg = $palette[crc32((string) ($this->name ?: 'User')) % count($palette)];
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">'
+            . '<rect width="128" height="128" fill="' . $bg . '"/>'
+            . '<text x="50%" y="50%" dy=".35em" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="52" font-weight="600" fill="#fff">'
+            . htmlspecialchars($this->initials, ENT_QUOTES) . '</text></svg>';
+
+        return 'data:image/svg+xml;base64,' . base64_encode($svg);
+    }
+
     public function getAvatarUrlAttribute(): string
     {
-        // Staff picture
-        if ($this->isStaff() && $this->staffPicture?->picture) {
-            return asset('storage/staff_avatars/' . $this->staffPicture->picture);
-        }
-
-        // Student picture
-        if ($this->isStudent() && $this->student_id) {
-            $studentPicture = \App\Models\Studentpicture::where('studentid', $this->student_id)->first();
-            if ($studentPicture?->picture) {
-                return asset('storage/student_avatars/' . $studentPicture->picture);
-            }
-        }
-
-        // General avatar column
         if ($this->avatar) {
-            return asset('storage/avatars/' . $this->avatar);
+            return asset('storage/' . self::AVATAR_DIR . '/' . basename($this->avatar));
         }
 
-        // Legacy profile_image
-        if ($this->profile_image) {
-            return asset('storage/' . $this->profile_image);
-        }
-
-        // Default fallback
-        $initials = strtoupper(substr($this->first_name, 0, 1) . substr($this->last_name, 0, 1));
-        return "https://ui-avatars.com/api/?name=" . urlencode($this->name) . "&color=7F9CF5&background=EBF4FF";
+        return $this->fallback_avatar_url;
     }
 
-    // Get admission number (for students)
-    public function getAdmissionNoAttribute(): ?string
-    {
-        return $this->isStudent() && $this->student?->admissionNo ? $this->student->admissionNo : null;
-    }
-
-    // Check if user is active
-    public function isActive(): bool
-    {
-        return true; // Customize if needed
-    }
-
-    // Get formatted date of birth
     public function getFormattedDobAttribute(): ?string
     {
         return $this->date_of_birth?->format('d M Y');
     }
 
-    // Scope for staff users
-    public function scopeStaff($query)
+    public function isActive(): bool
     {
-        return $query->whereHas('roles', fn($q) => $q->where('name', 'Staff'));
+        return ! $this->is_disabled;
     }
 
-    // Scope for student users
-    public function scopeStudents($query)
+    public function scopeActive($query)
     {
-        return $query->whereHas('roles', fn($q) => $q->where('name', 'Student'));
+        return $query->where('is_disabled', false);
+    }
+
+    /**
+     * Colour class for a role pill on the user screens. Administrative roles
+     * are pink; every other role gets a stable colour from its name.
+     */
+    public static function rolePillClass(string $role): string
+    {
+        $key = strtolower($role);
+
+        if (in_array($key, ['super admin', 'admin', 'hotel owner'], true)) {
+            return 'pink';
+        }
+
+        $palette = ['blue', 'green', 'amber'];
+
+        return $palette[crc32($key) % count($palette)];
+    }
+
+    public function staffProfile(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(\App\Models\Attendance\StaffProfile::class);
     }
 }

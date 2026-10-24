@@ -6,9 +6,9 @@ use App\Models\User;
 use Spatie\Permission\Models\Permission;
 ?>
 
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="{{ asset('vendor/fonts/fonts.css') }}">
+<link rel="stylesheet" href="{{ asset('vendor/fontawesome/css/all.min.css') }}">
+<link rel="stylesheet" href="{{ asset('vendor/datatables/dataTables.bootstrap5.min.css') }}">
 
 <style>
 :root {
@@ -301,6 +301,11 @@ body{font-family:var(--rol-font);}
         <ul class="mb-0 mt-1">@foreach($errors->all() as $e)<li>{{$e}}</li>@endforeach</ul>
     </div>
     @endif
+    @if (session('error'))
+    <div class="alert alert-danger border-0 rounded-3 mb-3">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}
+    </div>
+    @endif
     @if (session('success') || session('status'))
     <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#16a34a;">
         <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') ?? session('status') }}
@@ -476,12 +481,8 @@ body{font-family:var(--rol-font);}
                         {{-- Tabs --}}
                         <div class="rol-nav-tabs" role="tablist">
                             <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#staff-tab" type="button">
-                                <i class="fas fa-user-tie"></i> Staff
+                                <i class="fas fa-user-tie"></i> Users
                                 <span style="background:var(--rol-accent);color:#fff;border-radius:12px;padding:1px 8px;font-size:10px;" id="staff-count">0</span>
-                            </button>
-                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#student-tab" type="button">
-                                <i class="fas fa-user-graduate"></i> Students
-                                <span style="background:var(--rol-success);color:#fff;border-radius:12px;padding:1px 8px;font-size:10px;" id="student-count">0</span>
                             </button>
                         </div>
 
@@ -495,7 +496,7 @@ body{font-family:var(--rol-font);}
                             {{-- STAFF --}}
                             <div class="tab-pane fade show active" id="staff-tab">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span style="font-size:12px;font-weight:700;color:var(--rol-muted);text-transform:uppercase;letter-spacing:.5px;">Staff Members</span>
+                                    <span style="font-size:12px;font-weight:700;color:var(--rol-muted);text-transform:uppercase;letter-spacing:.5px;">Users without this role</span>
                                     <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12.5px;font-weight:600;color:var(--rol-accent);">
                                         <input type="checkbox" class="rol-checkbox" id="select-all-staff">
                                         Select All
@@ -506,15 +507,7 @@ body{font-family:var(--rol-font);}
                                         $allUsersNotInRole = \App\Models\User::whereDoesntHave('roles', function ($q) use ($role) {
                                             $q->where('name', $role->name);
                                         })->get();
-                                        $staffUsers = $allUsersNotInRole->filter(function ($user) {
-                                            if ($user->staffemploymentDetails) return true;
-                                            if ($user->staffPicture) return true;
-                                            if (!$user->student_id) return true;
-                                            return false;
-                                        })->reject(function ($user) {
-                                            if ($user->student) return true;
-                                            return false;
-                                        })->sortBy('name');
+                                        $staffUsers = $allUsersNotInRole->sortBy('name');
                                     @endphp
                                     @forelse($staffUsers as $staff)
                                     @php $sInit = strtoupper(substr($staff->name,0,1)); @endphp
@@ -532,52 +525,11 @@ body{font-family:var(--rol-font);}
                                         </div>
                                     </div>
                                     @empty
-                                    <div class="col-12"><div class="rol-info-banner">No staff members available.</div></div>
+                                    <div class="col-12"><div class="rol-info-banner">Every user already has this role.</div></div>
                                     @endforelse
                                 </div>
                             </div>
 
-                            {{-- STUDENTS --}}
-                            <div class="tab-pane fade" id="student-tab">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span style="font-size:12px;font-weight:700;color:var(--rol-muted);text-transform:uppercase;letter-spacing:.5px;">Students</span>
-                                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12.5px;font-weight:600;color:var(--rol-accent);">
-                                        <input type="checkbox" class="rol-checkbox" id="select-all-students">
-                                        Select All
-                                    </label>
-                                </div>
-                                <div class="row g-2" id="student-list-container">
-                                    @php
-                                        $studentUsers = $allUsersNotInRole->filter(function ($user) {
-                                            return $user->student_id || $user->student;
-                                        })->sortBy('name');
-                                    @endphp
-                                    @forelse($studentUsers as $studentUser)
-                                    @php $stInit = strtoupper(substr($studentUser->name,0,1)); @endphp
-                                    <div class="col-xl-4 col-lg-6">
-                                        <div class="user-card-sel" data-user-id="{{ $studentUser->id }}">
-                                            <div class="usr-avatar-sm" style="background:linear-gradient(135deg,#10b981,#059669);">{{ $stInit }}</div>
-                                            <div class="ucs-info">
-                                                <div class="ucs-name">{{ $studentUser->name }}</div>
-                                                <div class="ucs-meta">
-                                                    @if($studentUser->student?->admissionNo)
-                                                        {{ $studentUser->student->admissionNo }}
-                                                    @else
-                                                        {{ $studentUser->email }}
-                                                    @endif
-                                                </div>
-                                            </div>
-                                            <div class="ucs-check">
-                                                <input type="checkbox" value="{{ $studentUser->id }}" name="users[]"
-                                                       class="student-checkbox user-checkbox" id="student-{{ $studentUser->id }}">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    @empty
-                                    <div class="col-12"><div class="rol-info-banner">No students available.</div></div>
-                                    @endforelse
-                                </div>
-                            </div>
                         </div>
 
                     </div>
@@ -646,9 +598,9 @@ body{font-family:var(--rol-font);}
 </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script src="{{ asset('vendor/sweetalert2/sweetalert2.all.min.js') }}"></script>
+<script src="{{ asset('vendor/datatables/jquery.dataTables.min.js') }}"></script>
+<script src="{{ asset('vendor/datatables/dataTables.bootstrap5.min.js') }}"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -783,11 +735,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function initAddUserModal() {
         const staffCbs   = document.querySelectorAll('#addUserModalgrid .staff-checkbox');
-        const studentCbs = document.querySelectorAll('#addUserModalgrid .student-checkbox');
         const allCbs     = document.querySelectorAll('#addUserModalgrid .user-checkbox');
 
         document.getElementById('staff-count').textContent   = staffCbs.length;
-        document.getElementById('student-count').textContent = studentCbs.length;
 
         function updateCount() {
             const n = document.querySelectorAll('#addUserModalgrid .user-checkbox:checked').length;
@@ -813,12 +763,6 @@ document.addEventListener('DOMContentLoaded', function () {
         // Select all staff
         document.getElementById('select-all-staff')?.addEventListener('change', function() {
             staffCbs.forEach(c=>{ c.checked=this.checked; c.closest('.user-card-sel')?.classList.toggle('selected',this.checked); });
-            updateCount();
-        });
-
-        // Select all students
-        document.getElementById('select-all-students')?.addEventListener('change', function() {
-            studentCbs.forEach(c=>{ c.checked=this.checked; c.closest('.user-card-sel')?.classList.toggle('selected',this.checked); });
             updateCount();
         });
 

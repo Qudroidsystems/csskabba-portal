@@ -3,26 +3,19 @@
 
 <head>
     <meta charset="utf-8">
-    <title>{{ $pagetitle }} | Vite-ESchool 2.0</title>
+    <title>{{ $pagetitle ?? 'Dashboard' }} | {{ config('hotel.name') }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta content="school management software" name="description">
-    <meta content="" name="author">
+    <meta content="{{ config('hotel.tagline') }}" name="description">
+    <meta content="{{ config('hotel.vendor') }}" name="author">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <!-- Dynamic Favicon from School Logo -->
-    @php
-        $activeSchool = App\Models\SchoolInformation::getActiveSchool();
-        $faviconUrl = $activeSchool ? $activeSchool->getLogoWithFallbackAttribute() : asset('theme/layouts/assets/images/favicon.ico');
-    @endphp
-    <link rel="icon" type="image/png" href="{{ $faviconUrl }}">
-    <link rel="shortcut icon" type="image/png" href="{{ $faviconUrl }}">
+    <link rel="icon" href="{{ asset(config('hotel.favicon')) }}">
+    <link rel="shortcut icon" href="{{ asset(config('hotel.favicon')) }}">
 
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com/">
-    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
-    <link id="fontsLink" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.0.3/src/bold/style.css">
+    <link id="fontsLink" href="{{ asset('vendor/fonts/fonts.css') }}" rel="stylesheet">
+    <link href="{{ asset('vendor/choices/choices.min.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('vendor/phosphor-bold/style.css') }}">
     <link href="{{ asset('theme/layouts/assets/fonts/materialdesignicons-webfont.woff2') }}?v=6.5.95" rel="stylesheet" type="font/woff2">
 
     <!-- Layout CSS — load BEFORE layout.js -->
@@ -35,14 +28,14 @@
     <script src="{{ asset('theme/layouts/assets/js/layout.js') }}"></script>
 
     <!-- NProgress -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css"/>
-    <script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js"></script>
+    <link rel="stylesheet" href="{{ asset('vendor/nprogress/nprogress.css') }}"/>
+    <script src="{{ asset('vendor/nprogress/nprogress.js') }}"></script>
 
     <!-- Select2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="{{ asset('vendor/select2/select2.min.css') }}" rel="stylesheet" />
 
     <!-- jQuery (needed by Select2 and some page scripts) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ asset('vendor/jquery/jquery-3.6.0.min.js') }}"></script>
 
     <style>
         /* =====================================================
@@ -356,76 +349,17 @@
     <!-- Route-specific CSS includes -->
     @if (Route::is('dashboard'))              @include('layouts.pages-assets.css.users-list-css') @endif
     @if (Route::is('users.*'))                @include('layouts.pages-assets.css.users-list-css') @endif
-    @if (Route::is('student-id-cards.*'))     @include('layouts.pages-assets.css.users-list-css') @endif
-    @if (Route::is('student.payments.*'))     @include('layouts.pages-assets.css.users-list-css') @endif
     @if (Route::is('profile.*'))              @include('layouts.pages-assets.css.users-list-css') @endif
     @if (Route::is('roles.*'))                @include('layouts.pages-assets.css.roles-list-css') @endif
     @if (Route::is('permissions.*'))          @include('layouts.pages-assets.css.permission-list-css') @endif
-    @if (Route::is('session.*'))              @include('layouts.pages-assets.css.session-list-css') @endif
-    @if (Route::is('school-information.*'))   @include('layouts.pages-assets.css.schoolinformation-list-css') @endif
-    @if (Route::is('admin.school-info.*'))    @include('layouts.pages-assets.css.schoolinformation-list-css') @endif
-    @if (Route::is('term.*'))                 @include('layouts.pages-assets.css.term-list-css') @endif
-    @if (Route::is('schoolhouse.*'))          @include('layouts.pages-assets.css.schoolhouse-list-css') @endif
-    @if (Route::is('schoolarm.*'))            @include('layouts.pages-assets.css.arm-list-css') @endif
-    @if (Route::is('classcategories.*'))      @include('layouts.pages-assets.css.classcategory-list-css') @endif
-    @if (Route::is('schoolclass.*'))          @include('layouts.pages-assets.css.schoolclass-list-css') @endif
-    @if (Route::is('classteacher.*'))         @include('layouts.pages-assets.css.classteacher-list-css') @endif
-    @if (Route::is('subject.*'))              @include('layouts.pages-assets.css.subject-list-css') @endif
-    @if (Route::is('subjects.*'))             @include('layouts.pages-assets.css.subject-list-css') @endif
-    @if (Route::is('subjectteacher.*'))       @include('layouts.pages-assets.css.subjectteacher-list-css') @endif
-    @if (Route::is('subjectclass.*'))         @include('layouts.pages-assets.css.subjectclass-list-css') @endif
-    @if (Route::is('schoolbill.*'))           @include('layouts.pages-assets.css.schoolbill-list-css') @endif
-    @if (Route::is('schoolbilltermsession.*'))@include('layouts.pages-assets.css.schoolbilltermsession-list-css') @endif
-    @if (Route::is('student.*'))              @include('layouts.pages-assets.css.student-list-css') @endif
-    @if (Route::is('studentbatchindex'))      @include('layouts.pages-assets.css.student-list-css') @endif
-    @if (Route::is('myclass.*'))              @include('layouts.pages-assets.css.myclass-list-css') @endif
-    @if (Route::is('mysubject.*'))            @include('layouts.pages-assets.css.mysubject-list-css') @endif
-    @if (Route::is('viewstudent'))            @include('layouts.pages-assets.css.viewstudent-list-css') @endif
-    @if (Route::is('studentreports.*'))       @include('layouts.pages-assets.css.studentreport-list-css') @endif
-    @if (Route::is('studentmockreports.*'))   @include('layouts.pages-assets.css.studentreport-list-css') @endif
-    @if (Route::is('broadsheet*'))            @include('layouts.pages-assets.css.broadsheet-list-css') @endif
-    @if (Route::is('subjectoperation.*'))     @include('layouts.pages-assets.css.subjectoperation-list-css') @endif
-    @if (Route::is('subjects.subjectinfo'))   @include('layouts.pages-assets.css.subjectinfo-list-css') @endif
-    @if (Route::is('myresultroom.*'))         @include('layouts.pages-assets.css.myresultroom-list-css') @endif
-    @if (Route::is('subjectscoresheet'))      @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
-    @if (Route::is('subassessment.*'))        @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
-    @if (Route::is('assessment.*'))           @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
-    @if (Route::is('assessments'))            @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
-    @if (Route::is('subjectscoresheet-mock.*'))@include('layouts.pages-assets.css.subjectscoresheet-mock-list-css') @endif
-    @if (Route::is('studentresults*'))        @include('layouts.pages-assets.css.studentresults-list-css') @endif
-    @if (Route::is('schoolpayment*'))         @include('layouts.pages-assets.css.schoolpayment-list-css') @endif
-    @if (Route::is('analysis*'))              @include('layouts.pages-assets.css.analysis-list-css') @endif
-    @if (Route::is('exams*'))                 @include('layouts.pages-assets.css.exams-list-css') @endif
-    @if (Route::is('questions*'))             @include('layouts.pages-assets.css.questions-list-css') @endif
-    @if (Route::is('cbt*'))                   @include('layouts.pages-assets.css.cbt-list-css') @endif
-    @if (Route::is('classbroadsheet.*'))      @include('layouts.pages-assets.css.classbroadsheet-list-css') @endif
-    @if (Route::is('principalscomment.*'))    @include('layouts.pages-assets.css.principalscomment-list-css') @endif
-    @if (Route::is('myprincipalscomment.*'))  @include('layouts.pages-assets.css.myprincipalscomment-list-css') @endif
-    @if (Route::is('compulsorysubjectclass.*'))@include('layouts.pages-assets.css.compulsorysubjectclass-list-css') @endif
-    @if (Route::is('subjectvetting.*'))       @include('layouts.pages-assets.css.subjectvettings-list-css') @endif
-    @if (Route::is('mocksubjectvetting.*'))   @include('layouts.pages-assets.css.mocksubjectvettings-list-css') @endif
-    @if (Route::is('mysubjectvettings.*'))    @include('layouts.pages-assets.css.mysubjectvettings-list-css') @endif
-    @if (Route::is('mymocksubjectvettings.*'))@include('layouts.pages-assets.css.mymocksubjectvettings-list-css') @endif
-    @if (Route::is('timetable.*'))            @include('layouts.pages-assets.css.timetable-list-css') @endif
-    @if (Route::is('rooms.*'))                @include('layouts.pages-assets.css.rooms-list-css') @endif
-    @if (Route::is('promotions.*'))           @include('layouts.pages-assets.css.promotions-list-css') @endif
-    @if (Route::is('attendance.*'))           @include('layouts.pages-assets.css.attendance-list-css') @endif
-    @if (Route::is('device-mappings.*'))      @include('layouts.pages-assets.css.attendance-list-css') @endif
-    @if (Route::is('staff-attendance.*'))     @include('layouts.pages-assets.css.attendance-list-css') @endif
-    @if (Route::is('transcript.*'))           @include('layouts.pages-assets.css.attendance-list-css') @endif
-    @if (Route::is('admin.score-entry.*'))    @include('layouts.pages-assets.css.adminscoreentry-list-css') @endif
-    @if (Route::is('admin.scholarship.*') || Route::is('admin.discount.*') || Route::is('sibling.*') ||
-        Route::is('payment.*') || Route::is('reports.financial.*') || Route::is('reports.analysis.*') ||
-        Route::is('payroll.*') || Route::is('staff.payments.*'))
-        @include('layouts.pages-assets.css.finance-list-css')
-    @endif
+    {{-- New modules: add a line per module here, e.g.
+         @if (Route::is('rooms.*')) @include('layouts.pages-assets.css.rooms-list-css') @endif --}}
+
 
     {{-- CB UI design system (hero / stat / card look used across the portal).
          Loaded LAST so page-specific CSS partials above can't override it.
          Remove class="cb-ui" from <body> to switch the global skin off. --}}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link href="{{ asset('vendor/fonts/fonts.css') }}" rel="stylesheet">
     <link href="{{ asset('css/cb-ui.css') }}?v={{ @filemtime(public_path('css/cb-ui.css')) }}" rel="stylesheet">
 </head>
 
@@ -438,30 +372,28 @@
         <!-- LOGO -->
         <div class="navbar-brand-box">
             @php
-                use App\Models\SchoolInformation;
-                $schoolInfo = SchoolInformation::getActiveSchool();
-                $schoolName = $schoolInfo?->school_name ?? config('app.name', 'School System');
-                $defaultLogo      = asset('theme/layouts/assets/images/logo-dark.png');
-                $defaultLogoLight = asset('theme/layouts/assets/images/logo-light.png');
+                $hotelName = config('hotel.name');
+                $logoDark  = asset(config('hotel.logo'));
+                $logoLight = asset(config('hotel.logo_light'));
             @endphp
 
             <a href="{{ url('/') }}" class="logo logo-dark">
                 <span class="logo-sm">
-                    <img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogo }}" alt="{{ $schoolName }}"
+                    <img src="{{ $logoDark }}" alt="{{ $hotelName }}"
                          style="height:80px;width:auto;border-radius:10px;object-fit:contain;padding:3px;background:rgb(39,38,38);">
                 </span>
                 <span class="logo-lg">
-                    <img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogo }}" alt="{{ $schoolName }}"
+                    <img src="{{ $logoDark }}" alt="{{ $hotelName }}"
                          style="height:80px;width:auto;border-radius:12px;object-fit:contain;padding:2px;background:rgb(37,36,36);">
                 </span>
             </a>
             <a href="{{ url('/') }}" class="logo logo-light">
                 <span class="logo-sm">
-                    <img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogoLight }}" alt="{{ $schoolName }}"
+                    <img src="{{ $logoLight }}" alt="{{ $hotelName }}"
                          style="height:45px;width:auto;border-radius:10px;object-fit:contain;padding:3px;background:rgb(40,39,39);">
                 </span>
                 <span class="logo-lg">
-                    <img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogoLight }}" alt="{{ $schoolName }}"
+                    <img src="{{ $logoLight }}" alt="{{ $hotelName }}"
                          style="height:80px;width:auto;border-radius:12px;object-fit:contain;padding:2px;background:rgb(37,36,36);">
                 </span>
             </a>
@@ -481,47 +413,35 @@
 
                     {{-- MOVED_ADMIN_TOP: Dashboards + Users first --}}
                     {{-- Dashboard --}}
-                    @unless(auth()->user()->hasRole('Parent') && !auth()->user()->can('dashboard'))
+                    @can('dashboard')
                     <li class="nav-item">
                         <a class="nav-link menu-link collapsed" href="#sidebarDashboards" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarDashboards">
                             <i class="ph-gauge"></i> <span data-key="t-dashboards">Dashboards</span>
                         </a>
                         <div class="collapse menu-dropdown" id="sidebarDashboards">
                             <ul class="nav nav-sm flex-column">
-                                @feature('dashboard')
                                 <li class="nav-item">
-                                    <a href="{{ route('dashboard') }}" class="nav-link" data-key="t-analytics">Administration Analytics</a>
+                                    <a href="{{ route('dashboard') }}" class="nav-link" data-key="t-analytics">Hotel Overview</a>
                                 </li>
-                                @endfeature
-                                @can('View management dashboard')
+                                @can('View management reports')
                                 <li class="nav-item">
-                                    <a href="{{ route('management.dashboard') }}" class="nav-link">Management Overview</a>
-                                </li>
-                                @endcan
-                                @can('finance dashboard')
-                                <li class="nav-item">
-                                    <a href="dashboard-crm.html" class="nav-link" data-key="t-crm">Finance Analytics</a>
-                                </li>
-                                @endcan
-                                @can('academics dashboard')
-                                <li class="nav-item">
-                                    <a href="index.html" class="nav-link" data-key="t-ecommerce">Academics Analytics</a>
+                                    <a href="{{ route('reports.index') }}" class="nav-link">Management Reports</a>
                                 </li>
                                 @endcan
                             </ul>
                         </div>
                     </li>
-                    @endunless
+                    @endcan
 
                     {{-- USERS & PRIVILEGES --}}
                     @if(auth()->user()->can('View user') || auth()->user()->can('View role') || auth()->user()->can('View user-account'))
-                        <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-pages">USERS & PRIVILEDGES</span></li>
+                        <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-pages">USERS & PRIVILEGES</span></li>
                     @endif
 
                     @can('View user')
                         <li class="nav-item">
                             <a class="nav-link menu-link collapsed" href="#sidebarusers" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarusers">
-                                <i class="ph-user-circle"></i> <span data-key="t-authentication">User Managements</span>
+                                <i class="ph-user-circle"></i> <span data-key="t-authentication">User Management</span>
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarusers">
                                 <ul class="nav nav-sm flex-column">
@@ -550,33 +470,14 @@
                                         <i class="ri-settings-3-line me-2"></i> Account Settings
                                     </a>
                                 </li>
-                                @if(Auth::user()->isStaff())
-                                <li class="nav-item">
-                                    <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#employmentInfo" class="nav-link ps-4">
-                                        <i class="ri-building-line me-2"></i> Employment Details
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#qualifications" class="nav-link ps-4">
-                                        <i class="ri-graduation-cap-line me-2"></i> Academic Qualifications
-                                    </a>
-                                </li>
-                                @endif
-                                @if(Auth::user()->isStudent())
-                                <li class="nav-item">
-                                    <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#studentInfo" class="nav-link ps-4">
-                                        <i class="ri-user-line me-2"></i> Student Details
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#parentInfo" class="nav-link ps-4">
-                                        <i class="ri-parent-line me-2"></i> Parent Information
-                                    </a>
-                                </li>
-                                @endif
                                 <li class="nav-item">
                                     <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#security" class="nav-link ps-4">
                                         <i class="ri-lock-password-line me-2"></i> Change Password
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('attendance.my') }}" class="nav-link">
+                                        <i class="ri-user-follow-line me-2"></i> My Attendance
                                     </a>
                                 </li>
                             </ul>
@@ -601,981 +502,200 @@
                         </li>
                     @endcan
 
+                    {{-- ============================================================
+                         HOTEL MODULES
+                         Add each new module's menu here (Rooms, Reservations, Front Desk,
+                         POS, Inventory, HR, Security, IT Control Room…), wrapped in the
+                         @can() permission that guards it.
+                         ============================================================ --}}
 
-                    {{-- PARENT PORTAL --}}
-                    @role('Parent')
-                        @php $ppKids = \App\Services\Parents\ParentAccountService::children(auth()->user()); @endphp
-                        <li class="nav-item">
-                            <a href="{{ route('parent.dashboard') }}" class="nav-link menu-link {{ request()->routeIs('parent.dashboard') ? 'active' : '' }}">
-                                <i class="ri-parent-line"></i> <span>My Children</span>
-                            </a>
-                        </li>
-                        @foreach($ppKids as $k)
-                            <li class="nav-item">
-                                <a href="#sidebarChild{{ $k->id }}" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarChild{{ $k->id }}">
-                                    <i class="ri-user-smile-line"></i> <span>{{ $k->firstname }}</span>
-                                </a>
-                                <div class="collapse menu-dropdown" id="sidebarChild{{ $k->id }}">
-                                    <ul class="nav nav-sm flex-column">
-                                        <li class="nav-item"><a href="{{ route('parent.results', $k->id) }}" class="nav-link">Results</a></li>
-                                        <li class="nav-item"><a href="{{ route('parent.fees', $k->id) }}" class="nav-link">Fees &amp; Payments</a></li>
-                                        <li class="nav-item"><a href="{{ route('parent.attendance', $k->id) }}" class="nav-link">Attendance</a></li>
-                                        <li class="nav-item"><a href="{{ route('parent.timetable', $k->id) }}" class="nav-link">Timetable</a></li>
-                                        @if(Route::has('lms.parent.child'))<li class="nav-item"><a href="{{ route('lms.parent.child', $k->id) }}" class="nav-link">Learning</a></li>@endif
-                                    </ul>
-                                </div>
-                            </li>
-                        @endforeach
-                        @if(Route::has('student-leave.mine'))
-                        <li class="nav-item">
-                            <a href="{{ route('student-leave.mine') }}" class="nav-link menu-link {{ request()->routeIs('student-leave.mine') ? 'active' : '' }}"><i class="ri-calendar-event-line"></i> <span>Leave of Absence</span></a>
-                        </li>
-                        @if(Route::has('calendar.index'))
-                        <li class="nav-item">
-                            <a href="{{ route('calendar.index') }}" class="nav-link menu-link {{ request()->routeIs('calendar.index') ? 'active' : '' }}"><i class="ri-calendar-2-line"></i> <span>School Calendar</span></a>
-                        </li>
-                        @endif
-                        @endif
-                        <li class="nav-item">
-                            <a href="{{ route('notifications.index') }}" class="nav-link menu-link"><i class="ri-notification-3-line"></i> <span>Notices</span></a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('parent.password') }}" class="nav-link menu-link"><i class="ri-lock-password-line"></i> <span>Change Password</span></a>
-                        </li>
-                    @endrole
-
-                    {{-- MY PAY (staff self-service) --}}
-                    @php $myStaffId = \Illuminate\Support\Facades\DB::table('staffbioinfo')->where('userid', auth()->id())->value('id'); @endphp
-                    @if($myStaffId)
-                        <li class="nav-item">
-                            <a href="{{ route('my-pay.index') }}" class="nav-link menu-link {{ request()->routeIs('my-pay.*') ? 'active' : '' }}"><i class="ri-wallet-3-line"></i> <span>My Pay</span></a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('leave.index') }}" class="nav-link menu-link {{ request()->routeIs('leave.*') ? 'active' : '' }}"><i class="ri-calendar-event-line"></i> <span>My Leave</span></a>
-                        </li>
-                    @endif
-
-                    @if(($myStaffId || auth()->user()->can('Manage school calendar') || auth()->user()->can('View school calendar')) && Route::has('calendar.index'))
-                        <li class="nav-item">
-                            <a href="{{ route('calendar.index') }}" class="nav-link menu-link {{ request()->routeIs('calendar.index') ? 'active' : '' }}"><i class="ri-calendar-2-line"></i> <span>School Calendar</span></a>
-                        </li>
-                    @endif
-                    @if(auth()->user()->can('View activity log') || auth()->user()->can('View online staff'))
-                        <li class="nav-item">
-                            <a href="#sidebarActivity" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarActivity"><i class="ri-shield-user-line"></i> <span>Staff Monitoring</span></a>
-                            <div class="collapse menu-dropdown" id="sidebarActivity"><ul class="nav nav-sm flex-column">
-                                <li class="nav-item"><a href="{{ route('online-staff.index') }}" class="nav-link">Who's Online</a></li>
-                                @can('View activity log')<li class="nav-item"><a href="{{ route('activity.index') }}" class="nav-link">Activity Log</a></li>@endcan
-                                @canany(['View leave records', 'Manage leave types'])<li class="nav-item"><a href="{{ route('leave.records') }}" class="nav-link">Leave Records</a></li>@endcanany
-                                @canany(['View leave records', 'Manage leave types'])@if(Route::has('leave.balances'))<li class="nav-item"><a href="{{ route('leave.balances') }}" class="nav-link">Leave Balances</a></li>@endif @endcanany
-                            </ul></div>
-                        </li>
-                    @endif
-
-                    @canany(['Recommend student leave', 'Approve student leave', 'View student leave records'])
-                    @if(Route::has('student-leave.approvals'))
-                        <li class="nav-item">
-                            <a href="#sidebarStudentLeave" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentLeave"><i class="ri-user-follow-line"></i> <span>Student Leave</span></a>
-                            <div class="collapse menu-dropdown" id="sidebarStudentLeave"><ul class="nav nav-sm flex-column">
-                                @canany(['Recommend student leave', 'Approve student leave'])<li class="nav-item"><a href="{{ route('student-leave.approvals') }}" class="nav-link">Approvals</a></li>@endcanany
-                                @can('View student leave records')<li class="nav-item"><a href="{{ route('student-leave.records') }}" class="nav-link">Records</a></li>@endcan
-                            </ul></div>
-                        </li>
-                    @endif
+                    @canany(['View rooms', 'Manage room types', 'Manage buildings', 'View reservations', 'View guests', 'View folios', 'Receive payments', 'View finance reports', 'Use POS', 'View POS reports', 'Manage POS menu', 'Manage hotel settings', 'View stock', 'View attendance', 'Manage staff & shifts', 'Run attendance kiosk', 'View audit log', 'View housekeeping', 'Do housekeeping tasks', 'Manage housekeeping', 'View maintenance', 'Report maintenance issues', 'Manage maintenance', 'View visitors', 'Manage visitors', 'View incidents', 'Report incidents', 'Manage incidents', 'Manage lost & found'])
+                        <li class="menu-title"><i class="ri-more-fill"></i> <span>HOTEL OPERATIONS</span></li>
                     @endcanany
-
-                    @canany(['View leave records', 'View student leave records', 'Approve leave', 'Approve student leave'])
-                    @if(Route::has('leave.board'))
+                    @canany(['View reservations', 'View guests'])
                         <li class="nav-item">
-                            <a href="{{ route('leave.board') }}" class="nav-link menu-link {{ request()->routeIs('leave.board') ? 'active' : '' }}"><i class="ri-team-line"></i> <span>Who's Away</span></a>
+                            <a class="nav-link menu-link collapsed" href="#sidebarFrontDesk" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarFrontDesk">
+                                <i class="ph-calendar-check"></i> <span>Front Desk</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarFrontDesk">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View reservations')
+                                        <li class="nav-item"><a href="{{ route('reservations.index') }}" class="nav-link">Arrivals &amp; Departures</a></li>
+                                    @endcan
+                                    @can('Create reservations')
+                                        <li class="nav-item"><a href="{{ route('reservations.create') }}" class="nav-link">New Reservation</a></li>
+                                    @endcan
+                                    @can('View reservations')
+                                        <li class="nav-item"><a href="{{ route('reservations.calendar') }}" class="nav-link">Booking Calendar</a></li>
+                                        <li class="nav-item"><a href="{{ route('reservations.index', ['tab' => 'all']) }}" class="nav-link">All Reservations</a></li>
+                                        <li class="nav-item"><a href="{{ route('reservations.scan') }}" class="nav-link">Scan / Find Booking</a></li>
+                                    @endcan
+                                    @can('View guests')
+                                        <li class="nav-item"><a href="{{ route('guests.index') }}" class="nav-link">Guests</a></li>
+                                    @endcan
+                                </ul>
+                            </div>
                         </li>
-                    @endif
                     @endcanany
-
-                    {{-- STUDENT & PARENTS --}}
-                    @if(auth()->user()->can('View student') || auth()->user()->can('Create student-bulk-upload') || auth()->user()->can('View parent') || auth()->user()->can('View id card'))
-                        <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-apps">STUDENT & PARENTS</span></li>
-                    @endif
-
-                    @feature('students')
-                    @if(auth()->user()->can('View student') || auth()->user()->can('Create student-bulk-upload'))
+                    @canany(['View folios', 'Receive payments', 'View finance reports', 'Use POS', 'Review cash shifts'])
                         <li class="nav-item">
-                            <a href="#sidebarStudentmanagement" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentmanagement">
-                                <i class="ph-storefront"></i> <span>Student Management</span>
+                            <a class="nav-link menu-link collapsed" href="#sidebarBilling" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarBilling">
+                                <i class="ph-receipt"></i> <span>Billing</span>
                             </a>
-                            <div class="collapse menu-dropdown" id="sidebarStudentmanagement">
+                            <div class="collapse menu-dropdown" id="sidebarBilling">
                                 <ul class="nav nav-sm flex-column">
-                                    @can('View student')
-                                        <li class="nav-item"><a href="{{ route('student.index') }}" class="nav-link">All Students</a></li>
+                                    @can('View folios')
+                                        <li class="nav-item"><a href="{{ route('billing.outstanding') }}" class="nav-link">Outstanding Bills</a></li>
                                     @endcan
-                                    @can('Create student-bulk-upload')
-                                        <li class="nav-item"><a href="{{ route('studentbatchindex') }}" class="nav-link">Batch Student Registration</a></li>
+                                    @can('View finance reports')
+                                        <li class="nav-item"><a href="{{ route('billing.payments') }}" class="nav-link">Collections</a></li>
+                                    @elsecan('Receive payments')
+                                        <li class="nav-item"><a href="{{ route('billing.payments') }}" class="nav-link">My Collections</a></li>
                                     @endcan
-                                    @can('View id card')
-                                        <li class="nav-item"><a href="{{ route('student-id-cards.index') }}" class="nav-link">ID Card Generator</a></li>
+                                    @canany(['Use POS', 'Receive payments', 'Review cash shifts', 'View finance reports'])
+                                        <li class="nav-item"><a href="{{ route('cash-shifts.index') }}" class="nav-link">@canany(['Review cash shifts', 'View finance reports'])Cashier Shifts @else My Cash Shift @endcanany</a></li>
+                                    @endcanany
+                                </ul>
+                            </div>
+                        </li>
+                    @endcanany
+                    @canany(['Use POS', 'View POS reports', 'Manage POS menu'])
+                        <li class="nav-item">
+                            <a class="nav-link menu-link collapsed" href="#sidebarPos" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPos">
+                                <i class="ph-beer-bottle"></i> <span>Bar &amp; Restaurant</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarPos">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('Use POS')
+                                        <li class="nav-item"><a href="{{ route('pos.terminal') }}" class="nav-link">Open Till (POS)</a></li>
+                                    @endcan
+                                    @canany(['View POS reports', 'Use POS'])
+                                        <li class="nav-item"><a href="{{ route('pos.orders') }}" class="nav-link">@can('View POS reports')Sales @else My Sales @endcan</a></li>
+                                    @endcanany
+                                    @can('Manage POS menu')
+                                        <li class="nav-item"><a href="{{ route('pos.menu') }}" class="nav-link">Menu &amp; Prices</a></li>
                                     @endcan
                                 </ul>
                             </div>
                         </li>
-                    @endif
-                    @endfeature
-
-                    @if(auth()->user()->can('View student assessments') || auth()->user()->can('View student payments'))
-                        <li class="menu-title"><i class="ph-graduation-cap"></i> <span>STUDENT PORTAL</span></li>
-                    @endif
-
-                    @feature('exams')
-                    @can('View student assessments')
+                    @endcanany
+                    @can('View stock')
                         <li class="nav-item">
-                            <a href="#sidebarAssessments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAssessments">
-                                <i class="ph-graduation-cap"></i> <span>Assessments</span>
+                            <a class="nav-link menu-link collapsed" href="#sidebarStock" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStock">
+                                <i class="ph-package"></i> <span>Inventory</span>
                             </a>
-                            <div class="collapse menu-dropdown" id="sidebarAssessments">
+                            <div class="collapse menu-dropdown" id="sidebarStock">
                                 <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('assessments') }}" class="nav-link">My Assessments</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-                    @endfeature
-
-                    @if(auth()->user()->student_id && Route::has('lms.learn.index'))
-                    <li class="nav-item">
-                        <a href="{{ route('lms.learn.index') }}" class="nav-link menu-link {{ request()->routeIs('lms.learn.*') ? 'active' : '' }}"><i class="ri-graduation-cap-line"></i> <span>My Learning</span></a>
-                    </li>
-                    @endif
-
-                    <li class="nav-item">
-                        <a href="#sidebarPayment" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPayment">
-                            <i class="ph-graduation-cap"></i> <span>Payments</span>
-                        </a>
-                        <div class="collapse menu-dropdown" id="sidebarPayment">
-                            <ul class="nav nav-sm flex-column">
-                                <li class="nav-item"><a href="{{ route('student.payments') }}" class="nav-link">My Payments</a></li>
-                                <li class="nav-item"><a href="{{ route('student.fees.pay') }}" class="nav-link">Pay School Fees</a></li>
-                            </ul>
-                        </div>
-                    </li>
-
-                    @if(auth()->user()->student_id && Route::has('student-leave.mine'))
-                    <li class="nav-item">
-                        <a href="{{ route('student-leave.mine') }}" class="nav-link menu-link {{ request()->routeIs('student-leave.mine') ? 'active' : '' }}"><i class="ri-calendar-event-line"></i> <span>Leave of Absence</span></a>
-                    </li>
-                    @endif
-
-                    @if(auth()->user()->student_id && Route::has('calendar.index'))
-                    <li class="nav-item">
-                        <a href="{{ route('calendar.index') }}" class="nav-link menu-link {{ request()->routeIs('calendar.index') ? 'active' : '' }}"><i class="ri-calendar-2-line"></i> <span>School Calendar</span></a>
-                    </li>
-                    @endif
-
-                    @can('View parent')
-                        <li class="nav-item">
-                            <a href="#sidebarParent" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarParent">
-                                <i class="ph-storefront"></i> <span>Parent Management</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarParent">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('parent.index') }}" class="nav-link">All Parents</a></li>
+                                    <li class="nav-item"><a href="{{ route('inventory.index') }}" class="nav-link">Stock on Hand</a></li>
+                                    @can('Receive stock')<li class="nav-item"><a href="{{ route('inventory.receipts.create') }}" class="nav-link">Receive Stock</a></li>@endcan
+                                    <li class="nav-item"><a href="{{ route('inventory.po.index') }}" class="nav-link">Purchase Orders</a></li>
+                                    @can('Transfer stock')<li class="nav-item"><a href="{{ route('inventory.transfers.create') }}" class="nav-link">Transfer Stock</a></li>@endcan
+                                    <li class="nav-item"><a href="{{ route('inventory.counts.index') }}" class="nav-link">Stocktakes</a></li>
+                                    <li class="nav-item"><a href="{{ route('inventory.suppliers.index') }}" class="nav-link">Suppliers</a></li>
+                                    @can('View stock reports')<li class="nav-item"><a href="{{ route('inventory.reports') }}" class="nav-link">Stock Reports</a></li>@endcan
                                 </ul>
                             </div>
                         </li>
                     @endcan
-
-                    {{-- SUBJECT REGISTRATION --}}
-                    @feature('subjects')
-                    @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject'))
-                        <li class="menu-title"><i class="ph-folder-open"></i> <span>SUBJECT REGISTRATION</span></li>
+                    @canany(['View housekeeping', 'Do housekeeping tasks', 'Manage housekeeping', 'View maintenance', 'Report maintenance issues', 'Manage maintenance'])
                         <li class="nav-item">
-                            <a href="#sidebarsubjectoperaton" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarsubjectoperaton">
-                                <i class="ph-folder-open"></i> <span>Subject Registration</span>
+                            <a class="nav-link menu-link collapsed" href="#sidebarOps" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarOps">
+                                <i class="ph-paint-brush-household"></i> <span>Housekeeping &amp; Repairs</span>
                             </a>
-                            <div class="collapse menu-dropdown" id="sidebarsubjectoperaton">
+                            <div class="collapse menu-dropdown" id="sidebarOps">
                                 <ul class="nav nav-sm flex-column">
-                                    @can('View my-class')
-                                        <li class="nav-item"><a href="{{ route('subjectoperation.index') }}" class="nav-link">Student Subject Registration</a></li>
+                                    @canany(['View housekeeping', 'Do housekeeping tasks', 'Manage housekeeping'])
+                                        <li class="nav-item"><a href="{{ route('housekeeping.index') }}" class="nav-link">@canany(['View housekeeping', 'Manage housekeeping'])Housekeeping Board @else My Rooms to Clean @endcanany</a></li>
+                                    @endcanany
+                                    @canany(['View maintenance', 'Report maintenance issues', 'Manage maintenance'])
+                                        <li class="nav-item"><a href="{{ route('maintenance.index') }}" class="nav-link">Maintenance Jobs</a></li>
+                                    @endcanany
+                                </ul>
+                            </div>
+                        </li>
+                    @endcanany
+                    @canany(['View visitors', 'Manage visitors', 'View incidents', 'Report incidents', 'Manage incidents', 'Manage lost & found'])
+                        <li class="nav-item">
+                            <a class="nav-link menu-link collapsed" href="#sidebarSecurity" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSecurity">
+                                <i class="ri-shield-user-line"></i> <span>Security</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarSecurity">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View visitors')
+                                        <li class="nav-item"><a href="{{ route('visitors.index') }}" class="nav-link">Visitors</a></li>
+                                        <li class="nav-item"><a href="{{ route('visitors.check') }}" class="nav-link">Check a Visitor Pass</a></li>
+                                    @endcan
+                                    @canany(['View incidents', 'Report incidents', 'Manage incidents'])
+                                        <li class="nav-item"><a href="{{ route('incidents.index') }}" class="nav-link">Incidents</a></li>
+                                    @endcanany
+                                    @can('Manage lost & found')
+                                        <li class="nav-item"><a href="{{ route('lost-found.index') }}" class="nav-link">Lost &amp; Found</a></li>
                                     @endcan
                                 </ul>
                             </div>
                         </li>
-                    @endif
-                    @endfeature
-
-                    {{-- EXAMS AND CBT --}}
-                    @if(auth()->user()->can('View exam') || auth()->user()->can('View cbt-exam'))
-                        <li class="menu-title"><i class="ph-graduation-cap"></i> <span>EXAMS AND CBT</span></li>
-                    @endif
-
-                    @feature('exams')
-                    @can('View exam')
+                    @endcanany
+                    @canany(['View rooms', 'Manage room types', 'Manage buildings'])
                         <li class="nav-item">
-                            <a href="#sidebarExams" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarExams">
-                                <i class="ph-graduation-cap"></i> <span>Exams Management</span>
+                            <a class="nav-link menu-link collapsed" href="#sidebarRooms" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarRooms">
+                                <i class="ph-bed"></i> <span>Rooms &amp; Property</span>
                             </a>
-                            <div class="collapse menu-dropdown" id="sidebarExams">
+                            <div class="collapse menu-dropdown" id="sidebarRooms">
                                 <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('exams.index') }}" class="nav-link">All Examinations</a></li>
-                                    @can('View question')
-                                        <li class="nav-item"><a href="{{ route('questions.all') }}" class="nav-link">Questions Management</a></li>
-                                    @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-                    @endfeature
-
-                    @feature('cbt')
-                    @can('View cbt-exam')
-                        <li class="nav-item">
-                            <a href="#sidebarCBT" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarCBT">
-                                <i class="ph-graduation-cap"></i> <span>CBT Management</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarCBT">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('cbt.index') }}" class="nav-link">CBT Exercise</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-                    @endfeature
-
-                    {{-- TIMETABLE --}}
-                    @feature('timetable')
-                    @if(auth()->user()->can('View timetable') || auth()->user()->can('View my timetable'))
-                        <li class="nav-item">
-                            <a href="#sidebartimetable" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebartimetable">
-                                <i class="ph-calendar"></i> <span>Timetable Management</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebartimetable">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View timetable')
-                                        <li class="nav-item"><a href="{{ route('timetable.index') }}" class="nav-link">Admin Timetable</a></li>
-                                    @endcan
-                                    @can('View my timetable')
-                                        <li class="nav-item"><a href="{{ route('timetable.teacher') }}" class="nav-link">My Timetable</a></li>
-                                    @endcan
                                     @can('View rooms')
-                                        <li class="nav-item"><a href="{{ route('rooms.index') }}" class="nav-link">Room Management</a></li>
+                                        <li class="nav-item"><a href="{{ route('rooms.index') }}" class="nav-link">Room Board</a></li>
+                                        <li class="nav-item"><a href="{{ route('rooms.index', ['view' => 'list']) }}" class="nav-link">Room List</a></li>
                                     @endcan
-                                    @can('View exam timetable')
-                                        <li class="nav-item"><a href="{{ route('exam-timetable.index') }}" class="nav-link">Exam Timetable</a></li>
+                                    @can('Create rooms')
+                                        <li class="nav-item"><a href="{{ route('rooms.bulk.create') }}" class="nav-link">Add Rooms</a></li>
                                     @endcan
-                                    @can('View holidays')
-                                        <li class="nav-item"><a href="{{ route('holidays.index') }}" class="nav-link">Holidays</a></li>
-                                    @endcan
+                                    @canany(['View rooms', 'Manage room types'])
+                                        <li class="nav-item"><a href="{{ route('room-types.index') }}" class="nav-link">Room Types &amp; Rates</a></li>
+                                    @endcanany
+                                    @canany(['View rooms', 'Manage buildings'])
+                                        <li class="nav-item"><a href="{{ route('buildings.index') }}" class="nav-link">Buildings &amp; Floors</a></li>
+                                    @endcanany
                                 </ul>
                             </div>
                         </li>
-                    @endif
-                    @endfeature
-
-                    {{-- CLASSES & RECORDS --}}
-                    @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject') || auth()->user()->can('View my-subject-vettings') || auth()->user()->can('View my-mock-subject-vettings') || auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report') || auth()->user()->can('View my-principals-comment'))
-                        <li class="menu-title"><i class="ph-folder-open"></i> <span>CLASSES & RECORDS</span></li>
-                    @endif
-
-                    @feature('classes')
-                    @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject') || auth()->user()->can('View my-subject-vettings') || auth()->user()->can('View my-mock-subject-vettings') || auth()->user()->can('View my-principals-comment'))
+                    @endcanany
+                    @canany(['View attendance', 'Manage staff & shifts', 'Run attendance kiosk'])
                         <li class="nav-item">
-                            <a href="#sidebarClasses" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarClasses">
-                                <i class="ph-folder-open"></i> <span>Classes & Subjects</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarClasses">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View my-class')
-                                        <li class="nav-item"><a href="{{ route('myclass.index') }}" class="nav-link">My Class</a></li>
-                                    @endcan
-                                    @can('View my-subject')
-                                        <li class="nav-item"><a href="{{ route('mysubject.index') }}" class="nav-link">My Subject</a></li>
-                                    @endcan
-                                    @can('View my-subject-vettings')
-                                        <li class="nav-item"><a href="{{ route('mysubjectvettings.index') }}" class="nav-link">Subjects to Vet</a></li>
-                                    @endcan
-                                    @can('View my-mock-subject-vettings')
-                                        <li class="nav-item"><a href="{{ route('mymocksubjectvettings.index') }}" class="nav-link">Mock Subjects to Vet</a></li>
-                                    @endcan
-                                    @can('View my-principals-comment')
-                                        <li class="nav-item"><a href="{{ route('myprincipalscomment.index') }}" class="nav-link">Principal's Comment</a></li>
-                                    @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-                    @endfeature
-
-                    {{-- ATTENDANCE --}}
-                    @feature('attendance')
-                    @if(auth()->user()->can('View attendance-register') || 
-                        auth()->user()->can('View attendance-class-summary') || 
-                        auth()->user()->can('View attendance-student-report') ||
-                        auth()->user()->can('View device-mappings') ||
-                        auth()->user()->can('View staff-attendance'))
-                        <li class="menu-title"><i class="ph-calendar-check"></i> <span>ATTENDANCE</span></li>
-                        <li class="nav-item">
-                            <a href="#sidebarAttendance" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAttendance">
-                                <i class="ph-calendar-check"></i> <span>Attendance</span>
+                            <a class="nav-link menu-link collapsed" href="#sidebarAttendance" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAttendance">
+                                <i class="ph-identification-badge"></i> <span>Staff Attendance</span>
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarAttendance">
                                 <ul class="nav nav-sm flex-column">
-                                    @can('View attendance-register')
-                                        <li class="nav-item"><a href="{{ route('attendance.my-classes') }}" class="nav-link">Mark Attendance</a></li>
+                                    @can('View attendance')
+                                        <li class="nav-item"><a href="{{ route('attendance.board') }}" class="nav-link">Who's In Today</a></li>
+                                        <li class="nav-item"><a href="{{ route('attendance.timesheet') }}" class="nav-link">Timesheet</a></li>
+                                        <li class="nav-item"><a href="{{ route('attendance.leave') }}" class="nav-link">Leave</a></li>
                                     @endcan
-                                    
-                                    
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-                    @endfeature
-
-                    {{-- RECORDS AND RESULTS --}}
-                    @feature('results')
-                    @if(auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report') || auth()->user()->can('View admin-score-entry') || auth()->user()->can('View report-approvals') || auth()->user()->can('Submit report cards') || auth()->user()->can('Approve report cards'))
-                        <li class="nav-item">
-                            <a href="#sidebarRecords" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarRecords">
-                                <i class="ph-folder-open"></i> <span>Records and Results</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarRecords">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View myresult-room')
-                                        <li class="nav-item"><a href="{{ route('myresultroom.index') }}" class="nav-link">Terminal Records</a></li>
+                                    @can('Manage staff & shifts')
+                                        <li class="nav-item"><a href="{{ route('attendance.setup') }}" class="nav-link">Staff, Shifts &amp; Badges</a></li>
                                     @endcan
-                                    @canany(['View report-approvals', 'Submit report cards', 'Approve report cards'])
-                                        <li class="nav-item"><a href="{{ route('report-approvals.index') }}" class="nav-link">Report Card Approval</a></li>
-                                    @endcanany
-                                    @can('View student-report')
-                                        <li class="nav-item"><a href="{{ route('studentreports.index') }}" class="nav-link">Terminal Result Reports</a></li>
-                                        <li class="nav-item"><a href="{{ route('broadsheet.index') }}" class="nav-link">Terminal Result Broadsheet</a></li>
-                                    @endcan
-                                    @can('Manage broadsheet ranking')
-                                        <li class="nav-item"><a href="{{ route('broadsheet.ranking.index') }}" class="nav-link {{ request()->routeIs('broadsheet.ranking.*') ? 'active' : '' }}">Broadsheet Ranking</a></li>
-                                    @endcan
-                                    @can('View student-mock-report')
-                                        <li class="nav-item"><a href="{{ route('studentmockreports.index') }}" class="nav-link">Mock Result Reports</a></li>
-                                    @endcan
-                                    @can('View admin-score-entry')
-                                        <li class="nav-item"><a href="{{ route('admin.score-entry.index') }}" class="nav-link">Admin Score Entry</a></li>
+                                    @can('Run attendance kiosk')
+                                        <li class="nav-item"><a href="{{ route('attendance.kiosk') }}" class="nav-link">Open Clock-in Kiosk</a></li>
                                     @endcan
                                 </ul>
                             </div>
                         </li>
-                    @endif
-                    @endfeature
-
-                    {{-- TRANSCRIPTS --}}
-                    @feature('transcripts')
-                    @if(auth()->user()->can('View student-transcript') || auth()->user()->can('Preview student-transcript') || auth()->user()->can('Download student-transcript'))
-                        <li class="menu-title"><i class="ph-folder-open"></i> <span>TRANSCRIPTS</span></li>
-                        <li class="nav-item">
-                            <a href="#sidebarTranscript" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarTranscript">
-                                <i class="ri-file-text-line"></i> <span>Transcript</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarTranscript">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View student-transcript')
-                                        <li class="nav-item"><a href="{{ route('transcript.index') }}" class="nav-link">Generate Transcript</a></li>
-                                    @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-                    @endfeature
-
-                    {{-- PROMOTION MANAGEMENT --}}
-                    @feature('promotions')
-                    @if(auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report'))
-                        <li class="menu-title"><i class="ri-more-fill"></i> <span>PROMOTION MANAGEMENT</span></li>
-                        <li class="nav-item">
-                            <a href="#sidebarPromotions" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPromotions">
-                                <i class="ph-folder-open"></i> <span>Promotion Management</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarPromotions">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View myresult-room')
-                                        <li class="nav-item"><a href="{{ route('promotions.index') }}" class="nav-link">Student Promotion</a></li>
-                                        <li class="nav-item"><a href="{{ route('promotion-settings.index') }}" class="nav-link">Promotion Settings</a></li>
-                                        <li class="nav-item"><a href="{{ route('promotion.templates.index') }}" class="nav-link">Rule Templates</a></li>
-                                    @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-                    @endfeature
-
-                    {{-- BURSARY & FINANCE --}}
-                    @if(auth()->user()->can('View school-payment') || auth()->user()->can('View analysis') ||
-                        auth()->user()->can('View scholarship') || auth()->user()->can('View discount') ||
-                        auth()->user()->can('View sibling groups') || auth()->user()->can('View financial reports') ||
-                        auth()->user()->can('View payroll') || auth()->user()->can('View staff payments'))
-                        <li class="menu-title"><i class="ri-more-fill"></i> <span>BURSARY & FINANCE</span></li>
-                    @endif
-
-                    @feature('finance')
-                    @can('View school-payment')
-                        <li class="nav-item">
-                            <a href="#sidebarStudentpayments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentpayments">
-                                <i class="ph-storefront"></i> <span>Student Payments</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarStudentpayments">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('schoolpayment.index') }}" class="nav-link">Student Bill</a></li>
-                                    <li class="nav-item"><a href="{{ route('payment.index') }}" class="nav-link">Payment Portal</a></li>
-                                    @can('View online-fee-payments')<li class="nav-item"><a href="{{ route('online-fees.index') }}" class="nav-link">Online Payments</a></li>@endcan
-                                    @can('View instalment-plans')<li class="nav-item"><a href="{{ route('instalment-plans.index') }}" class="nav-link">Instalment Plans</a></li>@endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-                    @endfeature
-
-
-                    @feature('scholarships')
-                    @can('View scholarship')
-                        <li class="nav-item">
-                            <a href="#sidebarScholarship" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarScholarship">
-                                <i class="ph-graduation-cap"></i> <span>Scholarship Management</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarScholarship">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('admin.scholarship.index') }}" class="nav-link">All Scholarships</a></li>
-                                    @can('Create scholarship')
-                                        <li class="nav-item"><a href="{{ route('admin.scholarship.create') }}" class="nav-link">Create Scholarship</a></li>
-                                    @endcan
-                                    <li class="nav-item"><a href="{{ route('admin.scholarship.assignments') }}" class="nav-link">Scholarship Assignments</a></li>
-                                    <li class="nav-item"><a href="{{ route('admin.scholarship.applications') }}" class="nav-link">Applications</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-                    @endfeature
-
-                    @feature('scholarships')
-                    @can('View discount')
-                        <li class="nav-item">
-                            <a href="#sidebarDiscount" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarDiscount">
-                                <i class="ph-tag"></i> <span>Discount Management</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarDiscount">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('admin.discount.index') }}" class="nav-link">All Discounts</a></li>
-                                    @can('Create discount')
-                                        <li class="nav-item"><a href="{{ route('admin.discount.create') }}" class="nav-link">Create Discount</a></li>
-                                    @endcan
-                                    <li class="nav-item"><a href="{{ route('admin.discount.assignments') }}" class="nav-link">Discount Assignments</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-                    @endfeature
-
-                    @feature('finance')
-                    @can('View sibling groups')
-                        <li class="nav-item">
-                            <a href="#sidebarSibling" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSibling">
-                                <i class="ph-users"></i> <span>Sibling Groups</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarSibling">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('sibling.index') }}" class="nav-link">All Family Groups</a></li>
-                                    <li class="nav-item"><a href="{{ route('sibling.create') }}" class="nav-link">Create Family Group</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-                    @endfeature
-
-                    @feature('expenses')
-                    @if(auth()->user()->canany(['Create expenses', 'Approve expenses', 'Pay expenses', 'Manage budgets', 'Manage assets', 'Approve purchase requests', 'View financial reports']))
-                        <li class="nav-item">
-                            <a href="#sidebarExpenses" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarExpenses">
-                                <i class="ri-receipt-line"></i> <span>Expenses &amp; Assets</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarExpenses">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('finance.expenses') }}" class="nav-link">Expenses</a></li>
-                                    <li class="nav-item"><a href="{{ route('finance.purchases') }}" class="nav-link">Purchase Requests</a></li>
-                                    @can('Create expenses')<li class="nav-item"><a href="{{ route('finance.vendors') }}" class="nav-link">Vendors</a></li>@endcan
-                                    @canany(['Manage budgets', 'View financial reports'])<li class="nav-item"><a href="{{ route('finance.budgets') }}" class="nav-link">Budgets</a></li>@endcanany
-                                    @canany(['Manage assets', 'View financial reports'])<li class="nav-item"><a href="{{ route('finance.assets') }}" class="nav-link">Fixed Assets</a></li>@endcanany
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-                    @endfeature
-
-                    @can('Manage payment gateways')
-                        <li class="nav-item">
-                            <a href="{{ route('admin.payment-gateways.index') }}" class="nav-link">
-                                <i class="ph-credit-card"></i> <span>Payment Gateways</span>
-                            </a>
-                        </li>
-                    @endcan
-
-                    @can('Manage maintenance mode')
-                        <li class="nav-item">
-                            <a href="{{ route('maintenance.settings') }}" class="nav-link">
-                                <i class="ri-tools-line"></i> <span>Maintenance Mode</span>
-                                @php $mmActive = false; try { $mmActive = \App\Models\MaintenanceSetting::current()->is_active; } catch (\Throwable $e) {} @endphp
-                                @if($mmActive)<span class="badge bg-danger ms-1">ON</span>@endif
-                            </a>
-                        </li>
-                    @endcan
-
-                    @can('Manage website')
-                        <li class="nav-item">
-                            <a href="{{ route('website.admin.index') }}" class="nav-link">
-                                <i class="ri-global-line"></i> <span>Website</span>
-                                @php $wsUnread = 0; try { $wsUnread = \App\Models\Website\WebsiteMessage::whereNull('read_at')->where('type', '!=', 'newsletter')->count(); } catch (\Throwable $e) {} @endphp
-                                @if($wsUnread)<span class="badge bg-danger ms-1">{{ $wsUnread }}</span>@endif
-                            </a>
-                        </li>
-                    @endcan
-
-                    @can('Manage result display')
-                        <li class="nav-item">
-                            <a href="{{ route('result-display.index') }}" class="nav-link">
-                                <i class="ri-layout-grid-line"></i> <span>Result Display</span>
-                            </a>
-                        </li>
-                    @endcan
-
-                    @can('Manage AI guidance')
-                        <li class="nav-item">
-                            <a href="{{ route('ai-guidance.index') }}" class="nav-link">
-                                <i class="ri-sparkling-2-line"></i> <span>AI Learning Guidance</span>
-                            </a>
-                        </li>
-                    @endcan
-
-                    @can('Manage feature flags')
-                        <li class="nav-item">
-                            <a href="{{ route('feature-flags.index') }}" class="nav-link">
-                                <i class="ri-toggle-line"></i> <span>Module Access</span>
-                            </a>
-                        </li>
-                    @endcan
-
-                    @can('Manage backups')
-                    @if(Route::has('admin.backups.index'))
-                        <li class="nav-item">
-                            <a href="{{ route('admin.backups.index') }}" class="nav-link {{ request()->routeIs('admin.backups.*') ? 'active' : '' }}">
-                                <i class="ri-database-2-line"></i> <span>Database Backups</span>
-                            </a>
-                        </li>
-                    @endif
-                    @endcan
-
-                    @canany(['Manage courses', 'Grade coursework'])
-                    @if(Route::has('lms.courses.index'))
-                        <li class="nav-item">
-                            <a href="#sidebarElearning" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarElearning">
-                                <i class="ri-book-open-line"></i> <span>E-Learning</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarElearning">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('lms.courses.index') }}" class="nav-link">Courses</a></li>
-                                    <li class="nav-item"><a href="{{ route('lms.courses.create') }}" class="nav-link">New Course</a></li>
-                                    @if(Route::has('lms.bank.index'))<li class="nav-item"><a href="{{ route('lms.bank.index') }}" class="nav-link">Question Bank</a></li>@endif
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
                     @endcanany
-
-                    @canany(['Manage topics', 'Verify topics'])
-                    <li class="nav-item">
-                        <a href="#sidebarCurriculum" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarCurriculum">
-                            <i class="ri-booklet-line"></i> <span>Curriculum</span>
-                        </a>
-                        <div class="collapse menu-dropdown" id="sidebarCurriculum">
-                            <ul class="nav nav-sm flex-column">
-                                <li class="nav-item"><a href="{{ route('curriculum.topics.index') }}" class="nav-link">Topics &amp; Scheme</a></li>
-                                <li class="nav-item"><a href="{{ route('curriculum.topics.coverage') }}" class="nav-link">Coverage</a></li>
-                                @can('Manage topics')<li class="nav-item"><a href="{{ route('curriculum.reps.index') }}" class="nav-link">Class Reps</a></li>@endcan
-                                @can('Manage teaching methods')<li class="nav-item"><a href="{{ route('curriculum.methods.index') }}" class="nav-link">Teaching Methods</a></li>@endcan
-                            </ul>
-                        </div>
-                    </li>
-                    @endcanany
-
-                    @canany(['Track topics', 'Manage topics', 'Verify topics'])
-                    <li class="nav-item"><a href="{{ route('curriculum.progress.index') }}" class="nav-link menu-link {{ request()->routeIs('curriculum.progress.*') ? 'active' : '' }}"><i class="ri-task-line"></i> <span>My Topics</span></a></li>
-                    @canany(['Write lesson notes', 'Review lesson notes'])
-                    <li class="nav-item"><a href="{{ route('curriculum.notes.index') }}" class="nav-link menu-link {{ request()->routeIs('curriculum.notes.*') ? 'active' : '' }}"><i class="ri-booklet-line"></i> <span>Lesson Notes</span></a></li>
-                    @endcanany
-                    @endcanany
-
-                    @role('Class Rep')
-                    <li class="nav-item"><a href="{{ route('curriculum.reps.confirm') }}" class="nav-link menu-link {{ request()->routeIs('curriculum.reps.confirm') ? 'active' : '' }}"><i class="ri-shield-check-line"></i> <span>Confirm Topics</span></a></li>
-                    @endrole
-
-                    @canany(['Write exam papers', 'Vet exam papers', 'Manage exam bank'])
-                    <li class="nav-item">
-                        <a href="#sidebarExamVetting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarExamVetting">
-                            <i class="ri-file-list-3-line"></i> <span>Paper Exams &amp; Vetting</span>
-                        </a>
-                        <div class="collapse menu-dropdown" id="sidebarExamVetting">
-                            <ul class="nav nav-sm flex-column">
-                                <li class="nav-item"><a href="{{ route('exam.papers.index') }}" class="nav-link {{ request()->routeIs('exam.papers.*') ? 'active' : '' }}">Exam Papers</a></li>
-                                @can('Vet exam papers')<li class="nav-item"><a href="{{ route('exam.vet.queue') }}" class="nav-link {{ request()->routeIs('exam.vet.*') ? 'active' : '' }}">Vetting Queue</a></li>@endcan
-                                @canany(['Manage exam bank', 'Write exam papers'])<li class="nav-item"><a href="{{ route('exam.bank.index') }}" class="nav-link {{ request()->routeIs('exam.bank.*') ? 'active' : '' }}">Question Bank</a></li>@endcanany
-                                <li class="nav-item"><a href="{{ route('exam.coverage.index') }}" class="nav-link {{ request()->routeIs('exam.coverage.index') ? 'active' : '' }}">Term-end Analysis</a></li>
-                            </ul>
-                        </div>
-                    </li>
-                    @endcanany
-
-                    @canany(['Manage certificate templates', 'Generate certificates', 'View certificate audit'])
-                    @if(Route::has('certificates.index'))
+                    @can('Manage hotel settings')
                         <li class="nav-item">
-                            <a href="{{ route('certificates.index') }}" class="nav-link {{ request()->routeIs('certificates.*') ? 'active' : '' }}">
-                                <i class="ri-award-line"></i> <span>Certificates</span>
+                            <a class="nav-link menu-link" href="{{ route('settings.bank-accounts.index') }}">
+                                <i class="ph-bank"></i> <span>Bank Accounts</span>
                             </a>
-                        </li>
-                    @endif
-                    @endcanany
-
-                    @canany(['Manage certificate templates', 'Generate certificates', 'View certificate audit'])
-                    @if(Route::has('certificates.index'))
-                        <li class="nav-item">
-                            <a href="{{ route('certificates.index', ['kind' => 'testimonial']) }}" class="nav-link {{ request()->routeIs('certificates.*') && request('kind')==='testimonial' ? 'active' : '' }}">
-                                <i class="ri-file-user-line"></i> <span>Testimonials</span>
-                            </a>
-                        </li>
-                    @endif
-                    @endcanany
-
-                    @feature('accounting')
-                    @can('View financial reports')
-                        <li class="nav-item">
-                            <a href="#sidebarAccounting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAccounting">
-                                <i class="ph-chart-line"></i> <span>Accounting & Reports</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarAccounting">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('accounting.dashboard') }}" class="nav-link">Accounting Overview</a></li>
-                                    <li class="nav-item"><a href="{{ route('accounting.journals') }}" class="nav-link">Journal</a></li>
-                                    <li class="nav-item"><a href="{{ route('accounting.ledger') }}" class="nav-link">General Ledger</a></li>
-                                    <li class="nav-item"><a href="{{ route('accounting.income-statement') }}" class="nav-link">Income &amp; Expenditure</a></li>
-                                    <li class="nav-item"><a href="{{ route('accounting.balance-sheet') }}" class="nav-link">Balance Sheet</a></li>
-                                    <li class="nav-item"><a href="{{ route('accounting.trial-balance') }}" class="nav-link">Trial Balance</a></li>
-                                    <li class="nav-item"><a href="{{ route('accounting.cash-flow') }}" class="nav-link">Cash Flow</a></li>
-                                    <li class="nav-item"><a href="{{ route('accounting.accounts') }}" class="nav-link">Chart of Accounts</a></li>
-                                    <li class="nav-item"><a href="{{ route('reports.financial.debtors') }}" class="nav-link">Student Debtors List</a></li>
-                                    @can('View result-access')
-                                    <li class="nav-item"><a href="{{ route('result-access.index') }}" class="nav-link">Result Access Control</a></li>
-                                    @endcan
-                                    <li class="nav-item"><a href="{{ route('reports.financial.collection-summary') }}" class="nav-link">Collection Summary</a></li>
-                                    <li class="nav-item"><a href="{{ route('reports.analysis.index') }}" class="nav-link">Class Analysis</a></li>
-                                    <li class="nav-item"><a href="{{ route('reports.analysis.school-wide') }}" class="nav-link">School-Wide Analysis</a></li>
-                                    @can('View financial audit')@if(Route::has('finance.audit.dashboard'))
-                                    <li class="nav-item"><a href="{{ route('finance.audit.dashboard') }}" class="nav-link">Financial Audit</a></li>
-                                    @endif @endcan
-                                </ul>
-                            </div>
                         </li>
                     @endcan
-                    @endfeature
-
-                    @feature('payroll')
-                    @can('View payroll')
+                    @can('View audit log')
                         <li class="nav-item">
-                            <a href="#sidebarPayroll" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPayroll">
-                                <i class="ph-money"></i> <span>Payroll Management</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarPayroll">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('payroll.periods') }}" class="nav-link">Payroll Periods</a></li>
-                                    @canany(['Manage staff pay profiles', 'Manage payroll settings'])<li class="nav-item"><a href="{{ route('payroll.profiles') }}" class="nav-link">Staff Pay Profiles</a></li>@endcanany
-                                    <li class="nav-item"><a href="{{ route('payroll.scales') }}" class="nav-link">Salary Scales</a></li>
-                                    <li class="nav-item"><a href="{{ route('payroll.items') }}" class="nav-link">Allowances &amp; Deductions</a></li>
-                                    <li class="nav-item"><a href="{{ route('payroll.reviews') }}" class="nav-link">Salary Reviews</a></li>
-                                    @can('Manage payroll settings')<li class="nav-item"><a href="{{ route('payroll.rates') }}" class="nav-link">Rates &amp; Tax Bands</a></li>@endcan
-                                    @can('Manage payroll settings')<li class="nav-item"><a href="{{ route('payroll.employer') }}" class="nav-link">Employer Details</a></li>@endcan
-                                    <li class="nav-item"><a href="{{ route('payroll.remittances') }}" class="nav-link">Government Remittances</a></li>
-                                    @canany(['View payroll', 'Release salary payments'])<li class="nav-item"><a href="{{ route('payroll.payouts') }}" class="nav-link">Salary Payments</a></li>@endcanany
-                                    @canany(['Manage staff loans', 'Approve staff loans', 'View payroll'])<li class="nav-item"><a href="{{ route('payroll.loans') }}" class="nav-link">Loans &amp; Advances</a></li>@endcanany
-                                    @canany(['Manage cooperative', 'View payroll'])<li class="nav-item"><a href="{{ route('payroll.coop') }}" class="nav-link">Staff Cooperative</a></li>@endcanany
-                                    <li class="nav-item"><a href="{{ route('payroll.attendance-pay') }}" class="nav-link">Attendance &amp; Pay</a></li>
-                                    @canany(['Approve duty claims', 'View payroll'])<li class="nav-item"><a href="{{ route('payroll.claims') }}" class="nav-link">Extra Duty Claims</a></li>@endcanany
-                                    <li class="nav-item"><a href="{{ route('payroll.summary') }}" class="nav-link">Payroll Summary</a></li>
-                                    <li class="nav-item"><a href="{{ route('payroll.statutory') }}" class="nav-link">Statutory Report</a></li>
-                                    <li class="nav-item"><a href="{{ route('payroll.salary-structures') }}" class="nav-link">Salary Structures</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-                    @endfeature
-
-                    @feature('payroll')
-                    @can('View staff payments')
-                        <li class="nav-item">
-                            <a href="#sidebarStaffPayments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStaffPayments">
-                                <i class="ph-wallet"></i> <span>Staff Payments</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarStaffPayments">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('staff.payments.index') }}" class="nav-link">All Payments</a></li>
-                                    <li class="nav-item"><a href="{{ route('staff.payments.dashboard') }}" class="nav-link">My Payments</a></li>
-                                    <li class="nav-item"><a href="{{ route('my-pay.loans') }}" class="nav-link">My Loans</a></li>
-                                    <li class="nav-item"><a href="{{ route('my-pay.claims') }}" class="nav-link">Extra Duty Claims</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-                    @endfeature
-
-                    {{-- COMMUNICATION --}}
-                    @if(auth()->user()->can('View notices') || auth()->user()->can('Create notices') || auth()->user()->can('Manage notification settings') || auth()->user()->can('View result-sends') || auth()->user()->can('Manage parent contacts') || auth()->user()->can('Manage parent accounts'))
-                        <li class="menu-title"><i class="ri-more-fill"></i> <span>COMMUNICATION</span></li>
-                    @endif
-
-                    @feature('communication')
-                    @can('View notices')
-                        <li class="nav-item">
-                            <a href="#sidebarNotices" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarNotices">
-                                <i class="ri-megaphone-line"></i> <span>School Notices</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarNotices">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('notices.index') }}" class="nav-link">All Notices</a></li>
-                                    @can('Create notices')
-                                        <li class="nav-item"><a href="{{ route('notices.create') }}" class="nav-link">New Notice</a></li>
-                                    @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-                    @endfeature
-
-                    @feature('communication')
-                    @can('View result-sends')
-                        <li class="nav-item">
-                            <a href="#sidebarResultSends" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarResultSends">
-                                <i class="ri-mail-send-line"></i> <span>Send Results</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarResultSends">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('Create result-sends')
-                                        <li class="nav-item"><a href="{{ route('result-sends.create') }}" class="nav-link">Send Report Cards</a></li>
-                                    @endcan
-                                    <li class="nav-item"><a href="{{ route('result-sends.index') }}" class="nav-link">Sending History</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-                    @endfeature
-
-                    @can('Manage parent contacts')
-                        <li class="nav-item">
-                            <a href="{{ route('parent-contacts.index') }}" class="nav-link">
-                                <i class="ri-contacts-book-2-line"></i> <span>Parent Contacts</span>
+                            <a class="nav-link menu-link" href="{{ route('audit.index') }}">
+                                <i class="ph-shield-check"></i> <span>Audit Trail</span>
                             </a>
                         </li>
                     @endcan
 
-                    @can('Manage parent accounts')
-                        <li class="nav-item">
-                            <a href="{{ route('parent-accounts.index') }}" class="nav-link">
-                                <i class="ri-parent-line"></i> <span>Parent Portal Accounts</span>
-                            </a>
-                        </li>
-                    @endcan
-
-                    @can('Manage notification settings')
-                        <li class="nav-item">
-                            <a href="{{ route('notices.automations') }}" class="nav-link">
-                                <i class="ri-robot-2-line"></i> <span>Automatic Messages</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('notices.settings') }}" class="nav-link">
-                                <i class="ri-settings-3-line"></i> <span>Notification Settings</span>
-                            </a>
-                        </li>
-                    @endcan
-
-                    {{-- SCHOOL BASIC SETTINGS --}}
-                    @if(auth()->user()->can('View schoolinformation') || auth()->user()->can('View session') || auth()->user()->can('View term') || auth()->user()->can('View schoolhouse') || auth()->user()->can('View school-arm') || auth()->user()->can('View class-category') || auth()->user()->can('View school-class') || auth()->user()->can('View class-teacher') || auth()->user()->can('View subjects') || auth()->user()->can('View subject-teacher') || auth()->user()->can('View subject-class') || auth()->user()->can('View compulsory-subject') || auth()->user()->can('View principals-comment') || auth()->user()->can('View school-bills') || auth()->user()->can('View school-bill-for-term-session'))
-                        <li class="menu-title"><i class="ri-more-fill"></i> <span>SCHOOL BASIC SETTINGS</span></li>
-                    @endif
-
-                    @can('View schoolinformation')
-                        <li class="nav-item">
-                            <a href="#sidebarSchoolInfo" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSchoolInfo">
-                                <i class="ph-file-text"></i> <span>School Information</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarSchoolInfo">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('school-information.index') }}" class="nav-link">School Information</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-
-                    @if(auth()->user()->can('View session') || auth()->user()->can('View term') || auth()->user()->can('View schoolhouse'))
-                        <li class="nav-item">
-                            <a href="#sidebarSession" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSession">
-                                <i class="ph-file-text"></i> <span>Session Term & House</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarSession">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View session')     <li class="nav-item"><a href="{{ route('session.index') }}"    class="nav-link">School Session</a></li> @endcan
-                                    @can('View term')        <li class="nav-item"><a href="{{ route('term.index') }}"       class="nav-link">School Term</a></li>    @endcan
-                                    @can('View schoolhouse') <li class="nav-item"><a href="{{ route('schoolhouse.index') }}" class="nav-link">School House</a></li> @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-
-                    {{-- HOUSES, CLUBS & SPORTS --}}
-                    @if(auth()->user()->can('View schoolhouse') || auth()->user()->can('Update schoolhouse') || auth()->user()->can('Award house points') || auth()->user()->can('View club') || auth()->user()->can('Update club') || auth()->user()->can('View sport') || auth()->user()->can('Update sport'))
-                        <li class="nav-item">
-                            <a href="#sidebarActivities" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarActivities">
-                                <i class="ri-trophy-line"></i> <span>Houses, Clubs &amp; Sports</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarActivities">
-                                <ul class="nav nav-sm flex-column">
-                                    @canany(['View schoolhouse', 'Update schoolhouse', 'Award house points'])<li class="nav-item"><a href="{{ route('houses.index') }}" class="nav-link">Houses &amp; Points</a></li>@endcanany
-                                    @canany(['View club', 'Update club'])<li class="nav-item"><a href="{{ route('activities.index', 'club') }}" class="nav-link">Clubs &amp; Members</a></li>@endcanany
-                                    @canany(['View sport', 'Update sport'])<li class="nav-item"><a href="{{ route('activities.index', 'sport') }}" class="nav-link">Sports &amp; Members</a></li>@endcanany
-                                    @canany(['Update club', 'Update sport'])<li class="nav-item"><a href="{{ route('activities.student') }}" class="nav-link">By Student</a></li>@endcanany
-                                    @can('View club')<li class="nav-item"><a href="{{ route('club.index') }}" class="nav-link">Create Clubs</a></li>@endcan
-                                    @can('View sport')<li class="nav-item"><a href="{{ route('sport.index') }}" class="nav-link">Create Sports</a></li>@endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-
-                    @if(auth()->user()->can('View school-arm') || auth()->user()->can('View class-category') || auth()->user()->can('View school-class') || auth()->user()->can('View class-teacher'))
-                        <li class="nav-item">
-                            <a href="#sidebarClassessettings" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarClassessettings">
-                                <i class="ph-file-text"></i> <span>Classes</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarClassessettings">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View school-arm')     <li class="nav-item"><a href="{{ route('schoolarm.index') }}"        class="nav-link">Class Arm</a></li>      @endcan
-                                    @can('View class-category') <li class="nav-item"><a href="{{ route('classcategories.index') }}"  class="nav-link">Class Category</a></li> @endcan
-                                    @can('View school-class')   <li class="nav-item"><a href="{{ route('schoolclass.index') }}"      class="nav-link">Class Name</a></li>     @endcan
-                                    @can('View class-teacher')  <li class="nav-item"><a href="{{ route('classteacher.index') }}"     class="nav-link">Class Teacher</a></li>  @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-
-                    @if(auth()->user()->can('View subjects') || auth()->user()->can('View subject-teacher') || auth()->user()->can('View subject-class') || auth()->user()->can('View compulsory-subject'))
-                        <li class="nav-item">
-                            <a href="#sidebarSub" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSub">
-                                <i class="ph-file-text"></i> <span>Subject</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarSub">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View subjects')           <li class="nav-item"><a href="{{ route('subject.index') }}"               class="nav-link">Subject</a></li>                          @endcan
-                                    @can('View subject-teacher')    <li class="nav-item"><a href="{{ route('subjectteacher.index') }}"         class="nav-link">Assign Subject Teacher</a></li>           @endcan
-                                    @can('View subject-class')      <li class="nav-item"><a href="{{ route('subjectclass.index') }}"           class="nav-link">Assign Class Subject</a></li>             @endcan
-                                    @can('View compulsory-subject') <li class="nav-item"><a href="{{ route('compulsorysubjectclass.index') }}" class="nav-link">Assign Compulsory Subject to classes</a></li> @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-
-                    {{-- ATTENDANCE ADMIN --}}
-                    @if(auth()->user()->can('View attendance-settings') || auth()->user()->can('View attendance-holidays') || 
-                        auth()->user()->can('View attendance-school-report') || auth()->user()->can('View device-mappings') || 
-                        auth()->user()->can('View staff-attendance'))
-                        <li class="menu-title"><i class="ri-more-fill"></i> <span>ATTENDANCE ADMIN</span></li>
-                        <li class="nav-item">
-                            <a href="#sidebarAttendanceAdmin" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAttendanceAdmin">
-                                <i class="ph-calendar-check"></i> <span>Attendance Admin</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarAttendanceAdmin">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View attendance-settings')
-                                        <li class="nav-item"><a href="{{ route('attendance.settings') }}" class="nav-link">Term Settings</a></li>
-                                    @endcan
-                                    @can('View attendance-holidays')
-                                        <li class="nav-item"><a href="{{ route('attendance.holidays') }}" class="nav-link">Holidays & Breaks</a></li>
-                                    @endcan
-                                    @can('View attendance-school-report')
-                                        <li class="nav-item"><a href="{{ route('attendance.school-report') }}" class="nav-link">School Report</a></li>
-                                    @endcan
-                                    @can('View device-mappings')
-                                        <li class="nav-item"><a href="{{ route('device-mappings.index') }}" class="nav-link">Device Mappings</a></li>
-                                    @endcan
-                                    @can('View staff-attendance')
-                                        <li class="nav-item"><a href="{{ route('staff-attendance.index') }}" class="nav-link">Staff Attendance</a></li>
-                                    @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-
-                    @can('View principals-comment')
-                        <li class="nav-item">
-                            <a href="#sidebarPrincipal" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPrincipal">
-                                <i class="ph-file-text"></i> <span>Principal's Comments</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarPrincipal">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('principalscomment.index') }}" class="nav-link">Assign Staff</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-
-                    @can('View subjects')
-                        <li class="nav-item">
-                            <a href="#sidebarSubjectvetting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSubjectvetting">
-                                <i class="ph-file-text"></i> <span>Terminal Subject Vettings</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarSubjectvetting">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('subjectvetting.index') }}" class="nav-link">Assign Subjects to Staff</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li class="nav-item">
-                            <a href="#mocksidebarSubjectvetting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="mocksidebarSubjectvetting">
-                                <i class="ph-file-text"></i> <span>Mock Subject Vettings</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="mocksidebarSubjectvetting">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('mocksubjectvetting.index') }}" class="nav-link">Assign Subjects to Staff</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-
-                    @if(auth()->user()->can('View school-bills') || auth()->user()->can('View school-bill-for-term-session'))
-                        <li class="nav-item">
-                            <a href="#sidebarBills" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarBills">
-                                <i class="ph-file-text"></i> <span>School Bills</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarBills">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View school-bills')                 <li class="nav-item"><a href="{{ route('schoolbill.index') }}"            class="nav-link">Bills</a></li>       @endcan
-                                    @can('View school-bill-for-term-session') <li class="nav-item"><a href="{{ route('schoolbilltermsession.index') }}" class="nav-link">Apply Bills</a></li> @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-
-                    {{-- ADMIN TOOLS --}}
-                    @can('View admin-score-entry')
-                        <li class="menu-title"><i class="ri-more-fill"></i> <span>ADMIN TOOLS</span></li>
-                        <li class="nav-item">
-                            <a href="#sidebarAdminTools" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAdminTools">
-                                <i class="ph-wrench"></i> <span>Score Management</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarAdminTools">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('admin.score-entry.index') }}" class="nav-link">Admin Score Entry</a></li>
-                                    <li class="nav-item"><a href="{{ route('admin.score-entry.lock-management') }}" class="nav-link">Lock Management</a></li>
-                                    <li class="nav-item"><a href="{{ route('admin.score-entry.student-result-manager') }}" class="nav-link">Student Result Manager</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
 
                 </ul>
             </div>
@@ -1585,26 +705,9 @@
         @auth
         <div class="sidebar-footer">
             @php
-                $sidebarUser = Auth::user();
-                $sidebarIsStudent = $sidebarUser->hasRole('student');
-                $sidebarSrc = null;
-                if ($sidebarIsStudent) {
-                    $stu = \App\Models\Student::find($sidebarUser->student_id);
-                    if ($stu?->picture) {
-                        $bn = basename($stu->picture);
-                        if (\Illuminate\Support\Facades\Storage::disk('public')->exists('student_avatars/' . $bn))
-                            $sidebarSrc = asset('storage/student_avatars/' . $bn);
-                    }
-                } else {
-                    if ($sidebarUser->avatar) {
-                        $bn = basename($sidebarUser->avatar);
-                        if (\Illuminate\Support\Facades\Storage::disk('public')->exists('staff_avatars/' . $bn))
-                            $sidebarSrc = asset('storage/staff_avatars/' . $bn);
-                    }
-                }
-                $sidebarInitials = collect(explode(' ', $sidebarUser->name))
-                    ->map(fn($w) => strtoupper(substr($w, 0, 1)))
-                    ->take(2)->implode('');
+                $sidebarUser     = Auth::user();
+                $sidebarSrc      = $sidebarUser->avatar ? $sidebarUser->avatar_url : null;
+                $sidebarInitials = $sidebarUser->initials;
             @endphp
 
             <div class="sidebar-footer-user">
@@ -1664,8 +767,6 @@
 
                 <div class="d-flex align-items-center gap-1">
                     <!-- Notifications bell -->
-                    @include('layouts.partials.online-badge')
-                    @include('layouts.partials.notification-bell')
 
                     <!-- Theme Toggle -->
                     <div class="position-relative" id="theme-toggle-wrapper">
@@ -1681,33 +782,10 @@
 
                     <!-- ===== USER DROPDOWN ===== -->
                     @php
-                        use App\Models\User as UserModel;
-                        use App\Models\Student;
-                        use Illuminate\Support\Facades\Storage;
-                        use Illuminate\Support\Facades\Auth;
-
                         $userdata  = Auth::user();
-                        $isStudent = $userdata->hasRole('student');
                         $fullName  = $userdata->name ?? 'User';
-                        $initials  = collect(explode(' ', $fullName))->map(fn($w) => strtoupper(substr($w,0,1)))->take(2)->implode('');
-                        $srcPath   = null;
-
-                        if ($isStudent) {
-                            $student        = Student::where('id', $userdata->student_id)->first();
-                            $studentPicture = $student?->picture;
-                            if ($studentPicture) {
-                                $basename = basename($studentPicture);
-                                if (Storage::disk('public')->exists('student_avatars/' . $basename))
-                                    $srcPath = asset('storage/student_avatars/' . $basename);
-                            }
-                        } else {
-                            if ($userdata->avatar) {
-                                $basename = basename($userdata->avatar);
-                                if (Storage::disk('public')->exists('staff_avatars/' . $basename))
-                                    $srcPath = asset('storage/staff_avatars/' . $basename);
-                            }
-                        }
-
+                        $initials  = $userdata->initials;
+                        $srcPath   = $userdata->avatar ? $userdata->avatar_url : null;
                         $userRoles = $userdata->roles->pluck('name');
                     @endphp
 
@@ -1735,13 +813,13 @@
                                     @foreach($userRoles as $roleName)
                                         @php
                                             $roleColors = [
-                                                'admin'     => ['bg'=>'#405189','light'=>'#eef2ff'],
-                                                'teacher'   => ['bg'=>'#0a9396','light'=>'#e0f2fe'],
-                                                'student'   => ['bg'=>'#e76f51','light'=>'#fff0ed'],
-                                                'bursar'    => ['bg'=>'#2a9d8f','light'=>'#e6f7f5'],
-                                                'principal' => ['bg'=>'#6a0572','light'=>'#f3e8ff'],
-                                                'parent'    => ['bg'=>'#e9c46a','light'=>'#fefce8'],
-                                                'staff'     => ['bg'=>'#457b9d','light'=>'#e8f0fe'],
+                                                'super admin'     => ['bg'=>'#405189','light'=>'#eef2ff'],
+                                                'hotel owner'     => ['bg'=>'#6a0572','light'=>'#f3e8ff'],
+                                                'general manager' => ['bg'=>'#0a9396','light'=>'#e0f2fe'],
+                                                'front desk'      => ['bg'=>'#e76f51','light'=>'#fff0ed'],
+                                                'accountant'      => ['bg'=>'#2a9d8f','light'=>'#e6f7f5'],
+                                                'cashier'         => ['bg'=>'#e9c46a','light'=>'#fefce8'],
+                                                'it operations'   => ['bg'=>'#457b9d','light'=>'#e8f0fe'],
                                             ];
                                             $rk    = strtolower($roleName);
                                             $color = $roleColors[$rk]['bg']    ?? '#6c757d';
@@ -1752,7 +830,7 @@
                                 </div>
                             </div>
                             <div class="dropdown-divider"></div>
-                            @if(!$isStudent)<a class="dropdown-item" href="{{ route('users.overview', $userdata->id) }}"><i class="mdi mdi-account-circle me-2"></i>My Profile</a>@endif
+                            <a class="dropdown-item" href="{{ route('users.overview', $userdata->id) }}"><i class="mdi mdi-account-circle me-2"></i>My Profile</a>
                             <a class="dropdown-item" href="{{ route('profile.settings', ['id' => $userdata->id]) }}"><i class="mdi mdi-cog me-2"></i>Account Settings</a>
                             <div class="dropdown-divider"></div>
                             <form method="POST" action="{{ route('logout') }}" id="topbar-logout-form">@csrf<a class="dropdown-item text-danger" href="{{ route('logout') }}" onclick="event.preventDefault();document.getElementById('topbar-logout-form').submit();"><i class="mdi mdi-logout me-2"></i>Logout</a></form>
@@ -1778,23 +856,18 @@
         </div>
     </div>
 
-    @include('layouts.partials.maintenance-banner')
-
     @yield('content')
 
     <footer class="footer">
         <div class="container-fluid">
             <div class="row">
                 <div class="col-sm-6">
-                    {{ now()->year }} © {{ $schoolInfo->school_name ?? 'ViteSchools' }}
-                    <span class="text-muted">· Powered by
-                        <a href="https://viteschools.ng" target="_blank" rel="noopener noreferrer" class="fw-semibold">ViteSchools.ng</a>
-                    </span>
+                    {{ now()->year }} © {{ config('hotel.name') }}
                 </div>
                 <div class="col-sm-6">
                     <div class="text-sm-end">
                         Created by
-                        <a href="https://qudroids.com" target="_blank" rel="noopener noreferrer" class="fw-semibold">Qudroid Systems</a>
+                        <a href="{{ config('hotel.vendor_url') }}" target="_blank" rel="noopener noreferrer" class="fw-semibold">{{ config('hotel.vendor') }}</a>
                     </div>
                 </div>
             </div>
@@ -1921,7 +994,7 @@
             <div id="spotlight-empty" style="padding:48px 24px;text-align:center;color:rgba(255,255,255,0.35);">
                 <i class="mdi mdi-lightning-bolt" style="font-size:48px;display:block;margin-bottom:16px;opacity:0.4;"></i>
                 <span style="font-size:15px;">Start typing to search…</span>
-                <div style="margin-top:16px;font-size:12px;opacity:0.4;">Popular: Students, Classes, Payments, Exams</div>
+                <div style="margin-top:16px;font-size:12px;opacity:0.4;">Popular: Users, Roles, Permissions, Profile</div>
             </div>
             <ul id="spotlight-list" style="list-style:none;margin:0;padding:0;display:none;"></ul>
             <div id="spotlight-loading" style="display:none;padding:48px;text-align:center;">
@@ -1945,7 +1018,7 @@
 <script src="{{ asset('theme/layouts/assets/js/app.js') }}"></script>
 <script src="{{ asset('theme/layouts/assets/libs/simplebar/simplebar.min.js') }}"></script>
 <script src="{{ asset('theme/layouts/assets/js/plugins.js') }}"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="{{ asset('vendor/select2/select2.min.js') }}"></script>
 
 <script>
 (function () {
@@ -2143,204 +1216,138 @@
        ───────────────────────────────────────────────────────────────── */
     var STATIC_PAGES = [
         /* ── Dashboards ── */
-        {title:'Administration Dashboard',              url:'{{ route("dashboard") }}',                                      icon:'mdi-gauge',                  category:'Dashboards',          keywords:['home','analytics','overview','admin']},
+        @can('dashboard')
+        {title:'Hotel Overview',                        url:'{{ route("dashboard") }}',                                      icon:'mdi-gauge',                  category:'Dashboards',          keywords:['home','analytics','overview','dashboard']},
+        @endcan
+
+        @can('View management reports')
+        {title:'Management Reports',                    url:'{{ route("reports.index") }}',                                  icon:'mdi-chart-line',              category:'Dashboards',          keywords:['report','occupancy','adr','revpar','revenue','department','kpi','analytics','performance']},
+        @endcan
 
         /* ── Users & Privileges ── */
+        @can('View user')
         {title:'User Management',                       url:'{{ route("users.index") }}',                                    icon:'mdi-account-group',           category:'Users & Privileges',  keywords:['staff','accounts','login','users']},
+        @endcan
+        @can('View role')
         {title:'Roles',                                 url:'{{ route("roles.index") }}',                                    icon:'mdi-shield-account',          category:'Users & Privileges',  keywords:['permissions','access','roles']},
+        @endcan
+        @can('View permission')
         {title:'Permissions',                           url:'{{ route("permissions.index") }}',                              icon:'mdi-lock',                    category:'Users & Privileges',  keywords:['access','rights','permissions']},
+        @endcan
 
         /* ── My Account ── */
         {title:'My Profile',                            url:'{{ route("users.overview", ["id" => Auth::id()]) }}',           icon:'mdi-account-circle',          category:'My Account',          keywords:['profile','bio','account']},
         {title:'Account Settings',                      url:'{{ route("profile.settings", ["id" => Auth::id()]) }}',         icon:'mdi-cog',                     category:'My Account',          keywords:['settings','password','avatar']},
 
-        /* ── Students ── */
-        {title:'All Students',                          url:'{{ route("student.index") }}',                                  icon:'mdi-school',                  category:'Students',            keywords:['pupils','learners','students','list']},
-        {title:'Batch Student Registration',            url:'{{ route("studentbatchindex") }}',                              icon:'mdi-account-multiple-plus',   category:'Students',            keywords:['bulk','import','upload','register','batch']},
-        {title:'ID Card Generator',                     url:'{{ route("student-id-cards.index") }}',                         icon:'mdi-card-account-details',    category:'Students',            keywords:['id','card','identity','print']},
-
-        /* ── Parents ── */
-        {title:'All Parents',                           url:'{{ route("parent.index") }}',                                   icon:'mdi-account-group',           category:'Parents',             keywords:['guardian','parent','family','mother','father']},
-
-        /* ── Student Portal ── */
-        {title:'My Learning',                             url:'{{ route("lms.learn.index") }}',                              icon:'mdi-school-outline',          category:'Student Portal',      keywords:['course','lesson','learn','elearning','lms','video']},
-        {title:'Courses (E-Learning)',                   url:'{{ route("lms.courses.index") }}',                            icon:'mdi-book-open-page-variant',  category:'Academics',           keywords:['course','lms','elearning','lesson','quiz','assignment','teach']},
-        {title:'My Assessments',                        url:'{{ route("assessments") }}',                                    icon:'mdi-clipboard-list',          category:'Student Portal',      keywords:['test','quiz','cbt','assessment']},
-        {title:'Pay School Fees',                       url:'{{ route("student.fees.pay") }}',                           icon:'mdi-credit-card-outline',     category:'Student Portal',      keywords:['pay','fees','paystack','online','card','transfer']},
-        {title:'My Payments',                           url:'{{ route("student.payments") }}',                               icon:'mdi-cash-multiple',           category:'Student Portal',      keywords:['fees','invoice','payment','student']},
-
-        /* ── Subject Registration ── */
-        {title:'Student Subject Registration',          url:'{{ route("subjectoperation.index") }}',                         icon:'mdi-book-plus',               category:'Subject Registration',keywords:['register','subject','enroll','course']},
-
-        /* ── Exams & CBT ── */
-        {title:'All Examinations',                      url:'{{ route("exams.index") }}',                                    icon:'mdi-clipboard-text',          category:'Exams & CBT',         keywords:['exam','test','examination']},
-        {title:'Questions Management',                  url:'{{ route("questions.all") }}',                                  icon:'mdi-help-circle',             category:'Exams & CBT',         keywords:['questions','bank','quiz']},
-        {title:'CBT Exercise',                          url:'{{ route("cbt.index") }}',                                      icon:'mdi-monitor',                 category:'Exams & CBT',         keywords:['cbt','computer','online','test']},
-
-        /* ── Timetable ── */
-        {title:'Admin Timetable',                       url:'{{ route("timetable.index") }}',                                icon:'mdi-table-clock',             category:'Timetable',           keywords:['schedule','timetable','period','admin']},
-        {title:'My Timetable',                          url:'{{ route("timetable.teacher") }}',                              icon:'mdi-calendar-clock',          category:'Timetable',           keywords:['schedule','timetable','teacher','my']},
-        {title:'Room Management',                       url:'{{ route("rooms.index") }}',                                    icon:'mdi-door',                    category:'Timetable',           keywords:['room','hall','venue','classroom']},
-        {title:'Exam Timetable',                        url:'{{ route("exam-timetable.index") }}',                           icon:'mdi-calendar-text',           category:'Timetable',           keywords:['exam','schedule','timetable']},
-        {title:'Holidays',                              url:'{{ route("holidays.index") }}',                                 icon:'mdi-beach',                   category:'Timetable',           keywords:['holiday','break','vacation','leave']},
-
-        /* ── Classes & Records ── */
-        {title:'My Class',                              url:'{{ route("myclass.index") }}',                                  icon:'mdi-google-classroom',        category:'Classes & Records',   keywords:['class','register','students','my']},
-        {title:'My Subject',                            url:'{{ route("mysubject.index") }}',                                icon:'mdi-book-open',               category:'Classes & Records',   keywords:['subject','teach','course','my']},
-        {title:'Subjects to Vet',                       url:'{{ route("mysubjectvettings.index") }}',                        icon:'mdi-check-decagram',          category:'Classes & Records',   keywords:['vet','verify','approve','subject']},
-        {title:'Mock Subjects to Vet',                  url:'{{ route("mymocksubjectvettings.index") }}',                    icon:'mdi-check-decagram',          category:'Classes & Records',   keywords:['mock','vet','verify','approve']},
-        {title:'Principal\'s Comment',                  url:'{{ route("myprincipalscomment.index") }}',                      icon:'mdi-comment-text',            category:'Classes & Records',   keywords:['principal','comment','remark','report']},
-
-        /* ── Attendance ── */
-        {title:'Mark Attendance',                       url:'{{ route("attendance.my-classes") }}',                          icon:'mdi-clipboard-check',         category:'Attendance',          keywords:['attendance','present','absent','mark']},
-        {title:'Attendance Term Settings',              url:'{{ route("attendance.settings") }}',                            icon:'mdi-cog',                     category:'Attendance Admin',    keywords:['attendance','settings','term','configure']},
-        {title:'Attendance Holidays & Breaks',          url:'{{ route("attendance.holidays") }}',                            icon:'mdi-calendar-remove',         category:'Attendance Admin',    keywords:['attendance','holiday','break']},
-        {title:'Attendance School Report',              url:'{{ route("attendance.school-report") }}',                       icon:'mdi-chart-bar',               category:'Attendance Admin',    keywords:['attendance','report','school','summary']},
-        {title:'Device Mappings',                       url:'{{ route("device-mappings.index") }}',                          icon:'mdi-devices',                  category:'Attendance Admin',    keywords:['device','map','attendance','hardware','biometric']},
-        {title:'Staff Attendance',                      url:'{{ route("staff-attendance.index") }}',                        icon:'mdi-account-clock',            category:'Attendance Admin',    keywords:['staff','attendance','clock','in','out','time']},
-
-        /* ── Records & Results ── */
-        {title:'Terminal Records',                      url:'{{ route("myresultroom.index") }}',                             icon:'mdi-file-chart',              category:'Records & Results',   keywords:['result','terminal','record','scores']},
-        {title:'Terminal Result Reports',               url:'{{ route("studentreports.index") }}',                           icon:'mdi-file-document',           category:'Records & Results',   keywords:['report','result','terminal','card']},
-        {title:'Terminal Result Broadsheet',            url:'{{ route("broadsheet.index") }}',                               icon:'mdi-table-large',             category:'Records & Results',   keywords:['broadsheet','class','result','terminal']},
-        {title:'Broadsheet Web View',                   url:'{{ route("broadsheet.web-view") }}',                            icon:'mdi-table-eye',               category:'Records & Results',   keywords:['broadsheet','view','class','result','web']},
-        {title:'Mock Result Reports',                   url:'{{ route("studentmockreports.index") }}',                       icon:'mdi-file-document-outline',   category:'Records & Results',   keywords:['mock','result','report']},
-        {title:'Admin Score Entry',                     url:'{{ route("admin.score-entry.index") }}',                        icon:'mdi-clipboard-edit',          category:'Records & Results',   keywords:['score','entry','admin','marks','results']},
-
-        /* ── Admin Tools (Score Management) ── */
-        {title:'Score Lock Management',                 url:'{{ route("admin.score-entry.lock-management") }}',              icon:'mdi-lock-open-check',         category:'Admin Tools',         keywords:['lock','unlock','scoresheet','security','admin']},
-        {title:'Student Result Manager',                url:'{{ route("admin.score-entry.student-result-manager") }}',       icon:'mdi-account-edit',            category:'Admin Tools',         keywords:['student','result','edit','admin','manage','scores']},
-
-        /* ── Transcripts ── */
-        {title:'Generate Transcript',                   url:'{{ route("transcript.index") }}',                               icon:'mdi-file-account',            category:'Transcripts',         keywords:['transcript','certificate','generate','print']},
-
-        /* ── Promotions ── */
-        {title:'Student Promotion',                     url:'{{ route("promotions.index") }}',                               icon:'mdi-arrow-up-circle',         category:'Promotions',          keywords:['promote','promotion','class','next','move']},
-        {title:'Promotion Settings',                    url:'{{ route("promotion-settings.index") }}',                       icon:'mdi-tune',                    category:'Promotions',          keywords:['promotion','settings','rules','criteria','configure']},
-        {title:'Promotion Rule Templates',              url:'{{ route("promotion.templates.index") }}',                      icon:'mdi-content-copy',            category:'Promotions',          keywords:['promotion','template','rules','preset']},
-
-        /* ── Finance ── */
-        {title:'Student Bill',                          url:'{{ route("schoolpayment.index") }}',                            icon:'mdi-receipt',                 category:'Finance',             keywords:['bill','fees','invoice','payment','student']},
-        {title:'Payment Portal',                        url:'{{ route("payment.index") }}',                                  icon:'mdi-wallet',                  category:'Finance',             keywords:['pay','portal','fees','transaction']},
-        {title:'Online Payments',                       url:'{{ route("online-fees.index") }}',                           icon:'mdi-web',                     category:'Finance',             keywords:['online','pay','paystack','flutterwave','internet']},
-        {title:'All Scholarships',                      url:'{{ route("admin.scholarship.index") }}',                        icon:'mdi-medal',                   category:'Finance',             keywords:['scholarship','award','bursary','fund']},
-        {title:'Create Scholarship',                    url:'{{ route("admin.scholarship.create") }}',                       icon:'mdi-medal-outline',           category:'Finance',             keywords:['scholarship','create','new','add']},
-        {title:'Scholarship Assignments',               url:'{{ route("admin.scholarship.assignments") }}',                  icon:'mdi-account-star',            category:'Finance',             keywords:['scholarship','assign','student']},
-        {title:'Scholarship Applications',              url:'{{ route("admin.scholarship.applications") }}',                 icon:'mdi-file-check',              category:'Finance',             keywords:['scholarship','application','apply']},
-        {title:'All Discounts',                         url:'{{ route("admin.discount.index") }}',                           icon:'mdi-tag-multiple',            category:'Finance',             keywords:['discount','reduction','fee','concession']},
-        {title:'Create Discount',                       url:'{{ route("admin.discount.create") }}',                          icon:'mdi-tag-plus',                category:'Finance',             keywords:['discount','create','new','add']},
-        {title:'Discount Assignments',                  url:'{{ route("admin.discount.assignments") }}',                     icon:'mdi-account-tag',             category:'Finance',             keywords:['discount','assign','student']},
-        {title:'All Family Groups (Sibling)',           url:'{{ route("sibling.index") }}',                                  icon:'mdi-account-group',           category:'Finance',             keywords:['sibling','family','group','discount']},
-        {title:'Create Family Group',                   url:'{{ route("sibling.create") }}',                                 icon:'mdi-account-multiple-plus',   category:'Finance',             keywords:['sibling','family','group','create']},
-        @if(Route::has("maintenance.settings")){title:'Maintenance Mode',                      url:'{{ route("maintenance.settings") }}',                            icon:'mdi-wrench',                  category:'System',              keywords:['maintenance','offline','downtime','lock','close portal']},@endif
-        @if(Route::has("feature-flags.index")){title:'Module Access',                         url:'{{ route("feature-flags.index") }}',                             icon:'mdi-toggle-switch',           category:'System',              keywords:['module','feature','flag','remote','enable','disable','sidebar']},@endif
-        @if(Route::has("admin.backups.index")){title:'Database Backups',                     url:'{{ route("admin.backups.index") }}',                            icon:'mdi-database',                category:'System',              keywords:['backup','database','sql','dump','restore','schedule','export']},@endif
-        @if(Route::has("certificates.index")){title:'Certificates',                          url:'{{ route("certificates.index") }}',                              icon:'mdi-certificate',             category:'System',              keywords:['certificate','award','graduation','qr','verify','print','template']},@endif
-        @if(Route::has("certificates.index")){title:'Testimonials',                          url:'{{ route("certificates.index", ["kind"=>"testimonial"]) }}',      icon:'mdi-file-account',            category:'System',              keywords:['testimonial','leaving','character','reference','conduct','qr']},@endif
-        @if(Route::has("student-leave.approvals")){title:'Student Leave Approvals',              url:'{{ route("student-leave.approvals") }}',                         icon:'mdi-account-check',           category:'Staff',               keywords:['student','leave','absence','approve','recommend','permission']},@endif
-        @if(Route::has("student-leave.records")){title:'Student Leave Records',                 url:'{{ route("student-leave.records") }}',                           icon:'mdi-file-document-multiple',  category:'Staff',               keywords:['student','leave','absence','records','export','history']},@endif
-        @if(Route::has("leave.board")){title:'Who\'s Away (Leave Board)',                url:'{{ route("leave.board") }}',                                     icon:'mdi-calendar-account',        category:'Staff',               keywords:['leave','away','absent','calendar','board','staff','student','today']},@endif
-        @if(Route::has("leave.balances")){title:'Leave Balances',                        url:'{{ route("leave.balances") }}',                                  icon:'mdi-scale-balance',           category:'Staff',               keywords:['leave','balance','entitlement','remaining','carry','over','allowance']},@endif
-        @if(Route::has("calendar.index")){title:'School Calendar',                       url:'{{ route("calendar.index") }}',                                  icon:'mdi-calendar-month',          category:'General',             keywords:['calendar','event','activity','term','holiday','reminder','schedule']},@endif
-        {title:'Payment Gateways',                      url:'{{ route("admin.payment-gateways.index") }}',                   icon:'mdi-credit-card',             category:'Finance',             keywords:['gateway','paystack','flutterwave','online','configure']},
-
-        /* ── Accounting & Reports ── */
-        @if(Route::has("finance.audit.dashboard")){title:'Financial Audit',                       url:'{{ route("finance.audit.dashboard") }}',                        icon:'mdi-shield-search',           category:'Accounting',          keywords:['audit','financial','exception','trail','fraud','review','accountant']},@endif
-        {title:'Balance Sheet',                         url:'{{ route("reports.financial.balance-sheet") }}',                icon:'mdi-scale-balance',           category:'Accounting',          keywords:['balance','sheet','financial','report']},
-        {title:'Income Statement',                      url:'{{ route("reports.financial.income-statement") }}',             icon:'mdi-chart-line',              category:'Accounting',          keywords:['income','profit','loss','statement','p&l']},
-        {title:'Trial Balance',                         url:'{{ route("reports.financial.trial-balance") }}',                icon:'mdi-calculator',              category:'Accounting',          keywords:['trial','balance','ledger','accounts']},
-        {title:'Cash Flow',                             url:'{{ route("reports.financial.cash-flow") }}',                    icon:'mdi-cash-sync',               category:'Accounting',          keywords:['cash','flow','liquidity','report']},
-        @can('View notices')
-        {title:'School Notices',                        url:'{{ route("notices.index") }}',                                  icon:'mdi-bullhorn',                category:'Communication',       keywords:['notice','sms','whatsapp','email','parents','announcement','exam','holiday','midterm','ca test']},
+        /* ── Hotel modules: add an entry per page as modules are built ── */
+        @can('View rooms')
+        {title:'Room Board',                            url:'{{ route("rooms.index") }}',                                    icon:'mdi-view-grid',               category:'Rooms',               keywords:['rooms','status','board','available','occupied','housekeeping']},
+        {title:'Room List',                             url:'{{ route("rooms.index", ["view" => "list"]) }}',                icon:'mdi-format-list-bulleted',    category:'Rooms',               keywords:['rooms','list','table']},
+        {title:'Room Types & Rates',                    url:'{{ route("room-types.index") }}',                               icon:'mdi-tag-multiple',            category:'Rooms',               keywords:['room type','rate','price','suite','deluxe','standard']},
+        {title:'Buildings & Floors',                    url:'{{ route("buildings.index") }}',                                icon:'mdi-office-building',         category:'Rooms',               keywords:['building','block','floor','property']},
         @endcan
-        @can('Manage parent contacts')
-        {title:'Parent Contacts',                       url:'{{ route("parent-contacts.index") }}',                          icon:'mdi-card-account-phone',      category:'Communication',       keywords:['parent','phone','email','contact','whatsapp','csv','import']},
+        @can('View reservations')
+        {title:'Arrivals & Departures',                 url:'{{ route("reservations.index") }}',                             icon:'mdi-account-arrow-right',     category:'Front Desk',          keywords:['front desk','arrivals','departures','in house','check in','check out','reservations']},
+        {title:'Booking Calendar',                      url:'{{ route("reservations.calendar") }}',                          icon:'mdi-calendar-month',          category:'Front Desk',          keywords:['calendar','tape chart','bookings','availability']},
+        {title:'All Reservations',                      url:'{{ route("reservations.index", ["tab" => "all"]) }}',           icon:'mdi-book-open-variant',       category:'Front Desk',          keywords:['reservations','bookings','history']},
+        {title:'Scan / Find Booking',                   url:'{{ route("reservations.scan") }}',                              icon:'mdi-qrcode-scan',             category:'Front Desk',          keywords:['qr','scan','reference','lookup','find']},
         @endcan
-        @can('Manage notification settings')
-        {title:'Automatic Messages',                    url:'{{ route("notices.automations") }}',                            icon:'mdi-robot',                   category:'Communication',       keywords:['absence','absent','alert','fee reminder','birthday','automatic']},
+        @can('Create reservations')
+        {title:'New Reservation',                       url:'{{ route("reservations.create") }}',                            icon:'mdi-calendar-plus',           category:'Front Desk',          keywords:['book','booking','walk-in','reservation','new']},
         @endcan
-        @can('Create result-sends')
-        {title:'Send Results to Parents',               url:'{{ route("result-sends.create") }}',                            icon:'mdi-email-send',              category:'Communication',       keywords:['result','report card','send','parents','whatsapp','email','sms']},
+        @can('View guests')
+        {title:'Guests',                                url:'{{ route("guests.index") }}',                                   icon:'mdi-account-star',            category:'Front Desk',          keywords:['guest','customer','profile','vip']},
         @endcan
-        @can('Create notices')
-        {title:'New Notice',                            url:'{{ route("notices.create") }}',                                 icon:'mdi-bullhorn-outline',        category:'Communication',       keywords:['send','sms','broadcast','parents','notify']},
+        @can('View folios')
+        {title:'Outstanding Bills',                     url:'{{ route("billing.outstanding") }}',                            icon:'mdi-cash-clock',              category:'Billing',             keywords:['bill','folio','owing','balance','debt','credit','refund','invoice']},
         @endcan
-        {title:'Student Debtors List',                  url:'{{ route("reports.financial.debtors") }}',                      icon:'mdi-account-alert',           category:'Accounting',          keywords:['debtor','outstanding','arrears','owe','unpaid']},
-        @can('View instalment-plans')
-        {title:'Instalment Plans',                      url:'{{ route("instalment-plans.index") }}',                         icon:'mdi-calendar-clock',          category:'Accounting',          keywords:['instalment','installment','plan','part','payment','schedule']},
+        @canany(['View finance reports', 'Receive payments'])
+        {title:'Collections / Cash-up',                 url:'{{ route("billing.payments") }}',                               icon:'mdi-cash-register',           category:'Billing',             keywords:['payments','collections','cash','cash-up','transfer','pos','receipts','revenue']},
+        @endcanany
+        @canany(['Use POS', 'Receive payments', 'Review cash shifts', 'View finance reports'])
+        {title:'Cashier Shifts',                        url:'{{ route("cash-shifts.index") }}',                              icon:'mdi-safe',                    category:'Billing',             keywords:['shift','float','cash count','drawer','till','close','z report','variance','short','over']},
+        @endcanany
+        @can('Use POS')
+        {title:'Open Till (POS)',                       url:'{{ route("pos.terminal") }}',                                   icon:'mdi-cash-register',           category:'Bar & Restaurant',    keywords:['pos','till','bar','restaurant','sell','order','drinks','food']},
         @endcan
-        @can('View result-access')
-        {title:'Result Access Control',                 url:'{{ route("result-access.index") }}',                            icon:'mdi-lock-open-check',         category:'Accounting',          keywords:['result','access','owing','debt','block','withhold','exception']},
+        @canany(['View POS reports', 'Use POS'])
+        {title:'Bar & Restaurant Sales',                url:'{{ route("pos.orders") }}',                                     icon:'mdi-receipt-text',            category:'Bar & Restaurant',    keywords:['pos','sales','orders','bar','restaurant','void','report']},
+        @endcanany
+        @can('Manage POS menu')
+        {title:'Menu & Prices',                         url:'{{ route("pos.menu") }}',                                       icon:'mdi-food',                    category:'Bar & Restaurant',    keywords:['menu','items','prices','drinks','food','outlet','category']},
         @endcan
-        {title:'Collection Summary',                    url:'{{ route("reports.financial.collection-summary") }}',           icon:'mdi-cash-register',           category:'Accounting',          keywords:['collection','summary','receipts','income']},
-        {title:'Class Payment Analysis',                url:'{{ route("reports.analysis.index") }}',                         icon:'mdi-chart-bar',               category:'Accounting',          keywords:['analysis','class','payment','report']},
-        {title:'School-Wide Payment Analysis',          url:'{{ route("reports.analysis.school-wide") }}',                   icon:'mdi-chart-donut',             category:'Accounting',          keywords:['analysis','school','wide','payment','report']},
-
-        /* ── Payroll ── */
-        {title:'Payroll Periods',                       url:'{{ route("payroll.periods") }}',                                icon:'mdi-calendar-clock',          category:'Payroll',             keywords:['payroll','period','month','salary']},
-        {title:'Payroll Summary',                       url:'{{ route("payroll.summary") }}',                                icon:'mdi-cash-multiple',           category:'Payroll',             keywords:['payroll','summary','total','staff']},
-        {title:'Statutory Report',                      url:'{{ route("payroll.statutory") }}',                              icon:'mdi-file-certificate',        category:'Payroll',             keywords:['statutory','tax','pension','nhis','paye']},
-        {title:'Salary Structures',                     url:'{{ route("payroll.salary-structures") }}',                      icon:'mdi-bank',                    category:'Payroll',             keywords:['salary','structure','grade','pay']},
-        @if(Route::has("payroll.payouts")){title:'Salary Payments',                       url:'{{ route("payroll.payouts") }}',                                icon:'mdi-bank-transfer',           category:'Payroll',             keywords:['pay','transfer','paystack','salary','payout']},@endif
-        @if(Route::has("payroll.loans")){title:'Loans & Advances',                      url:'{{ route("payroll.loans") }}',                                  icon:'mdi-hand-coin',               category:'Payroll',             keywords:['loan','advance','staff']},@endif
-        @if(Route::has("payroll.coop")){title:'Staff Cooperative',                     url:'{{ route("payroll.coop") }}',                                   icon:'mdi-piggy-bank',              category:'Payroll',             keywords:['cooperative','savings','coop']},@endif
-        @if(Route::has("finance.expenses")){title:'Expenses',                              url:'{{ route("finance.expenses") }}',                               icon:'mdi-receipt',                 category:'Finance',             keywords:['expense','voucher','spend']},@endif
-        @if(Route::has("finance.budgets")){title:'Budgets',                               url:'{{ route("finance.budgets") }}',                                icon:'mdi-scale-balance',           category:'Finance',             keywords:['budget','plan']},@endif
-        @if(Route::has("finance.assets")){title:'Fixed Assets',                          url:'{{ route("finance.assets") }}',                                 icon:'mdi-archive',                 category:'Finance',             keywords:['asset','depreciation','register']},@endif
-        @if(Route::has("accounting.dashboard")){title:'Accounting',                            url:'{{ route("accounting.dashboard") }}',                           icon:'mdi-book-open-variant',       category:'Finance',             keywords:['ledger','journal','accounting','balance sheet']},@endif
-
-        /* ── Staff Payments ── */
-        {title:'All Staff Payments',                    url:'{{ route("staff.payments.index") }}',                           icon:'mdi-cash-check',              category:'Staff Payments',      keywords:['staff','payment','salary','payslip']},
-        {title:'My Staff Payments',                     url:'{{ route("staff.payments.dashboard") }}',                       icon:'mdi-wallet-outline',          category:'Staff Payments',      keywords:['my','payment','salary','payslip']},
-
-        /* ── School Settings ── */
-        {title:'School Information',                    url:'{{ route("school-information.index") }}',                       icon:'mdi-domain',                  category:'School Settings',     keywords:['school','info','name','address','logo']},
-        {title:'School Session',                        url:'{{ route("session.index") }}',                                  icon:'mdi-calendar-range',          category:'School Settings',     keywords:['session','year','academic']},
-        {title:'School Term',                           url:'{{ route("term.index") }}',                                     icon:'mdi-calendar',                category:'School Settings',     keywords:['term','semester','period']},
-        {title:'School House',                          url:'{{ route("schoolhouse.index") }}',                              icon:'mdi-home-group',              category:'School Settings',     keywords:['house','group','dormitory']},
-        {title:'Class Arm',                             url:'{{ route("schoolarm.index") }}',                                icon:'mdi-table-chair',             category:'School Settings',     keywords:['arm','stream','class','division']},
-        {title:'Class Category',                        url:'{{ route("classcategories.index") }}',                          icon:'mdi-format-list-bulleted',    category:'School Settings',     keywords:['category','class','type','level']},
-        {title:'Class Name',                            url:'{{ route("schoolclass.index") }}',                              icon:'mdi-google-classroom',        category:'School Settings',     keywords:['class','name','jss','sss','primary']},
-        {title:'Class Teacher',                         url:'{{ route("classteacher.index") }}',                             icon:'mdi-human-male-board',        category:'School Settings',     keywords:['class','teacher','form','tutor']},
-
-        /* ── Subjects ── */
-        {title:'Subjects',                              url:'{{ route("subject.index") }}',                                  icon:'mdi-book-open-variant',       category:'Subjects',            keywords:['subject','course','topic','list']},
-        {title:'Assign Subject Teacher',                url:'{{ route("subjectteacher.index") }}',                           icon:'mdi-account-tie',             category:'Subjects',            keywords:['assign','subject','teacher','staff']},
-        {title:'Assign Class Subject',                  url:'{{ route("subjectclass.index") }}',                             icon:'mdi-book-plus',               category:'Subjects',            keywords:['assign','class','subject','course']},
-        {title:'Assign Compulsory Subjects',            url:'{{ route("compulsorysubjectclass.index") }}',                   icon:'mdi-book-lock',               category:'Subjects',            keywords:['compulsory','subject','class','assign','mandatory']},
-
-        /* ── Vettings & Comments ── */
-        {title:'Terminal Subject Vettings',             url:'{{ route("subjectvetting.index") }}',                           icon:'mdi-check-decagram',          category:'Vettings',            keywords:['vet','verify','terminal','subject','approve']},
-        {title:'Mock Subject Vettings',                 url:'{{ route("mocksubjectvetting.index") }}',                       icon:'mdi-check-decagram',          category:'Vettings',            keywords:['mock','vet','verify','subject','approve']},
-        {title:'Principal\'s Comments (Admin)',         url:'{{ route("principalscomment.index") }}',                        icon:'mdi-comment-text-multiple',   category:'Vettings',            keywords:['principal','comment','remark','assign','staff']},
-
-        /* ── School Bills ── */
-        {title:'School Bills',                          url:'{{ route("schoolbill.index") }}',                               icon:'mdi-file-document-outline',   category:'School Bills',        keywords:['bill','fee','levy','school','charge']},
-        {title:'Apply Bills to Term/Session',           url:'{{ route("schoolbilltermsession.index") }}',                    icon:'mdi-file-check',              category:'School Bills',        keywords:['apply','bill','term','session','assign']},
+        @can('View stock')
+        {title:'Stock on Hand',                         url:'{{ route("inventory.index") }}',                                icon:'mdi-package-variant',         category:'Inventory',           keywords:['stock','inventory','store','quantity','low stock','reorder']},
+        {title:'Purchase Orders',                       url:'{{ route("inventory.po.index") }}',                             icon:'mdi-cart-arrow-down',         category:'Inventory',           keywords:['purchase','order','supplier','buy','po']},
+        {title:'Stocktakes',                            url:'{{ route("inventory.counts.index") }}',                         icon:'mdi-clipboard-check-outline', category:'Inventory',           keywords:['count','stocktake','variance','audit']},
+        {title:'Suppliers',                             url:'{{ route("inventory.suppliers.index") }}',                      icon:'mdi-truck-delivery',          category:'Inventory',           keywords:['supplier','vendor']},
+        @endcan
+        @can('Receive stock')
+        {title:'Receive Stock',                         url:'{{ route("inventory.receipts.create") }}',                      icon:'mdi-truck-check',             category:'Inventory',           keywords:['receive','delivery','grn','goods received']},
+        @endcan
+        @can('Transfer stock')
+        {title:'Transfer Stock',                        url:'{{ route("inventory.transfers.create") }}',                     icon:'mdi-swap-horizontal',         category:'Inventory',           keywords:['transfer','move','issue','bar','kitchen']},
+        @endcan
+        @can('View stock reports')
+        {title:'Stock Reports',                         url:'{{ route("inventory.reports") }}',                              icon:'mdi-chart-bar',               category:'Inventory',           keywords:['valuation','margin','waste','cost of sales','report']},
+        @endcan
+        @canany(['Manage stock items', 'Manage POS menu'])
+        {title:'Recipes',                               url:'{{ route("inventory.recipes.index") }}',                        icon:'mdi-chef-hat',                category:'Inventory',           keywords:['recipe','ingredients','cost','menu']},
+        @endcanany
+        @can('View attendance')
+        {title:"Who's In Today",                        url:'{{ route("attendance.board") }}',                               icon:'mdi-account-clock',           category:'Attendance',          keywords:['attendance','clock in','late','absent','staff','present']},
+        {title:'Timesheet',                             url:'{{ route("attendance.timesheet") }}',                           icon:'mdi-calendar-clock',          category:'Attendance',          keywords:['timesheet','hours','overtime','payroll','attendance']},
+        {title:'Staff Leave',                           url:'{{ route("attendance.leave") }}',                               icon:'mdi-bag-suitcase',            category:'Attendance',          keywords:['leave','sick','annual','holiday','off']},
+        @endcan
+        @can('Manage staff & shifts')
+        {title:'Staff, Shifts & Badges',                url:'{{ route("attendance.setup") }}',                               icon:'mdi-badge-account',           category:'Attendance',          keywords:['shift','rota','badge','id card','department','kiosk']},
+        @endcan
+        @can('Run attendance kiosk')
+        {title:'Clock-in Kiosk',                        url:'{{ route("attendance.kiosk") }}',                               icon:'mdi-qrcode-scan',             category:'Attendance',          keywords:['kiosk','clock in','scan','badge','qr']},
+        @endcan
+        {title:'My Attendance',                         url:'{{ route("attendance.my") }}',                                  icon:'mdi-account-check',           category:'My Account',          keywords:['my attendance','clock in','late','badge']},
+        @can('Manage hotel settings')
+        {title:'Bank Accounts',                         url:'{{ route("settings.bank-accounts.index") }}',                   icon:'mdi-bank',                    category:'Billing',             keywords:['bank','account','transfer','invoice','settings']},
+        @endcan
+        @canany(['View housekeeping', 'Do housekeeping tasks', 'Manage housekeeping'])
+        {title:'Housekeeping Board',                    url:'{{ route("housekeeping.index") }}',                             icon:'mdi-broom',                   category:'Rooms',               keywords:['housekeeping','clean','dirty','inspection','turnaround','stay-over','maid']},
+        @endcanany
+        @canany(['View maintenance', 'Report maintenance issues', 'Manage maintenance'])
+        {title:'Maintenance Jobs',                      url:'{{ route("maintenance.index") }}',                              icon:'mdi-wrench',                  category:'Rooms',               keywords:['maintenance','repair','fault','work order','ac','plumbing','broken','technician']},
+        @endcanany
+        @can('View visitors')
+        {title:'Visitors',                              url:'{{ route("visitors.index") }}',                                 icon:'mdi-badge-account',           category:'Security',            keywords:['visitor','sign in','gate','pass','guest visitor','contractor','delivery','badge']},
+        {title:'Check a Visitor Pass',                  url:'{{ route("visitors.check") }}',                                 icon:'mdi-qrcode-scan',             category:'Security',            keywords:['scan','pass','visitor','gate','qr','verify']},
+        @endcan
+        @canany(['View incidents', 'Report incidents', 'Manage incidents'])
+        {title:'Incidents',                             url:'{{ route("incidents.index") }}',                                icon:'mdi-alert-octagon',           category:'Security',            keywords:['incident','report','theft','fight','injury','complaint','fire','security','emergency','contacts']},
+        @endcanany
+        @can('Manage lost & found')
+        {title:'Lost & Found',                          url:'{{ route("lost-found.index") }}',                               icon:'mdi-briefcase-search',        category:'Security',            keywords:['lost','found','left behind','item','claim','property']},
+        @endcan
+        @can('View audit log')
+        {title:'Audit Trail',                           url:'{{ route("audit.index") }}',                                    icon:'mdi-shield-check',            category:'Audit',               keywords:['audit','log','history','who','changes','void','refund','security','trail']},
+        @endcan
+        @can('Create rooms')
+        {title:'Add Rooms in Bulk',                     url:'{{ route("rooms.bulk.create") }}',                              icon:'mdi-plus-box-multiple',       category:'Rooms',               keywords:['add','create','new','rooms','bulk']},
+        @endcan
     ];
 
     /* ── category colours ── */
     var CAT_COLORS = {
-        'Dashboards':'#4f8ef7','Users & Privileges':'#405189','Students':'#e76f51','My Account':'#2a9d8f',
-        'School Settings':'#6a0572','Subjects':'#e9c46a','Classes & Records':'#0a9396','Records & Results':'#457b9d',
-        'Promotions':'#2a9d8f','Finance':'#10b981','Payroll':'#e76f51','Staff Payments':'#e76f51',
-        'Exams & CBT':'#f4a261','Timetable':'#4f8ef7','Attendance':'#e9c46a','Attendance Admin':'#e76f51',
-        'Accounting':'#10b981','Transcripts':'#457b9d','Admin Tools':'#ef4444','Parents':'#6c757d',
-        'Student Portal':'#20c997','Subject Registration':'#a8dadc','Vettings':'#e63946','School Bills':'#457b9d'
+        'Dashboards':'#4f8ef7','Users & Privileges':'#405189','My Account':'#2a9d8f','Rooms':'#0d9488','Front Desk':'#7c3aed','Billing':'#16a34a','Bar & Restaurant':'#ea580c','Inventory':'#ca8a04','Attendance':'#0284c7','Audit':'#dc2626'
     };
 
     /* ── popular / suggestion chips ── */
     var POPULAR = [
-        {label:'Students',   q:'students'},
-        {label:'Payments',   q:'payment'},
-        {label:'Results',    q:'results'},
-        {label:'Exams',      q:'exam'},
-        {label:'Timetable',  q:'timetable'},
-        {label:'Attendance', q:'attendance'},
-        {label:'Promotions', q:'promotion'},
-        {label:'Payroll',    q:'payroll'},
-        {label:'Reports',    q:'report'},
-        {label:'Broadsheet', q:'broadsheet'},
+        {label:'Arrivals',    q:'arrivals'},
+        {label:'New booking', q:'reservation'},
+        {label:'Rooms',       q:'rooms'},
+        {label:'Users',       q:'users'},
+        {label:'Roles',       q:'roles'},
+        {label:'Permissions', q:'permissions'},
+        {label:'Profile',     q:'profile'},
+        {label:'Password',    q:'password'},
     ];
 
     /* ── history helpers ── */
@@ -2547,26 +1554,8 @@
     function performSearch(query){
         if (!query || !query.trim()) { showEmpty(true); return; }
         var sr = searchStatic(query);
-        if (sr.length > 0) {
-            renderResults(sr, query);
-            renderChips(getSuggestions(query));
-        } else {
-            showLoading();
-        }
-        clearTimeout(ajaxTimer);
-        ajaxTimer = setTimeout(function(){
-            if (query.length < 2) return;
-            fetch('{{ url("/api/search") }}?q='+encodeURIComponent(query)+'&_token={{ csrf_token() }}',{
-                headers:{'Accept':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}'}
-            }).then(function(r){ return r.ok ? r.json() : {results:[]}; })
-              .then(function(d){
-                  if (!input || input.value.trim() !== query) return;
-                  var remote = d.results || [];
-                  var seen = {};
-                  var merged = sr.concat(remote).filter(function(r){ if(seen[r.url]) return false; seen[r.url]=true; return true; });
-                  renderResults(merged, query);
-              }).catch(function(){});
-        }, 280);
+        renderResults(sr, query);
+        if (sr.length > 0) renderChips(getSuggestions(query));
     }
 
     /* ── render results ── */
@@ -2686,73 +1675,12 @@
 <!-- =====================================================
      ROUTE-SPECIFIC JS INCLUDES
      ===================================================== -->
-@if (Route::is('dashboard'))               @include('layouts.pages-assets.js.dashboard-list-js') @endif
 @if (Route::is('users.*'))                 @include('layouts.pages-assets.js.users-list-js') @endif
-@if (Route::is('student-id-cards.*'))      @include('layouts.pages-assets.js.idcard-list-js') @endif
-@if (Route::is('student.payments.*'))      @include('layouts.pages-assets.js.studentpayment-list-js') @endif
 @if (Route::is('profile.*'))               @include('layouts.pages-assets.js.users-list-js') @endif
 @if (Route::is('roles.*'))                 @include('layouts.pages-assets.js.role-list-js') @endif
 @if (Route::is('permissions.*'))           @include('layouts.pages-assets.js.permissions-list-js') @endif
-@if (Route::is('session.*'))               @include('layouts.pages-assets.js.session-list-js') @endif
-@if (Route::is('term.*'))                  @include('layouts.pages-assets.js.term-list-js') @endif
-@if (Route::is('school-information.*'))    @include('layouts.pages-assets.js.schoolinformation-list-js') @endif
-@if (Route::is('admin.school-info.*'))     @include('layouts.pages-assets.js.schoolinformation-list-js') @endif
-@if (Route::is('schoolhouse.*'))           @include('layouts.pages-assets.js.schoolhouse-list-js') @endif
-@if (Route::is('schoolarm.*'))             @include('layouts.pages-assets.js.arm-list-js') @endif
-@if (Route::is('classcategories.*'))       @include('layouts.pages-assets.js.classcategory-list-js') @endif
-@if (Route::is('schoolclass.*'))           @include('layouts.pages-assets.js.schoolclass-list-js') @endif
-@if (Route::is('classteacher.*'))          @include('layouts.pages-assets.js.classteacher-list-js') @endif
-@if (Route::is('subject.*'))               @include('layouts.pages-assets.js.subject-list-js') @endif
-{{-- subjects.index is Subject Registration: it has its own scripts, and subject-list.init.js
-     (Subjects page) overrides its filterData(), hijacks pagination and loads Bootstrap twice. --}}
-@if (Route::is('subjects.*') && !Route::is('subjects.index')) @include('layouts.pages-assets.js.subject-list-js') @endif
-@if (Route::is('subjectteacher.*'))        @include('layouts.pages-assets.js.subjectteacher-list-js') @endif
-@if (Route::is('subjectclass.*'))          @include('layouts.pages-assets.js.subjectclass-list-js') @endif
-@if (Route::is('schoolbill.*'))            @include('layouts.pages-assets.js.schoolbill-list-js') @endif
-@if (Route::is('schoolbilltermsession.*')) @include('layouts.pages-assets.js.schoolbilltermsession-list-js') @endif
-@if (Route::is('student.*'))               @include('layouts.pages-assets.js.student-list-js') @endif
-@if (Route::is('studentbatchindex'))       @include('layouts.pages-assets.js.studentbatch-list-js') @endif
-@if (Route::is('myclass.*'))               @include('layouts.pages-assets.js.myclass-list-js') @endif
-@if (Route::is('mysubject.*'))             @include('layouts.pages-assets.js.mysubject-list-js') @endif
-@if (Route::is('viewstudent'))             @include('layouts.pages-assets.js.viewstudent-list-js') @endif
-@if (Route::is('studentreports.*'))        @include('layouts.pages-assets.js.studentreport-list-js') @endif
-@if (Route::is('broadsheet.*'))            @include('layouts.pages-assets.js.studentreport-list-js') @endif
-@if (Route::is('studentmockreports.*'))    @include('layouts.pages-assets.js.studentmockreport-list-js') @endif
-@if (Route::is('subjectoperation.*'))      @include('layouts.pages-assets.js.subjectoperation-list-js') @endif
-@if (Route::is('subjects.subjectinfo'))    @include('layouts.pages-assets.js.subjectinfo-list-js') @endif
-@if (Route::is('myresultroom.*'))          @include('layouts.pages-assets.js.myresultroom-list-js') @endif
-@if (Route::is('assessment.*'))            @include('layouts.pages-assets.js.subjectscoresheet-list-js') @endif
-@if (Route::is('assessments'))             @include('layouts.pages-assets.js.studentassessment-list-js') @endif
-@if (Route::is('subjectscoresheet'))       @include('layouts.pages-assets.js.subjectscoresheet-list-js') @endif
-@if (Route::is('subjectscoresheet-mock.*'))@include('layouts.pages-assets.js.subjectscoresheet-mock-list-js') @endif
-@if (Route::is('studentresults*'))         @include('layouts.pages-assets.js.studentresults-list-js') @endif
-@if (Route::is('schoolbill*'))             @include('layouts.pages-assets.js.schoolbill-list-js') @endif
-@if (Route::is('schoolpayment*'))          @include('layouts.pages-assets.js.schoolpayment-list-js') @endif
-@if (Route::is('analysis*'))               @include('layouts.pages-assets.js.analysis-list-js') @endif
-@if (Route::is('exams*'))                  @include('layouts.pages-assets.js.exams-list-js') @endif
-@if (Route::is('questions*'))              @include('layouts.pages-assets.js.questions-list-js') @endif
-@if (Route::is('cbt*'))                    @include('layouts.pages-assets.js.cbt-list-js') @endif
-@if (Route::is('classbroadsheet.*'))       @include('layouts.pages-assets.js.classbroadsheet-list-js') @endif
-@if (Route::is('principalscomment.*'))     @include('layouts.pages-assets.js.principalscomment-list-js') @endif
-@if (Route::is('myprincipalscomment.*'))   @include('layouts.pages-assets.js.myprincipalscomment-list-js') @endif
-@if (Route::is('compulsorysubjectclass.*'))@include('layouts.pages-assets.js.compulsorysubjectclass-list-js') @endif
-@if (Route::is('subjectvetting.*'))        @include('layouts.pages-assets.js.subjectvetting-list-js') @endif
-@if (Route::is('mocksubjectvetting.*'))    @include('layouts.pages-assets.js.mocksubjectvetting-list-js') @endif
-@if (Route::is('mysubjectvettings.*'))     @include('layouts.pages-assets.js.mysubjectvettings-list-js') @endif
-@if (Route::is('mymocksubjectvettings.*')) @include('layouts.pages-assets.js.mysubjectvettings-list-js') @endif
-@if (Route::is('timetable.*'))             @include('layouts.pages-assets.js.timetable-list-js') @endif
-@if (Route::is('rooms.*'))                 @include('layouts.pages-assets.js.rooms-list-js') @endif
-@if (Route::is('promotions.*'))            @include('layouts.pages-assets.js.promotions-list-js') @endif
-@if (Route::is('attendance.*'))            @include('layouts.pages-assets.js.attendance-list-js') @endif
-@if (Route::is('device-mappings.*'))       @include('layouts.pages-assets.js.attendance-list-js') @endif
-@if (Route::is('staff-attendance.*'))      @include('layouts.pages-assets.js.attendance-list-js') @endif
-@if (Route::is('transcript.*'))            @include('layouts.pages-assets.js.attendance-list-js') @endif
-@if (Route::is('admin.score-entry.*'))     @include('layouts.pages-assets.js.adminscoreentry-list-js') @endif
-@if (Route::is('admin.scholarship.*') || Route::is('admin.discount.*') || Route::is('sibling.*') ||
-    Route::is('payment.*') || Route::is('reports.financial.*') || Route::is('reports.analysis.*') ||
-    Route::is('payroll.*') || Route::is('staff.payments.*'))
-    @include('layouts.pages-assets.js.scholarship-list-js')
-@endif
+{{-- New modules: add a line per module's page JS here. --}}
+
 
 <script>
 /* Expired session on an AJAX / fetch call (HTTP 419) → go to the login page
@@ -2783,6 +1711,81 @@
             return Promise.reject(err);
         });
     }
+})();
+</script>
+
+{{-- Weak or dropped network: say so, and don't let a form be sent into the void or twice. --}}
+<div id="netBanner" role="status" aria-live="polite" hidden
+     style="position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:2000;max-width:min(640px,94vw);background:#b91c1c;color:#fff;border-radius:12px;padding:10px 16px;font-weight:600;font-size:13.5px;box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;gap:10px;align-items:center">
+    <i class="ri-wifi-off-line" style="font-size:18px"></i>
+    <span id="netBannerText">You're offline. Nothing can be saved until the connection is back — what you've typed stays on the page.</span>
+</div>
+<script>
+(function () {
+    var pingUrl = @json(route('ping'));
+    var banner = document.getElementById('netBanner'), text = document.getElementById('netBannerText');
+    var online = navigator.onLine !== false, timer = null;
+
+    function show(msg) { if (msg) text.textContent = msg; banner.hidden = false; banner.style.display = 'flex'; }
+    function hide() { banner.hidden = true; banner.style.display = 'none'; }
+    function set(on) {
+        var was = online; online = on;
+        if (!on) show("You're offline. Nothing can be saved until the connection is back — what you've typed stays on the page.");
+        else { hide(); if (!was && window.Swal) Swal.fire({ toast: true, position: 'top', icon: 'success', title: 'Back online', timer: 1800, showConfirmButton: false }); }
+    }
+    function check() {
+        clearTimeout(timer);
+        var ctl = window.AbortController ? new AbortController() : null;
+        var t = ctl ? setTimeout(function () { ctl.abort(); }, 5000) : null;
+        return fetch(pingUrl, { cache: 'no-store', credentials: 'same-origin', signal: ctl ? ctl.signal : undefined })
+            .then(function (r) { set(r.ok || r.status < 500); })
+            .catch(function () { set(false); })
+            .finally(function () { if (t) clearTimeout(t); timer = setTimeout(check, online ? 60000 : 5000); });
+    }
+    window.addEventListener('offline', function () { set(false); check(); });
+    window.addEventListener('online', check);
+    check();
+
+    // Forms that change data: block while offline, and stop double sends on a slow line.
+    document.addEventListener('submit', function (e) {
+        var f = e.target;
+        if (!(f instanceof HTMLFormElement) || f.hasAttribute('data-no-guard')) return;
+        var method = (f.getAttribute('method') || 'get').toLowerCase();
+        if (method === 'get') return;
+        if (!online || navigator.onLine === false) {
+            e.preventDefault();
+            show("You're offline — this wasn't sent. Nothing is lost: press the button again once the connection is back.");
+            check();
+            return;
+        }
+        if (f.dataset.sending === '1') { e.preventDefault(); return; }
+        if (e.defaultPrevented) return;
+        f.dataset.sending = '1';
+        // A disabled button isn't sent with the form, so keep the clicked button's name/value.
+        var sub = e.submitter;
+        if (sub && sub.name) {
+            var keep = document.createElement('input');
+            keep.type = 'hidden'; keep.name = sub.name; keep.value = sub.value; keep.setAttribute('data-submitter', '1');
+            f.appendChild(keep);
+        }
+        var btns = f.querySelectorAll('button[type=submit], button:not([type]), input[type=submit]');
+        btns.forEach(function (b) { b.dataset.label = b.innerHTML; b.disabled = true; if (b.tagName === 'BUTTON') b.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>' + b.innerHTML; });
+        // If the page is still here after a while, the request probably failed — let them try again.
+        setTimeout(function () {
+            f.dataset.sending = '';
+            f.querySelectorAll('input[data-submitter]').forEach(function (x) { x.remove(); });
+            btns.forEach(function (b) { b.disabled = false; if (b.dataset.label) b.innerHTML = b.dataset.label; });
+            check().then(function () { if (online) show('This is taking longer than usual — the connection may be weak. If nothing happens, reload and check whether it saved before trying again (payments are never recorded twice).'); });
+        }, 20000);
+    }, false);
+    // Coming back with the browser's Back button: re-enable everything.
+    window.addEventListener('pageshow', function () {
+        document.querySelectorAll('form[data-sending="1"]').forEach(function (f) {
+            f.dataset.sending = '';
+            f.querySelectorAll('input[data-submitter]').forEach(function (x) { x.remove(); });
+            f.querySelectorAll('[disabled][data-label]').forEach(function (b) { b.disabled = false; b.innerHTML = b.dataset.label; });
+        });
+    });
 })();
 </script>
 </body>

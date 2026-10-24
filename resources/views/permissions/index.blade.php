@@ -66,7 +66,7 @@ use Spatie\Permission\Models\Role;
                         <div class="card">
                             <div class="card-header d-flex align-items-center">
                                 <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">Permissions <span class="badge bg-dark-subtle text-dark ms-1"></span></h5>
+                                    <h5 class="card-title mb-0">Permissions <span class="badge bg-dark-subtle text-dark ms-1">{{ $data->count() }}</span></h5>
                                 </div>
                                
                             </div>
@@ -84,11 +84,7 @@ use Spatie\Permission\Models\Role;
                                         </thead>
                                         <tbody class="list form-check-all">
                                             @forelse ($data as $permission)
-                                                    @php
-                                                        $rolePermissions = DB::table("role_has_permissions")->where("role_has_permissions.permission_id",$permission->id)
-                                                        ->leftJoin('roles', 'roles.id','=','role_has_permissions.role_id')
-                                                        ->get(['roles.name as name','roles.badge as badge']);
-                                                    @endphp
+                                                    @php $rolePermissions = $permission->roles; @endphp
 
                                          
                                                 <tr>
@@ -111,7 +107,7 @@ use Spatie\Permission\Models\Role;
                                                     <td class="role" data-roles="">
                                                         <div>
                                                             @foreach ($rolePermissions as $r)
-                                                                  <a href="{{ route('roles.index',) }}" class="{{ $r->badge }} fs-7 m-1">{{ $r->name }}</a>
+                                                                  <a href="{{ route('roles.show', $r->id) }}" class="{{ $r->badge ?: 'badge bg-secondary' }} fs-7 m-1">{{ $r->name }}</a>
                                                             @endforeach
                                                         </div>
                                                     </td>

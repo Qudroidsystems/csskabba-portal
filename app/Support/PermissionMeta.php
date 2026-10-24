@@ -53,6 +53,21 @@ class PermissionMeta
         'Manage payment gateways'   => ['Manage', 'Configure the payment gateways (Paystack, OPay).'],
         'Close accounting period'   => ['Close',  'Lock the accounting books up to a date.'],
         'Post journal entries'      => ['Post',   'Post entries directly into the general ledger.'],
+        'Use POS'                   => ['Use',    'Sell at the bar / restaurant till, including when the network is down.'],
+        'Charge to room'            => ['Charge', 'Put a bar or restaurant sale on an in-house guest\'s bill.'],
+        'Give POS discounts'        => ['Discount','Take money off a bar or restaurant sale.'],
+        'Void POS orders'           => ['Void',   'Cancel a bar or restaurant sale (and its room charge) with a reason.'],
+        'Check out with balance'    => ['Approve','Let a guest check out while they still owe money (a reason is required).'],
+        'Receive stock'             => ['Receive','Book goods delivered by suppliers into a store (goods received note).'],
+        'Transfer stock'            => ['Move',   'Move stock between stores, e.g. main store to the bar.'],
+        'Adjust stock'              => ['Adjust', 'Record stock used, wasted or broken, and correct mistakes (a reason is required).'],
+        'Count stock'               => ['Count',  'Start a stocktake and enter counted quantities.'],
+        'Post stock counts'         => ['Approve','Approve a stocktake so the differences are booked to stock.'],
+        'View attendance'           => ['View',   'See who is in, lateness, absences and timesheets for all staff.'],
+        'Manage attendance'         => ['Manage', 'Correct clock-ins (with a reason), change the rota and record leave.'],
+        'Manage staff & shifts'     => ['Manage', 'Set up shifts, departments, kiosks and staff badges (including replacing a lost badge).'],
+        'Run attendance kiosk'      => ['Use',    'Open the clock-in kiosk on a device at the staff entrance.'],
+        'Manage hotel settings'     => ['Manage', 'Change hotel settings such as the bank accounts shown on invoices.'],
     ];
 
     /** ['action' => chip word, 'label' => readable name, 'desc' => sentence] */

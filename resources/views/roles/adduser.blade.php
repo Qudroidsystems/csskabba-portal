@@ -5,7 +5,7 @@ use Spatie\Permission\Models\Role;
 use App\Models\User;
 ?>
 
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="{{ asset('vendor/fonts/fonts.css') }}">
 
 <style>
 :root {

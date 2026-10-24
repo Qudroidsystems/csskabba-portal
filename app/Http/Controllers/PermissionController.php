@@ -2,149 +2,57 @@
 
 namespace App\Http\Controllers;
 
-use DB;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB as FacadesDB;
 use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 
 class PermissionController extends Controller
 {
-    /**
-     * create a new instance of the class
-     *
-     * @return void
-     */
-    function __construct()
+    public function __construct()
     {
-         $this->middleware('permission:View permission|Create permission|Update permission|Delete permission', ['only' => ['index','store']]);
-         $this->middleware('permission:Create permission', ['only' => ['create','store']]);
-         $this->middleware('permission:Update permission', ['only' => ['edit','update']]);
-         $this->middleware('permission:Delete permission', ['only' => ['destroy']]);
+        $this->middleware('permission:View permission|Create permission|Update permission|Delete permission', ['only' => ['index']]);
+        $this->middleware('permission:Create permission', ['only' => ['store']]);
+        $this->middleware('permission:Update permission', ['only' => ['update']]);
+        $this->middleware('permission:Delete permission', ['only' => ['destroy']]);
     }
 
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request)
+    public function index()
     {
-         #page title
-         $pagetitle = "Role Management";
+        $pagetitle = 'Permissions';
+        $data = Permission::with('roles')->orderBy('title')->orderBy('name')->get();
 
-        $data = Permission::get();
-      
-        return view('permissions.index', compact('data'))->with('pagetitle', $pagetitle);
+        return view('permissions.index', compact('data', 'pagetitle'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-         #page title
-         $pagetitle = "Role Management";
-
-        return view('permissions.create')->with('pagetitle', $pagetitle);
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
-         #page title
-         $pagetitle = "Role Management";
-         
-        $this->validate($request, [
-            'name' => 'required|unique:permissions,name',
+        $data = $request->validate([
+            'name'  => 'required|string|max:255|unique:permissions,name',
+            'title' => 'nullable|string|max:255',
         ]);
 
-        Permission::create(['name' => $request->input('name')]);
+        Permission::create($data + ['guard_name' => 'web']);
 
-        return redirect()->route('permissions.index')
-            ->with('success', 'Permission created successfully.')->with('pagetitle', $pagetitle);
+        return redirect()->route('permissions.index')->with('success', 'Permission created successfully.');
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-
-         #page title
-         $pagetitle = "Role Management";
-
-
-        $permission = Permission::find($id);
-
-        return view('permissions.show', compact('permission'))->with('pagetitle', $pagetitle);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-
-         #page title
-         $pagetitle = "Role Management";
-
-
-        $permission = Permission::find($id);
-
-        return view('permissions.edit', compact('permission'))->with('pagetitle', $pagetitle);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
-         #page title
-         $pagetitle = "Role Management";
+        $permission = Permission::findOrFail($id);
 
-        $this->validate($request, [
-            'name' => 'required'
+        $data = $request->validate([
+            'name'  => 'required|string|max:255|unique:permissions,name,' . $permission->id,
+            'title' => 'nullable|string|max:255',
         ]);
 
-        $permission = Permission::find($id);
-        $permission->name = $request->input('name');
-        $permission->save();
+        $permission->update($data);
 
-        return redirect()->route('permissions.index')
-            ->with('success', 'Permission updated successfully.')->with('pagetitle', $pagetitle);
+        return redirect()->route('permissions.index')->with('success', 'Permission updated successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function destroy($id)
     {
-        Permission::find($id)->delete();
+        Permission::findOrFail($id)->delete();
 
-        return redirect()->route('permissions.index')
-            ->with('success', 'Permission deleted successfully');
+        return redirect()->route('permissions.index')->with('success', 'Permission deleted successfully.');
     }
-
-
 }

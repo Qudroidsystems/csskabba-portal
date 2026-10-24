@@ -2,194 +2,141 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 
+/**
+ * Core permissions. The "title" groups them in the role editor.
+ * Each new hotel module adds its own group here (or in its own seeder).
+ * Safe to run repeatedly.
+ */
 class PermissionTableSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
+    public const PERMISSIONS = [
+        'Dashboard' => [
+            'dashboard',
+        ],
+        'User Management' => [
+            'View user',
+            'Create user',
+            'Update user',
+            'Delete user',
+        ],
+        'Role Management' => [
+            'View role',
+            'Create role',
+            'Update role',
+            'Delete role',
+            'Add user-role',
+            'Update user-role',
+            'Remove user-role',
+        ],
+        'Room Management' => [
+            'View rooms',
+            'Create rooms',
+            'Update rooms',
+            'Delete rooms',
+            'Change room status',
+            'Manage room types',
+            'Manage buildings',
+        ],
+        'Housekeeping' => [
+            'View housekeeping',
+            'Do housekeeping tasks',
+            'Manage housekeeping',
+        ],
+        'Maintenance' => [
+            'View maintenance',
+            'Report maintenance issues',
+            'Manage maintenance',
+        ],
+        'Security' => [
+            'View visitors',
+            'Manage visitors',
+            'View incidents',
+            'Report incidents',
+            'Manage incidents',
+            'Manage lost & found',
+        ],
+        'Reservations' => [
+            'View reservations',
+            'Create reservations',
+            'Update reservations',
+            'Cancel reservations',
+            'Check in guests',
+            'Check out guests',
+            'Apply reservation discounts',
+        ],
+        'Billing & Payments' => [
+            'View folios',
+            'Post charges',
+            'Void charges',
+            'Receive payments',
+            'Void payments',
+            'Issue refunds',
+            'Check out with balance',
+            'View finance reports',
+            'Review cash shifts',
+        ],
+        'Bar & Restaurant (POS)' => [
+            'Use POS',
+            'Charge to room',
+            'Give POS discounts',
+            'Void POS orders',
+            'View POS reports',
+            'Manage POS menu',
+        ],
+        'Inventory' => [
+            'View stock',
+            'Manage stock items',
+            'Receive stock',
+            'Transfer stock',
+            'Adjust stock',
+            'Count stock',
+            'Post stock counts',
+            'Manage suppliers',
+            'Manage purchase orders',
+            'View stock reports',
+        ],
+        'Staff Attendance' => [
+            'View attendance',
+            'Manage attendance',
+            'Manage staff & shifts',
+            'Run attendance kiosk',
+        ],
+        'Reports' => [
+            'View management reports',
+        ],
+        'Audit & Security' => [
+            'View audit log',
+        ],
+        'Hotel Settings' => [
+            'Manage hotel settings',
+        ],
+        'Guest Management' => [
+            'View guests',
+            'Manage guests',
+        ],
+        'Permission Management' => [
+            'View permission',
+            'Create permission',
+            'Update permission',
+            'Delete permission',
+        ],
+    ];
+
     public function run(): void
     {
-        $permissions = [
-        //    'Super role',
-           'View user',
-           'Create user',
-           'Update user',
-           'Delete user',
-           
-           'View role',
-           'Create role',
-           'Update role',
-           'Delete role',
-           'Add user-role',
-           'Update user-role',
-           'Remove user-role',
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-           'View permission',
-           'Create permission',
-           'Update permission',
-           'Delete permission',
-
-           'dashboard',
-
-           'View session',
-           'Create session',
-           'Update session',
-           'Delete session',
-
-           'View term',
-           'Create term',
-           'Update term',
-           'Delete term',
-
-           'View schoolhouse',
-           'Create schoolhouse',
-           'Update schoolhouse',
-           'Delete schoolhouse',
-
-           'View school-arm',
-           'Create school-arm',
-           'Update school-arm',
-           'Delete school-arm',
-
-           'View school-class',
-           'Create school-class',
-           'Update school-class',
-           'Delete school-class',
-           
-           'View class-category',
-           'Create class-category',
-           'Update class-category',
-           'Delete class-category',
-
-           'View class-teacher',
-           'Create class-teacher',
-           'Update class-teacher',
-           'Delete class-teacher',
-
-           'View subjects',
-           'Create subjects',
-           'Update subjects',
-           'Delete subjects',
-
-           'View subject-teacher',
-           'Create subject-teacher',
-           'Update subject-teacher',
-           'Delete subject-teacher',
-           
-           'View subject-class',
-           'Create subject-class',
-           'Update subject-class',
-           'Delete subject-class',
-
-        ];
-
-        foreach ($permissions as $permission) {
-            $str = $permission;
-            $delimiter = ' ';
-            $words = explode($delimiter, $str);
-
-            foreach ($words as $word) {
-                if($word == "user")
-                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "User Management"]);
-
-                if($word == "role" || $word == "user-role")
-                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "Role Management"]);
-
-                if($word == "permission")
-                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "Permission Management"]);
-
-                if($word == "dashboard")
-                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "Dashboard Management"]);
-
-                if($word == "school-arm")
-                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "School Arm Management"]);
-
-                if($word == "school-class")
-                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "School ClassManagement"]);
-
-                if($word == "session")
-                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "School Session Management"]);
-
-                if($word == "term")
-                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "School Term Management "]);
-
-                if($word == "schoolhouse")
-                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "School House Management"]);
-
-                if($word == "class-category")
-                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "Class Category Management"]);
-
-                if($word == "class-teacher")
-                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "Class Teacher Management"]);
-
-                if($word == "subjects")
-                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "Subject Management"]);
-
-                if($word == "subject-teacher")
-                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "Subject Teacher Management"]);
-
-                if($word == "subject-class")
-                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "Subject Class Management"]);
-
-
-
-                // if($word == "class_operation")
-                // Permission::Create(['name' => $permission,'title'=>"Class Operation Management"]);
-
-                // if($word == "myclass")
-                // Permission::Create(['name' => $permission,'title'=>"User Class Management"]);
-
-                // if($word == "mysubject")
-                // Permission::Create(['name' => $permission,'title'=>"User Subject Management"]);
-
-           
-                // if($word == "myresultroom")
-                // Permission::Create(['name' => $permission,'title'=>"User Result Room Management"]);
-
-                // if($word == "parent")
-                // Permission::Create(['name' => $permission,'title'=>"Parent Management"]);
-
-                // if($word == "student")
-                // Permission::Create(['name' => $permission,'title'=>"Student Management"]);
-
-                // if($word == "studentresults")
-                // Permission::Create(['name' => $permission,'title'=>"Student Results Management"]);
-
-                // if($word == "student_bulk")
-                // Permission::Create(['name' => $permission,'title'=>"Student Management"]);
-
-             
-
-                // if($word == "subject_operation")
-                // Permission::Create(['name' => $permission,'title'=>"Subject Operations Management"]);
-
-                if($word == "subject")
-                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "Subject Management"]);
-
-                if($word == "subject_teacher")
-                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "Subject Teacher Management"]);
-
-                // if($word == "View_student")
-                // Permission::Create(['name' => $permission,'title'=>"View Student Management "]);
-
-                // if($word == "academic_operations")
-                // Permission::Create(['name' => $permission,'title'=>"Basic Settings Management Link"]);
-
-                // if($word == "student_picture")
-                // Permission::Create(['name' => $permission,'title'=>"Student Picture Management"]);
-
-                // if($word == "studenthouse")
-                // Permission::Create(['name' => $permission,'title'=>"Student house Management"]);
-
-                // if($word == "classsettings")
-                // Permission::Create(['name' => $permission,'title'=>"Class Settings Management "]);
-
+        foreach (self::PERMISSIONS as $title => $names) {
+            foreach ($names as $name) {
+                Permission::updateOrCreate(
+                    ['name' => $name, 'guard_name' => 'web'],
+                    ['title' => $title]
+                );
             }
-            //  Permission::Create(['name' => $permission]);
         }
     }
 }

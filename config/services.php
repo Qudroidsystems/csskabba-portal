@@ -60,24 +60,4 @@ return [
         'live_public_key' => env('PAYSTACK_LIVE_PUBLIC_KEY'),
     ],
 
-    // Push notifications to the Vite Schools mobile app (Firebase Cloud Messaging).
-    'fcm' => [
-        'enabled'     => env('FCM_ENABLED', true),
-        'credentials' => env('FCM_CREDENTIALS', storage_path('app/fcm-service-account.json')),
-        'project_id'  => env('FCM_PROJECT_ID'),
-    ],
-
-    // Lesson reminders pushed to teachers before each class.
-    'mobile' => [
-        // Which Vite Schools app this portal pairs with: 'dynamic' (assessments set per class
-        // category — Vite Schools app) or 'fixed' (CA1, CA2, CA3, Exam — TopClass Schools app).
-        'score_model' => 'dynamic',
-        // Show teachers' phone/e-mail to parents in the app's "Teachers" screen.
-        'share_teacher_contacts' => env('MOBILE_SHARE_TEACHER_CONTACTS', true),
-    ],
-
-    'timetable_reminders' => [
-        'minutes' => (int) env('TIMETABLE_REMINDER_MINUTES', 10),
-    ],
-
 ];

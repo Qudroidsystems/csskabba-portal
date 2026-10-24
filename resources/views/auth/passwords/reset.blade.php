@@ -7,17 +7,15 @@
 <head>
 
     <meta charset="utf-8">
-    <title>Password Re-set | Vite-ESchool</title>
+    <title>Reset Password | {{ config('hotel.name') }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta content="school  App" name="description">
+    <meta content="{{ config('hotel.tagline') }}" name="description">
     <meta content="Themesbrand" name="author">
     <!-- App favicon -->
     <link rel="shortcut icon" href="{{ asset('theme/layouts/assets/images/favicon.ico')}}">
 
     <!-- Fonts css load -->
-    <link rel="preconnect" href="https://fonts.googleapis.com/">
-    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
-    <link id="fontsLink" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+    <link id="fontsLink" href="{{ asset('vendor/fonts/fonts.css') }}" rel="stylesheet">
 
     <!-- Layout config Js -->
     <script src="{{ asset('theme/layouts/assets/js/layout.js')}}"></script>
@@ -45,14 +43,14 @@
                                     <div class="card-body py-5 d-flex justify-content-between flex-column">
                                         <div class="text-center">
                                             <h3 class="text-white">Start your journey with us.</h3>
-                                            <p class="text-white opacity-75 fs-base">It makes school operations SEEMLESS...</p>
+                                            <p class="text-white opacity-75 fs-base">{{ config('hotel.tagline') }}</p>
                                         </div>
                         
                                         <div class="auth-effect-main my-5 position-relative rounded-circle d-flex align-items-center justify-content-center mx-auto">
                                             <div class="effect-circle-1 position-relative mx-auto rounded-circle d-flex align-items-center justify-content-center">
                                                 <div class="effect-circle-2 position-relative mx-auto rounded-circle d-flex align-items-center justify-content-center">
                                                     <div class="effect-circle-3 mx-auto rounded-circle position-relative text-white fs-4xl d-flex align-items-center justify-content-center">
-                                                        Welcome to <span class="text-primary ms-1">Vite-ESchool</span>
+                                                        Welcome to <span class="text-primary ms-1">{{ config('hotel.name') }}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -97,7 +95,7 @@
                         
                                         <div class="text-center">
                                             <p class="text-white opacity-75 mb-0 mt-3">
-                                                &copy; <script>document.write(new Date().getFullYear())</script> Vite-ESchool. Created with <i class="mdi mdi-heart text-danger"></i> by Qudroid Systems
+                                                &copy; <script>document.write(new Date().getFullYear())</script> {{ config('hotel.name') }} · Built by {{ config('hotel.vendor') }}
                                             </p>
                                         </div>
                                     </div>

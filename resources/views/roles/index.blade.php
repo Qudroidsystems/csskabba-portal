@@ -7,7 +7,7 @@ use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Str;
 ?>
 
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="{{ asset('vendor/fonts/fonts.css') }}">
 
 <style>
 :root {
@@ -255,6 +255,11 @@ body{font-family:var(--rol-font);}
         <ul class="mb-0 mt-1">@foreach($errors->all() as $e)<li>{{$e}}</li>@endforeach</ul>
     </div>
     @endif
+    @if (session('error'))
+    <div class="alert alert-danger border-0 rounded-3 mb-3">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}
+    </div>
+    @endif
     @if (session('success') || session('status'))
     <div class="rol-alert-success mb-3">
         <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') ?? session('status') }}
@@ -268,7 +273,7 @@ body{font-family:var(--rol-font);}
         @php
             $roles_num = DB::table('model_has_roles')->where('role_id',$role->id)->count();
             $role_permissions = $role->permissions->pluck('name')->take(4);
-            $icons = ['Admin'=>'bi-shield-check','Student'=>'bi-mortarboard','Staff'=>'bi-person-badge','Teacher'=>'bi-book'];
+            $icons = ['Super Admin'=>'bi-shield-lock','Hotel Owner'=>'bi-gem','General Manager'=>'bi-briefcase','Front Desk'=>'bi-door-open','Accountant'=>'bi-calculator','Bar Manager'=>'bi-cup-straw','Cashier'=>'bi-cash-coin','Storekeeper'=>'bi-box-seam','Housekeeping'=>'bi-stars','Security Officer'=>'bi-shield-check','HR Administrator'=>'bi-people','IT Operations'=>'bi-hdd-network','Qudroid Support'=>'bi-headset'];
             $icon  = $icons[$role->name] ?? 'bi-key';
         @endphp
         <div class="col">
@@ -414,7 +419,7 @@ body{font-family:var(--rol-font);}
 </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{{ asset('vendor/sweetalert2/sweetalert2.all.min.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const selectAll     = document.getElementById('kt_roles_select_all');

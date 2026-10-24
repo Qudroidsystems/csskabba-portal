@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
-use App\Services\Parents\ParentAccountService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -25,41 +24,32 @@ class LoginController extends Controller
         return view('auth.login');
     }
 
-    /**
-     * The login box takes an email or a phone number. A phone number is
-     * matched to its account (parents sign in with their phone).
-     */
+    /** The login box accepts either an email address or a username. */
     protected function credentials(Request $request)
     {
         $login = trim((string) $request->input($this->username()));
-        if ($login !== '' && !str_contains($login, '@')) {
-            if ($user = ParentAccountService::findByPhone($login)) {
-                $login = $user->email;
-            }
-        }
-        return ['email' => $login, 'password' => $request->input('password')];
+        $field = str_contains($login, '@') ? 'email' : 'username';
+
+        return [$field => $login, 'password' => $request->input('password')];
     }
 
     protected function authenticated(Request $request, $user)
     {
-        if (!empty($user->is_disabled)) {
+        if ($user->is_disabled) {
             $this->guard()->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
-            throw ValidationException::withMessages([$this->username() => 'This account has been disabled. Please contact the school.']);
+
+            throw ValidationException::withMessages([
+                $this->username() => 'This account has been disabled. Please contact the hotel administrator.',
+            ]);
         }
 
-        if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'last_login_at')) {
-            $user->forceFill(['last_login_at' => now()])->saveQuietly();
-        }
+        $user->forceFill(['last_login_at' => now()])->saveQuietly();
 
-        if (!empty($user->must_change_password)) {
-            return redirect()->route('parent.password');
-        }
-
-        if ($user->hasRole(ParentAccountService::ROLE) && !$user->can('dashboard')) {
-            session()->forget('intended');
-            return redirect()->intended(route('parent.dashboard'));
+        if ($user->must_change_password) {
+            return redirect()->to(route('profile.settings', ['id' => $user->id]) . '#security')
+                ->with('error', 'Please set a new password before you continue.');
         }
 
         if ($intendedUrl = session('intended')) {
@@ -73,15 +63,11 @@ class LoginController extends Controller
         return redirect()->intended($this->redirectPath());
     }
 
-    protected function isValidIntendedUrl($url, $request)
+    protected function isValidIntendedUrl($url, $request): bool
     {
-        $parsedUrl = parse_url($url);
+        $host = parse_url($url, PHP_URL_HOST);
 
-        if (!isset($parsedUrl['host'])) {
-            return true;
-        }
-
-        return $parsedUrl['host'] === $request->getHost();
+        return $host === null || $host === $request->getHost();
     }
 
     public function username()
