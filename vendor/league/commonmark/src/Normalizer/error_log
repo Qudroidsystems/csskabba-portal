@@ -1,0 +1,8 @@
+[27-Sep-2026 10:06:47 UTC] PHP Fatal error:  Uncaught Error: Interface "League\CommonMark\Normalizer\TextNormalizerInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/commonmark/src/Normalizer/SlugNormalizer.php:22
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/commonmark/src/Normalizer/SlugNormalizer.php on line 22
+[27-Sep-2026 10:06:47 UTC] PHP Fatal error:  Uncaught Error: Interface "League\CommonMark\Normalizer\TextNormalizerInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/commonmark/src/Normalizer/UniqueSlugNormalizerInterface.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/commonmark/src/Normalizer/UniqueSlugNormalizerInterface.php on line 16

@@ -1,0 +1,8 @@
+[27-Sep-2026 10:08:43 UTC] PHP Fatal error:  Uncaught Error: Interface "League\MimeTypeDetection\ExtensionToMimeTypeMap" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/mime-type-detection/src/EmptyExtensionToMimeTypeMap.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/mime-type-detection/src/EmptyExtensionToMimeTypeMap.php on line 7
+[27-Sep-2026 10:08:43 UTC] PHP Fatal error:  Uncaught Error: Interface "League\MimeTypeDetection\ExtensionToMimeTypeMap" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/mime-type-detection/src/GeneratedExtensionToMimeTypeMap.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/mime-type-detection/src/GeneratedExtensionToMimeTypeMap.php on line 7

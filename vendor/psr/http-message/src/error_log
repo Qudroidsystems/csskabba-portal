@@ -1,0 +1,8 @@
+[27-Sep-2026 10:09:07 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Http\Message\MessageInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psr/http-message/src/RequestInterface.php:24
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psr/http-message/src/RequestInterface.php on line 24
+[27-Sep-2026 10:09:07 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Http\Message\RequestInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psr/http-message/src/ServerRequestInterface.php:43
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psr/http-message/src/ServerRequestInterface.php on line 43

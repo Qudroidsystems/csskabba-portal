@@ -1,0 +1,8 @@
+[27-Sep-2026 10:07:06 UTC] PHP Fatal error:  Uncaught Error: Interface "SebastianBergmann\LinesOfCode\Exception" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/lines-of-code/src/Exception/NegativeValueException.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/lines-of-code/src/Exception/NegativeValueException.php on line 14
+[27-Sep-2026 10:07:06 UTC] PHP Fatal error:  Uncaught Error: Interface "SebastianBergmann\LinesOfCode\Exception" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/lines-of-code/src/Exception/RuntimeException.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/lines-of-code/src/Exception/RuntimeException.php on line 12

@@ -1,0 +1,28 @@
+[27-Sep-2026 10:05:36 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\EventDispatcher\EventDispatcherInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher/EventDispatcher.php:32
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher/EventDispatcher.php on line 32
+[27-Sep-2026 10:05:37 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Contracts\EventDispatcher\EventDispatcherInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher/EventDispatcherInterface.php:23
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher/EventDispatcherInterface.php on line 23
+[27-Sep-2026 10:05:37 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Contracts\EventDispatcher\Event" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher/GenericEvent.php:26
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher/GenericEvent.php on line 26
+[27-Sep-2026 10:05:37 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\EventDispatcher\EventDispatcherInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher/ImmutableEventDispatcher.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher/ImmutableEventDispatcher.php on line 19
+[27-Sep-2026 10:07:32 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\EventDispatcher\EventDispatcherInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher/EventDispatcher.php:32
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher/EventDispatcher.php on line 32
+[27-Sep-2026 10:07:32 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Contracts\EventDispatcher\EventDispatcherInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher/EventDispatcherInterface.php:23
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher/EventDispatcherInterface.php on line 23
+[27-Sep-2026 10:07:32 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Contracts\EventDispatcher\Event" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher/GenericEvent.php:26
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher/GenericEvent.php on line 26

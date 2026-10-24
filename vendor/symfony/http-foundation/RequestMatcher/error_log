@@ -1,0 +1,4 @@
+[27-Sep-2026 10:06:26 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\HttpFoundation\RequestMatcherInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/RequestMatcher/ExpressionRequestMatcher.php:24
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/RequestMatcher/ExpressionRequestMatcher.php on line 24

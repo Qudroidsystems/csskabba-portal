@@ -1,0 +1,80 @@
+[27-Sep-2026 10:05:37 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\Response" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/BinaryFileResponse.php:26
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/BinaryFileResponse.php on line 26
+[27-Sep-2026 10:05:37 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\HttpFoundation\RequestMatcherInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/ChainRequestMatcher.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/ChainRequestMatcher.php on line 19
+[27-Sep-2026 10:05:38 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\StreamedResponse" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/EventStreamResponse.php:37
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/EventStreamResponse.php on line 37
+[27-Sep-2026 10:05:38 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\ParameterBag" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/FileBag.php:22
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/FileBag.php on line 22
+[27-Sep-2026 10:05:38 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\ParameterBag" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/InputBag.php:24
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/InputBag.php on line 24
+[27-Sep-2026 10:05:38 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\Response" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/JsonResponse.php:25
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/JsonResponse.php on line 25
+[27-Sep-2026 10:05:38 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\Response" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/RedirectResponse.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/RedirectResponse.php on line 19
+[27-Sep-2026 10:05:38 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\HeaderBag" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/ResponseHeaderBag.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/ResponseHeaderBag.php on line 19
+[27-Sep-2026 10:05:38 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\ParameterBag" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/ServerBag.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/ServerBag.php on line 21
+[27-Sep-2026 10:05:38 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\StreamedResponse" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/StreamedJsonResponse.php:45
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/StreamedJsonResponse.php on line 45
+[27-Sep-2026 10:05:38 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\Response" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/StreamedResponse.php:27
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/StreamedResponse.php on line 27
+[27-Sep-2026 10:07:33 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\Response" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/BinaryFileResponse.php:26
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/BinaryFileResponse.php on line 26
+[27-Sep-2026 10:07:33 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\StreamedResponse" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/EventStreamResponse.php:37
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/EventStreamResponse.php on line 37
+[27-Sep-2026 10:07:34 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\ParameterBag" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/InputBag.php:24
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/InputBag.php on line 24
+[27-Sep-2026 10:07:34 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\Response" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/JsonResponse.php:25
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/JsonResponse.php on line 25
+[27-Sep-2026 10:07:34 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\Response" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/RedirectResponse.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/RedirectResponse.php on line 19
+[27-Sep-2026 10:07:34 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\HeaderBag" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/ResponseHeaderBag.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/ResponseHeaderBag.php on line 19
+[27-Sep-2026 10:07:34 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\ParameterBag" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/ServerBag.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/ServerBag.php on line 21
+[27-Sep-2026 10:07:35 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\StreamedResponse" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/StreamedJsonResponse.php:45
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/StreamedJsonResponse.php on line 45
+[27-Sep-2026 10:07:35 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\Response" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/StreamedResponse.php:27
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/StreamedResponse.php on line 27

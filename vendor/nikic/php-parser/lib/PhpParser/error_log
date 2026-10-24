@@ -1,0 +1,12 @@
+[27-Sep-2026 10:06:50 UTC] PHP Fatal error:  Uncaught Error: Interface "PhpParser\NodeVisitor" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/nikic/php-parser/lib/PhpParser/NodeVisitorAbstract.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/nikic/php-parser/lib/PhpParser/NodeVisitorAbstract.php on line 8
+[27-Sep-2026 10:06:50 UTC] PHP Fatal error:  Uncaught Error: Class "PhpParser\Internal\TokenPolyfill" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/nikic/php-parser/lib/PhpParser/Token.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/nikic/php-parser/lib/PhpParser/Token.php on line 8
+[27-Sep-2026 10:06:50 UTC] PHP Fatal error:  Uncaught Error: Interface "PhpParser\PrettyPrinter" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinterAbstract.php:22
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinterAbstract.php on line 22

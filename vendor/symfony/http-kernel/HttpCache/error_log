@@ -1,0 +1,8 @@
+[27-Sep-2026 10:09:46 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\HttpKernel\HttpCache\ResponseCacheStrategyInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/HttpCache/ResponseCacheStrategy.php:25
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/HttpCache/ResponseCacheStrategy.php on line 25
+[27-Sep-2026 10:09:47 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\HttpCache\AbstractSurrogate" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/HttpCache/Ssi.php:22
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/HttpCache/Ssi.php on line 22

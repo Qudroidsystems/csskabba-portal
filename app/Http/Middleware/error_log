@@ -1,0 +1,4 @@
+[27-Sep-2026 10:05:13 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Http\Middleware\VerifyCsrfToken" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Middleware/VerifyCsrfToken.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Middleware/VerifyCsrfToken.php on line 7

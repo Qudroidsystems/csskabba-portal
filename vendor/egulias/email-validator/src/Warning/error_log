@@ -1,0 +1,4 @@
+[27-Sep-2026 10:06:43 UTC] PHP Fatal error:  Uncaught Error: Class "Egulias\EmailValidator\Warning\Warning" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/egulias/email-validator/src/Warning/CFWSWithFWS.php:5
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/egulias/email-validator/src/Warning/CFWSWithFWS.php on line 5

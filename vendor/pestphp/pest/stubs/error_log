@@ -1,0 +1,24 @@
+[27-Sep-2026 10:06:02 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function it() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/stubs/Browser.php:5
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/stubs/Browser.php on line 5
+[27-Sep-2026 10:06:02 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function dataset() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/stubs/Dataset.php:3
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/stubs/Dataset.php on line 3
+[27-Sep-2026 10:06:02 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function it() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/stubs/Feature.php:3
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/stubs/Feature.php on line 3
+[27-Sep-2026 10:08:55 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function it() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/stubs/Browser.php:5
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/stubs/Browser.php on line 5
+[27-Sep-2026 10:08:55 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function dataset() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/stubs/Dataset.php:3
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/stubs/Dataset.php on line 3
+[27-Sep-2026 10:08:56 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function it() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/stubs/Feature.php:3
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/stubs/Feature.php on line 3

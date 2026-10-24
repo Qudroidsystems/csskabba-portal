@@ -1,0 +1,12 @@
+[27-Sep-2026 10:06:21 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Console\Helper\Helper" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Helper/DescriptorHelper.php:28
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Helper/DescriptorHelper.php on line 28
+[27-Sep-2026 10:06:21 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Console\Helper\Helper" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Helper/InputAwareHelper.php:22
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Helper/InputAwareHelper.php on line 22
+[27-Sep-2026 10:09:29 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Console\Helper\Helper" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Helper/ProcessHelper.php:26
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Helper/ProcessHelper.php on line 26

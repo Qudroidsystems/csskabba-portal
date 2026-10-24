@@ -1,0 +1,4 @@
+[27-Sep-2026 10:04:51 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function test() in /home1/gozakma1/public_html/homaj.viteschools.ng/tests/Feature/ExampleTest.php:3
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/tests/Feature/ExampleTest.php on line 3

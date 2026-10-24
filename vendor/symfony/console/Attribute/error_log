@@ -1,0 +1,8 @@
+[27-Sep-2026 10:09:25 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Console\Attribute\InteractiveAttributeInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Attribute/Ask.php:23
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Attribute/Ask.php on line 23
+[27-Sep-2026 10:09:25 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Console\Attribute\InteractiveAttributeInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Attribute/Interact.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Attribute/Interact.php on line 17

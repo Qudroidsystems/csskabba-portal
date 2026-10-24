@@ -1,0 +1,4 @@
+[27-Sep-2026 10:06:27 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Mailer\Transport\AbstractHttpTransport" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mailer/Transport/AbstractApiTransport.php:26
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mailer/Transport/AbstractApiTransport.php on line 26

@@ -1,0 +1,8 @@
+[27-Sep-2026 10:09:34 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Finder\Iterator\MultiplePcreFilterIterator" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/finder/Iterator/FilenameFilterIterator.php:23
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/finder/Iterator/FilenameFilterIterator.php on line 23
+[27-Sep-2026 10:09:35 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Finder\Iterator\MultiplePcreFilterIterator" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/finder/Iterator/PathFilterIterator.php:24
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/finder/Iterator/PathFilterIterator.php on line 24

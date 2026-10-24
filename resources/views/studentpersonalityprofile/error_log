@@ -1,0 +1,7 @@
+[27-Sep-2026 10:05:59 UTC] PHP Warning:  Undefined variable $students in /home1/gozakma1/public_html/homaj.viteschools.ng/resources/views/studentpersonalityprofile/edit.blade.php on line 145
+[27-Sep-2026 10:05:59 UTC] PHP Warning:  Trying to access array offset on value of type null in /home1/gozakma1/public_html/homaj.viteschools.ng/resources/views/studentpersonalityprofile/edit.blade.php on line 145
+[27-Sep-2026 10:05:59 UTC] PHP Warning:  Attempt to read property "picture" on null in /home1/gozakma1/public_html/homaj.viteschools.ng/resources/views/studentpersonalityprofile/edit.blade.php on line 145
+[27-Sep-2026 10:05:59 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function asset() in /home1/gozakma1/public_html/homaj.viteschools.ng/resources/views/studentpersonalityprofile/edit.blade.php:146
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/resources/views/studentpersonalityprofile/edit.blade.php on line 146

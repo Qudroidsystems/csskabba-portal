@@ -1,0 +1,8 @@
+[27-Sep-2026 10:09:38 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\HttpKernel\CacheWarmer\CacheWarmerInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/CacheWarmer/CacheWarmer.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/CacheWarmer/CacheWarmer.php on line 19
+[27-Sep-2026 10:09:39 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\HttpKernel\CacheWarmer\WarmableInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/CacheWarmer/CacheWarmerInterface.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/CacheWarmer/CacheWarmerInterface.php on line 19

@@ -1,0 +1,88 @@
+[27-Sep-2026 10:05:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/ArchiveOldPayments.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/ArchiveOldPayments.php on line 7
+[27-Sep-2026 10:05:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/BackfillStaffBioInfo.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/BackfillStaffBioInfo.php on line 18
+[27-Sep-2026 10:05:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/CalculateLateFees.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/CalculateLateFees.php on line 7
+[27-Sep-2026 10:05:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/CarryOverLeave.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/CarryOverLeave.php on line 21
+[27-Sep-2026 10:05:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/CleanupExpiredLocks.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/CleanupExpiredLocks.php on line 10
+[27-Sep-2026 10:05:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/DepreciateAssets.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/DepreciateAssets.php on line 8
+[27-Sep-2026 10:05:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/FinancialAuditDigest.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/FinancialAuditDigest.php on line 17
+[27-Sep-2026 10:05:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/GenerateMonthlyReports.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/GenerateMonthlyReports.php on line 7
+[27-Sep-2026 10:05:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/GenerateWorkloadReports.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/GenerateWorkloadReports.php on line 7
+[27-Sep-2026 10:05:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/PullFeatureFlags.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/PullFeatureFlags.php on line 9
+[27-Sep-2026 10:05:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/RunDatabaseBackup.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/RunDatabaseBackup.php on line 16
+[27-Sep-2026 10:05:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/PruneActivityLog.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/PruneActivityLog.php on line 9
+[27-Sep-2026 10:05:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/SendAutoMessages.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/SendAutoMessages.php on line 8
+[27-Sep-2026 10:05:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/SendCalendarReminders.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/SendCalendarReminders.php on line 8
+[27-Sep-2026 10:05:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/SendDueNotices.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/SendDueNotices.php on line 8
+[27-Sep-2026 10:05:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/SendLeaveReminders.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/SendLeaveReminders.php on line 9
+[27-Sep-2026 10:05:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/SendPaymentReminders.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/SendPaymentReminders.php on line 7
+[27-Sep-2026 10:05:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/SendRemittanceReminders.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/SendRemittanceReminders.php on line 12
+[27-Sep-2026 10:05:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/SendResultBatches.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/SendResultBatches.php on line 8
+[27-Sep-2026 10:05:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/SendWeeklyTimetablePreview.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/SendWeeklyTimetablePreview.php on line 7
+[27-Sep-2026 10:05:13 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/SyncCalendarFees.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/SyncCalendarFees.php on line 8
+[27-Sep-2026 10:05:13 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/SyncFeesToLedger.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Console/Commands/SyncFeesToLedger.php on line 8

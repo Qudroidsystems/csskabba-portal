@@ -1,0 +1,28 @@
+[27-Sep-2026 10:06:07 UTC] PHP Fatal error:  Uncaught Error: Interface "Ramsey\Collection\ArrayInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/collection/src/AbstractArray.php:29
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/collection/src/AbstractArray.php on line 29
+[27-Sep-2026 10:06:08 UTC] PHP Fatal error:  Uncaught Error: Class "Ramsey\Collection\AbstractCollection" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/collection/src/Collection.php:76
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/collection/src/Collection.php on line 76
+[27-Sep-2026 10:06:08 UTC] PHP Fatal error:  Uncaught Error: Class "Ramsey\Collection\Queue" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/collection/src/DoubleEndedQueue.php:32
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/collection/src/DoubleEndedQueue.php on line 32
+[27-Sep-2026 10:09:07 UTC] PHP Fatal error:  Uncaught Error: Class "Ramsey\Collection\AbstractArray" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/collection/src/AbstractCollection.php:51
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/collection/src/AbstractCollection.php on line 51
+[27-Sep-2026 10:09:07 UTC] PHP Fatal error:  Uncaught Error: Interface "Ramsey\Collection\ArrayInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/collection/src/AbstractArray.php:29
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/collection/src/AbstractArray.php on line 29
+[27-Sep-2026 10:09:07 UTC] PHP Fatal error:  Uncaught Error: Class "Ramsey\Collection\AbstractCollection" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/collection/src/Collection.php:76
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/collection/src/Collection.php on line 76
+[27-Sep-2026 10:09:08 UTC] PHP Fatal error:  Uncaught Error: Interface "Ramsey\Collection\QueueInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/collection/src/DoubleEndedQueueInterface.php:166
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/collection/src/DoubleEndedQueueInterface.php on line 166

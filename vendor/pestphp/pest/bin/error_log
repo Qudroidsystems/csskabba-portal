@@ -1,0 +1,7 @@
+[27-Sep-2026 10:08:55 UTC] PHP Warning:  Trying to access array offset on value of type bool in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/bin/worker.php on line 62
+[27-Sep-2026 10:08:55 UTC] PHP Fatal error:  Uncaught TypeError: fopen(): Argument #1 ($filename) must be of type string, null given in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/bin/worker.php:62
+Stack trace:
+#0 /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/bin/worker.php(62): fopen()
+#1 /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/bin/worker.php(110): {closure}()
+#2 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/bin/worker.php on line 62

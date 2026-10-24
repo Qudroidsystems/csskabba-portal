@@ -1,0 +1,16 @@
+[27-Sep-2026 10:07:00 UTC] PHP Fatal error:  Uncaught Error: Interface "Ramsey\Uuid\Exception\UuidExceptionInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/Exception/BuilderNotFoundException.php:22
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/Exception/BuilderNotFoundException.php on line 22
+[27-Sep-2026 10:07:00 UTC] PHP Fatal error:  Uncaught Error: Interface "Ramsey\Uuid\Exception\UuidExceptionInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/Exception/InvalidArgumentException.php:22
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/Exception/InvalidArgumentException.php on line 22
+[27-Sep-2026 10:07:01 UTC] PHP Fatal error:  Uncaught Error: Class "Ramsey\Uuid\Exception\InvalidArgumentException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/Exception/InvalidUuidStringException.php:23
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/Exception/InvalidUuidStringException.php on line 23
+[27-Sep-2026 10:07:01 UTC] PHP Fatal error:  Uncaught Error: Interface "Ramsey\Uuid\Exception\UuidExceptionInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/Exception/UnsupportedOperationException.php:22
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/Exception/UnsupportedOperationException.php on line 22

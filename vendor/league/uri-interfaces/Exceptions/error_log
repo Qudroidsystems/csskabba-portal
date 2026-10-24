@@ -1,0 +1,12 @@
+[27-Sep-2026 10:08:44 UTC] PHP Fatal error:  Uncaught Error: Class "League\Uri\Exceptions\SyntaxError" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Exceptions/ConversionFailed.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Exceptions/ConversionFailed.php on line 21
+[27-Sep-2026 10:08:45 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Uri\Contracts\UriException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Exceptions/MissingFeature.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Exceptions/MissingFeature.php on line 19
+[27-Sep-2026 10:08:45 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Uri\Contracts\UriException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Exceptions/SyntaxError.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Exceptions/SyntaxError.php on line 19

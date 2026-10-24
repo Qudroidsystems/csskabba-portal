@@ -1,0 +1,12 @@
+[27-Sep-2026 10:08:17 UTC] PHP Fatal error:  Uncaught Error: Interface "Doctrine\DBAL\ServerVersionProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/doctrine/dbal/src/Connection.php:63
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/doctrine/dbal/src/Connection.php on line 63
+[27-Sep-2026 10:08:17 UTC] PHP Fatal error:  Uncaught Error: Interface "Doctrine\DBAL\Exception" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/doctrine/dbal/src/ConnectionException.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/doctrine/dbal/src/ConnectionException.php on line 7
+[27-Sep-2026 10:08:17 UTC] PHP Fatal error:  Uncaught Error: Interface "Doctrine\DBAL\SQL\Parser\Visitor" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/doctrine/dbal/src/ExpandArrayParameters.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/doctrine/dbal/src/ExpandArrayParameters.php on line 19

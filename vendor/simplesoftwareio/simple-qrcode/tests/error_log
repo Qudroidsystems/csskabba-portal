@@ -1,0 +1,16 @@
+[27-Sep-2026 10:06:10 UTC] PHP Fatal error:  Uncaught Error: Class "PHPUnit\Framework\TestCase" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/simplesoftwareio/simple-qrcode/tests/GeneratorTest.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/simplesoftwareio/simple-qrcode/tests/GeneratorTest.php on line 16
+[27-Sep-2026 10:06:10 UTC] PHP Fatal error:  Uncaught Error: Class "PHPUnit\Framework\TestCase" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/simplesoftwareio/simple-qrcode/tests/ImageMergeTest.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/simplesoftwareio/simple-qrcode/tests/ImageMergeTest.php on line 7
+[27-Sep-2026 10:09:14 UTC] PHP Fatal error:  Uncaught Error: Class "PHPUnit\Framework\TestCase" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/simplesoftwareio/simple-qrcode/tests/ImageMergeTest.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/simplesoftwareio/simple-qrcode/tests/ImageMergeTest.php on line 7
+[27-Sep-2026 10:09:15 UTC] PHP Fatal error:  Uncaught Error: Class "PHPUnit\Framework\TestCase" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/simplesoftwareio/simple-qrcode/tests/ImageTest.php:6
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/simplesoftwareio/simple-qrcode/tests/ImageTest.php on line 6

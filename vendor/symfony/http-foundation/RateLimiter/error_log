@@ -1,0 +1,4 @@
+[27-Sep-2026 10:06:25 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\HttpFoundation\RateLimiter\PeekableRequestRateLimiterInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/RateLimiter/AbstractRequestRateLimiter.php:25
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/RateLimiter/AbstractRequestRateLimiter.php on line 25

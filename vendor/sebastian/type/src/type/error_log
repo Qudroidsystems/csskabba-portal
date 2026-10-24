@@ -1,0 +1,4 @@
+[27-Sep-2026 10:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "SebastianBergmann\Type\Type" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/type/src/type/FalseType.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/type/src/type/FalseType.php on line 15

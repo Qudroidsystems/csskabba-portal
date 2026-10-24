@@ -1,0 +1,352 @@
+[27-Sep-2026 10:03:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AdminStudentResultManagerPermissionSeeder.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AdminStudentResultManagerPermissionSeeder.php on line 10
+[27-Sep-2026 10:03:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AnalysisPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AnalysisPermissionTableSeeder.php on line 8
+[27-Sep-2026 10:03:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AllFinancePermissionsSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AllFinancePermissionsSeeder.php on line 8
+[27-Sep-2026 10:03:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/BackupPermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/BackupPermissionSeeder.php on line 9
+[27-Sep-2026 10:03:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/BillCategorySeeder.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/BillCategorySeeder.php on line 10
+[27-Sep-2026 10:03:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/CalendarPermissionSeeder.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/CalendarPermissionSeeder.php on line 11
+[27-Sep-2026 10:04:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/DiscountTypeSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/DiscountTypeSeeder.php on line 9
+[27-Sep-2026 10:04:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ExamPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ExamPermissionTableSeeder.php on line 8
+[27-Sep-2026 10:04:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ExamTimetablePermissionTableSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ExamTimetablePermissionTableSeeder.php on line 9
+[27-Sep-2026 10:04:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FeatureFlagPermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FeatureFlagPermissionSeeder.php on line 9
+[27-Sep-2026 10:04:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FinanceOpsPermissionSeeder.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FinanceOpsPermissionSeeder.php on line 10
+[27-Sep-2026 10:04:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FinancePermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FinancePermissionSeeder.php on line 9
+[27-Sep-2026 10:04:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FinancialAuditPermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FinancialAuditPermissionSeeder.php on line 9
+[27-Sep-2026 10:04:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FinancialReportPermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FinancialReportPermissionSeeder.php on line 9
+[27-Sep-2026 10:04:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/MyPrincipalsCommentPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/MyPrincipalsCommentPermissionTableSeeder.php on line 8
+[27-Sep-2026 10:04:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/MyMockSubjectVettingsPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/MyMockSubjectVettingsPermissionTableSeeder.php on line 8
+[27-Sep-2026 10:04:01 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ParentPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ParentPermissionTableSeeder.php on line 8
+[27-Sep-2026 10:04:01 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/PaymentGatewayPermissionSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/PaymentGatewayPermissionSeeder.php on line 8
+[27-Sep-2026 10:04:01 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ParentPortalPermissionSeeder.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ParentPortalPermissionSeeder.php on line 10
+[27-Sep-2026 10:04:01 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/PromotionPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/PromotionPermissionTableSeeder.php on line 8
+[27-Sep-2026 10:04:01 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ResultSendPermissionSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ResultSendPermissionSeeder.php on line 8
+[27-Sep-2026 10:04:01 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ResultAccessPermissionSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ResultAccessPermissionSeeder.php on line 8
+[27-Sep-2026 10:04:01 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/RoleTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/RoleTableSeeder.php on line 8
+[27-Sep-2026 10:04:01 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ScholarshipTypeSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ScholarshipTypeSeeder.php on line 9
+[27-Sep-2026 10:04:01 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ScholarshipPermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ScholarshipPermissionSeeder.php on line 9
+[27-Sep-2026 10:04:01 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/SchoolBillTermSessionPermissionTableSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/SchoolBillTermSessionPermissionTableSeeder.php on line 9
+[27-Sep-2026 10:04:01 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/SchoolInformationPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/SchoolInformationPermissionTableSeeder.php on line 8
+[27-Sep-2026 10:04:02 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/StaffAttendancePermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/StaffAttendancePermissionTableSeeder.php on line 8
+[27-Sep-2026 10:04:02 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/StudentLeavePermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/StudentLeavePermissionSeeder.php on line 9
+[27-Sep-2026 10:04:02 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/StudentPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/StudentPermissionTableSeeder.php on line 8
+[27-Sep-2026 10:04:02 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/StudentReportPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/StudentReportPermissionTableSeeder.php on line 8
+[27-Sep-2026 10:04:02 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/TimetablePermissionTableSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/TimetablePermissionTableSeeder.php on line 9
+[27-Sep-2026 10:04:03 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ViewClassPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ViewClassPermissionTableSeeder.php on line 8
+[27-Sep-2026 10:04:17 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AccountingSetupSeeder.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AccountingSetupSeeder.php on line 15
+[27-Sep-2026 10:04:17 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AdminScoreEntryPermissionSeeder.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AdminScoreEntryPermissionSeeder.php on line 10
+[27-Sep-2026 10:04:17 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AdminStudentResultManagerPermissionSeeder.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AdminStudentResultManagerPermissionSeeder.php on line 10
+[27-Sep-2026 10:04:17 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AllFinancePermissionsSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AllFinancePermissionsSeeder.php on line 8
+[27-Sep-2026 10:04:18 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AnalysisPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AnalysisPermissionTableSeeder.php on line 8
+[27-Sep-2026 10:04:18 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AttendancePermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AttendancePermissionTableSeeder.php on line 8
+[27-Sep-2026 10:04:18 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/BillCategorySeeder.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/BillCategorySeeder.php on line 10
+[27-Sep-2026 10:04:18 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/BackupPermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/BackupPermissionSeeder.php on line 9
+[27-Sep-2026 10:04:18 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/CalendarPermissionSeeder.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/CalendarPermissionSeeder.php on line 11
+[27-Sep-2026 10:04:18 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/CompulsorySubjectsPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/CompulsorySubjectsPermissionTableSeeder.php on line 8
+[27-Sep-2026 10:04:18 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/DatabaseSeeder.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/DatabaseSeeder.php on line 11
+[27-Sep-2026 10:04:18 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/DefaultPaymentGatewaysSeeder.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/DefaultPaymentGatewaysSeeder.php on line 11
+[27-Sep-2026 10:04:19 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ExamPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ExamPermissionTableSeeder.php on line 8
+[27-Sep-2026 10:04:19 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FeatureFlagPermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FeatureFlagPermissionSeeder.php on line 9
+[27-Sep-2026 10:04:19 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ExamTimetablePermissionTableSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ExamTimetablePermissionTableSeeder.php on line 9
+[27-Sep-2026 10:04:19 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FinancePermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FinancePermissionSeeder.php on line 9
+[27-Sep-2026 10:04:19 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FinanceOpsPermissionSeeder.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FinanceOpsPermissionSeeder.php on line 10
+[27-Sep-2026 10:04:20 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/LeavePermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/LeavePermissionSeeder.php on line 9
+[27-Sep-2026 10:04:20 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/MyPrincipalsCommentPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/MyPrincipalsCommentPermissionTableSeeder.php on line 8
+[27-Sep-2026 10:04:20 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/NoticePermissionSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/NoticePermissionSeeder.php on line 8
+[27-Sep-2026 10:04:21 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/PaymentGatewayPermissionSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/PaymentGatewayPermissionSeeder.php on line 8
+[27-Sep-2026 10:04:21 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ParentPortalPermissionSeeder.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ParentPortalPermissionSeeder.php on line 10
+[27-Sep-2026 10:04:21 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/PaymentMethodSeeder.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/PaymentMethodSeeder.php on line 10
+[27-Sep-2026 10:04:21 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ResultAccessPermissionSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ResultAccessPermissionSeeder.php on line 8
+[27-Sep-2026 10:04:21 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ResultSendPermissionSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ResultSendPermissionSeeder.php on line 8
+[27-Sep-2026 10:04:22 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ScholarshipTypeSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ScholarshipTypeSeeder.php on line 9
+[27-Sep-2026 10:04:22 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/RoomPermissionTableSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/RoomPermissionTableSeeder.php on line 9
+[27-Sep-2026 10:04:22 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/SchoolPaymentPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/SchoolPaymentPermissionTableSeeder.php on line 8
+[27-Sep-2026 10:04:22 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/SiblingGroupPermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/SiblingGroupPermissionSeeder.php on line 9
+[27-Sep-2026 10:04:22 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/StaffPaymentPermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/StaffPaymentPermissionSeeder.php on line 9
+[27-Sep-2026 10:04:23 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/StudentLeavePermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/StudentLeavePermissionSeeder.php on line 9
+[27-Sep-2026 10:04:23 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/StudentPaymentPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/StudentPaymentPermissionTableSeeder.php on line 8
+[27-Sep-2026 10:04:23 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/SubjectClassResultRoomOperationPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/SubjectClassResultRoomOperationPermissionTableSeeder.php on line 8
+[27-Sep-2026 10:04:23 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/SubjectVettedPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/SubjectVettedPermissionTableSeeder.php on line 8
+[27-Sep-2026 10:04:23 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/SubjectUploadForStaffPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/SubjectUploadForStaffPermissionTableSeeder.php on line 8
+[27-Sep-2026 10:04:24 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/TimetablePermissionTableSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/TimetablePermissionTableSeeder.php on line 9
+[27-Sep-2026 10:04:24 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/TimetableReportsPermissionTableSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/TimetableReportsPermissionTableSeeder.php on line 9
+[27-Sep-2026 10:04:24 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/UpdatedScholarshipPermissionTableSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/UpdatedScholarshipPermissionTableSeeder.php on line 9
+[27-Sep-2026 10:04:25 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/UserTableSeeder.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/UserTableSeeder.php on line 15
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AccountingSetupSeeder.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AccountingSetupSeeder.php on line 15
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/BackupPermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/BackupPermissionSeeder.php on line 9
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ClubPermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ClubPermissionSeeder.php on line 9
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/DefaultPaymentGatewaysSeeder.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/DefaultPaymentGatewaysSeeder.php on line 11
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ExamTimetablePermissionTableSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ExamTimetablePermissionTableSeeder.php on line 9
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FeatureFlagPermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FeatureFlagPermissionSeeder.php on line 9
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FinancePermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FinancePermissionSeeder.php on line 9
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/HousePermissionSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/HousePermissionSeeder.php on line 8
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AdminStudentResultManagerPermissionSeeder.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/AdminStudentResultManagerPermissionSeeder.php on line 10
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/CalendarPermissionSeeder.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/CalendarPermissionSeeder.php on line 11
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FeatureFlagPermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/FeatureFlagPermissionSeeder.php on line 9
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ParentPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/ParentPermissionTableSeeder.php on line 8
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/StaffPaymentPermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/StaffPaymentPermissionSeeder.php on line 9
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/StudentPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/StudentPermissionTableSeeder.php on line 8
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/SubjectClassResultRoomOperationPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/SubjectClassResultRoomOperationPermissionTableSeeder.php on line 8
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/SubjectVettingsPermissionTableSeeder.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/seeders/SubjectVettingsPermissionTableSeeder.php on line 8

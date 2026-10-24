@@ -1,0 +1,8 @@
+[27-Sep-2026 10:10:02 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Translation\Catalogue\OperationInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/Catalogue/AbstractOperation.php:27
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/Catalogue/AbstractOperation.php on line 27
+[27-Sep-2026 10:10:03 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Translation\Catalogue\AbstractOperation" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/Catalogue/TargetOperation.php:26
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/Catalogue/TargetOperation.php on line 26

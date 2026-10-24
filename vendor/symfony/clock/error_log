@@ -1,0 +1,40 @@
+[27-Sep-2026 10:05:31 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Clock\ClockInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/clock/Clock.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/clock/Clock.php on line 21
+[27-Sep-2026 10:05:31 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Clock\ClockInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/clock/ClockInterface.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/clock/ClockInterface.php on line 19
+[27-Sep-2026 10:05:31 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Clock\ClockInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/clock/MockClock.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/clock/MockClock.php on line 21
+[27-Sep-2026 10:05:31 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Clock\ClockInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/clock/MonotonicClock.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/clock/MonotonicClock.php on line 19
+[27-Sep-2026 10:05:31 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Clock\ClockInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/clock/NativeClock.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/clock/NativeClock.php on line 19
+[27-Sep-2026 10:07:28 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Clock\ClockInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/clock/Clock.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/clock/Clock.php on line 21
+[27-Sep-2026 10:07:28 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Clock\ClockInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/clock/ClockInterface.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/clock/ClockInterface.php on line 19
+[27-Sep-2026 10:07:28 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Clock\ClockInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/clock/MockClock.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/clock/MockClock.php on line 21
+[27-Sep-2026 10:07:29 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Clock\ClockInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/clock/MonotonicClock.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/clock/MonotonicClock.php on line 19
+[27-Sep-2026 10:07:29 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Clock\ClockInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/clock/NativeClock.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/clock/NativeClock.php on line 19

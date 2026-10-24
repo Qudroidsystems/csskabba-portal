@@ -1,0 +1,20 @@
+[27-Sep-2026 10:06:00 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Config\MutableConfigurationInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/config/src/ConfigurationBuilderInterface.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/config/src/ConfigurationBuilderInterface.php on line 19
+[27-Sep-2026 10:06:00 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Config\ConfigurationBuilderInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/config/src/Configuration.php:28
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/config/src/Configuration.php on line 28
+[27-Sep-2026 10:08:39 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Config\ConfigurationBuilderInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/config/src/Configuration.php:28
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/config/src/Configuration.php on line 28
+[27-Sep-2026 10:08:39 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Config\MutableConfigurationInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/config/src/ConfigurationBuilderInterface.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/config/src/ConfigurationBuilderInterface.php on line 19
+[27-Sep-2026 10:08:40 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Config\ConfigurationInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/config/src/ReadOnlyConfiguration.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/config/src/ReadOnlyConfiguration.php on line 19

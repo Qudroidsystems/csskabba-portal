@@ -1,0 +1,4 @@
+[27-Sep-2026 10:06:39 UTC] PHP Fatal error:  Uncaught Error: Class "PHPUnit\Framework\TestCase" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation-contracts/Test/TranslatorTest.php:34
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation-contracts/Test/TranslatorTest.php on line 34

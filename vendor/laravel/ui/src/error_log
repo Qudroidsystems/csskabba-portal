@@ -1,0 +1,12 @@
+[27-Sep-2026 10:08:38 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/ui/src/AuthCommand.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/ui/src/AuthCommand.php on line 10
+[27-Sep-2026 10:08:38 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/ui/src/UiCommand.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/ui/src/UiCommand.php on line 10
+[27-Sep-2026 10:08:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/ui/src/ControllersCommand.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/ui/src/ControllersCommand.php on line 12

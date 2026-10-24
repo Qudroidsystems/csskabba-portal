@@ -1,0 +1,4 @@
+[27-Sep-2026 10:07:07 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Routing\Generator\Dumper\GeneratorDumperInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/routing/Generator/Dumper/GeneratorDumper.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/routing/Generator/Dumper/GeneratorDumper.php on line 21

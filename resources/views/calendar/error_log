@@ -1,0 +1,5 @@
+[27-Sep-2026 10:05:27 UTC] PHP Warning:  Undefined variable $anchor in /home1/gozakma1/public_html/homaj.viteschools.ng/resources/views/calendar/public.blade.php on line 2
+[27-Sep-2026 10:05:27 UTC] PHP Fatal error:  Uncaught Error: Call to a member function copy() on null in /home1/gozakma1/public_html/homaj.viteschools.ng/resources/views/calendar/public.blade.php:2
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/resources/views/calendar/public.blade.php on line 2

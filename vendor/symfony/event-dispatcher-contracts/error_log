@@ -1,0 +1,16 @@
+[27-Sep-2026 10:05:36 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\EventDispatcher\StoppableEventInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher-contracts/Event.php:31
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher-contracts/Event.php on line 31
+[27-Sep-2026 10:05:36 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\EventDispatcher\EventDispatcherInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher-contracts/EventDispatcherInterface.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher-contracts/EventDispatcherInterface.php on line 19
+[27-Sep-2026 10:07:31 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\EventDispatcher\StoppableEventInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher-contracts/Event.php:31
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher-contracts/Event.php on line 31
+[27-Sep-2026 10:07:32 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\EventDispatcher\EventDispatcherInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher-contracts/EventDispatcherInterface.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher-contracts/EventDispatcherInterface.php on line 19

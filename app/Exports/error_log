@@ -1,0 +1,88 @@
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Trait "Maatwebsite\Excel\Concerns\Exportable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/AdminRecordsheetExport.php on line 21
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Uncaught Error: Interface "Maatwebsite\Excel\Concerns\FromArray" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/BroadsheetExport.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/BroadsheetExport.php on line 17
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Trait "Maatwebsite\Excel\Concerns\Exportable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/MockRecordsheetExport.php on line 16
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Trait "Maatwebsite\Excel\Concerns\Exportable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/RecordsheetExport.php on line 20
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Uncaught Error: Interface "Maatwebsite\Excel\Concerns\FromArray" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StaffUserBatchTemplateExport.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StaffUserBatchTemplateExport.php on line 15
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Uncaught Error: Interface "Maatwebsite\Excel\Concerns\FromArray" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StudentBatchTemplateExport.php:42
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StudentBatchTemplateExport.php on line 42
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Uncaught Error: Interface "Maatwebsite\Excel\Concerns\FromCollection" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StudentReportExport.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StudentReportExport.php on line 21
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Trait "Maatwebsite\Excel\Concerns\Exportable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/AdminRecordsheetExport.php on line 21
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Uncaught Error: Interface "Maatwebsite\Excel\Concerns\FromView" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StaffAttendanceExport.php:29
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StaffAttendanceExport.php on line 29
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Uncaught Error: Interface "Maatwebsite\Excel\Concerns\FromArray" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/BroadsheetExport.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/BroadsheetExport.php on line 17
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Trait "Maatwebsite\Excel\Concerns\Exportable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/MockRecordsheetExport.php on line 16
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Trait "Maatwebsite\Excel\Concerns\Exportable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/RecordsheetExport.php on line 20
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Uncaught Error: Interface "Maatwebsite\Excel\Concerns\FromArray" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StaffUserBatchTemplateExport.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StaffUserBatchTemplateExport.php on line 15
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Uncaught Error: Interface "Maatwebsite\Excel\Concerns\FromArray" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StudentBatchTemplateExport.php:42
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StudentBatchTemplateExport.php on line 42
+[27-Sep-2026 10:03:52 UTC] PHP Fatal error:  Uncaught Error: Interface "Maatwebsite\Excel\Concerns\FromCollection" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StudentReportExport.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StudentReportExport.php on line 21
+[28-Sep-2026 14:07:05 UTC] PHP Fatal error:  Uncaught Error: Interface "Maatwebsite\Excel\Concerns\FromArray" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/BroadsheetExport.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/BroadsheetExport.php on line 17
+[28-Sep-2026 14:07:05 UTC] PHP Fatal error:  Trait "Maatwebsite\Excel\Concerns\Exportable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/AdminRecordsheetExport.php on line 21
+[28-Sep-2026 14:07:05 UTC] PHP Fatal error:  Trait "Maatwebsite\Excel\Concerns\Exportable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/RecordsheetExport.php on line 20
+[28-Sep-2026 14:07:05 UTC] PHP Fatal error:  Trait "Maatwebsite\Excel\Concerns\Exportable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/MockRecordsheetExport.php on line 16
+[28-Sep-2026 14:07:05 UTC] PHP Fatal error:  Uncaught Error: Interface "Maatwebsite\Excel\Concerns\FromArray" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StudentBatchTemplateExport.php:42
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StudentBatchTemplateExport.php on line 42
+[28-Sep-2026 14:07:05 UTC] PHP Fatal error:  Uncaught Error: Interface "Maatwebsite\Excel\Concerns\FromView" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StaffAttendanceExport.php:29
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StaffAttendanceExport.php on line 29
+[28-Sep-2026 14:07:05 UTC] PHP Fatal error:  Uncaught Error: Interface "Maatwebsite\Excel\Concerns\FromArray" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StaffUserBatchTemplateExport.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StaffUserBatchTemplateExport.php on line 15
+[28-Sep-2026 14:07:05 UTC] PHP Fatal error:  Uncaught Error: Interface "Maatwebsite\Excel\Concerns\FromCollection" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StudentReportExport.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StudentReportExport.php on line 21
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Trait "Maatwebsite\Excel\Concerns\Exportable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/AdminRecordsheetExport.php on line 21
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Interface "Maatwebsite\Excel\Concerns\FromArray" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/BroadsheetExport.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/BroadsheetExport.php on line 17
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Trait "Maatwebsite\Excel\Concerns\Exportable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/MockRecordsheetExport.php on line 16
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Trait "Maatwebsite\Excel\Concerns\Exportable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/RecordsheetExport.php on line 20
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Interface "Maatwebsite\Excel\Concerns\FromView" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StaffAttendanceExport.php:29
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StaffAttendanceExport.php on line 29
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Interface "Maatwebsite\Excel\Concerns\FromArray" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StaffUserBatchTemplateExport.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StaffUserBatchTemplateExport.php on line 15
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Interface "Maatwebsite\Excel\Concerns\FromArray" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StudentBatchTemplateExport.php:42
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StudentBatchTemplateExport.php on line 42
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Interface "Maatwebsite\Excel\Concerns\FromCollection" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StudentReportExport.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exports/StudentReportExport.php on line 21

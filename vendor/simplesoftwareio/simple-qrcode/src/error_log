@@ -1,0 +1,8 @@
+[27-Sep-2026 10:06:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\ServiceProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/simplesoftwareio/simple-qrcode/src/QrCodeServiceProvider.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/simplesoftwareio/simple-qrcode/src/QrCodeServiceProvider.php on line 7
+[27-Sep-2026 10:09:14 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\ServiceProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/simplesoftwareio/simple-qrcode/src/QrCodeServiceProvider.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/simplesoftwareio/simple-qrcode/src/QrCodeServiceProvider.php on line 7

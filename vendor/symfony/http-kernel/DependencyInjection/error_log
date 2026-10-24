@@ -1,0 +1,17 @@
+[27-Sep-2026 10:06:30 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\DependencyInjection\Extension" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/DependencyInjection/ConfigurableExtension.php:28
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/DependencyInjection/ConfigurableExtension.php on line 28
+[27-Sep-2026 10:09:48 UTC] PHP Fatal error:  Trait "Symfony\Component\DependencyInjection\Compiler\PriorityTaggedServiceTrait" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/DependencyInjection/ControllerArgumentValueResolverPass.php on line 29
+[27-Sep-2026 10:09:48 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\DependencyInjection\Extension" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/DependencyInjection/ConfigurableExtension.php:28
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/DependencyInjection/ConfigurableExtension.php on line 28
+[27-Sep-2026 10:09:48 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/DependencyInjection/FragmentRendererPass.php:26
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/DependencyInjection/FragmentRendererPass.php on line 26
+[27-Sep-2026 10:09:49 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/DependencyInjection/RemoveEmptyControllerArgumentLocatorsPass.php:22
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/DependencyInjection/RemoveEmptyControllerArgumentLocatorsPass.php on line 22

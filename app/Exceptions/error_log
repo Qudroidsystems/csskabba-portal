@@ -1,0 +1,16 @@
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Exceptions\Handler" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exceptions/Handler.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exceptions/Handler.php on line 10
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Exceptions\Handler" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exceptions/Handler.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exceptions/Handler.php on line 10
+[28-Sep-2026 14:07:05 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Exceptions\Handler" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exceptions/Handler.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exceptions/Handler.php on line 10
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Exceptions\Handler" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exceptions/Handler.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Exceptions/Handler.php on line 10

@@ -1,0 +1,4 @@
+[27-Sep-2026 10:09:19 UTC] PHP Fatal error:  Uncaught Error: Interface "SebastianBergmann\Diff\LongestCommonSubsequenceCalculator" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/diff/src/MemoryEfficientLongestCommonSubsequenceCalculator.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/diff/src/MemoryEfficientLongestCommonSubsequenceCalculator.php on line 20

@@ -1,0 +1,224 @@
+[27-Sep-2026 10:03:43 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/app.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/app.php on line 19
+[27-Sep-2026 10:03:43 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/database.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/database.php on line 19
+[27-Sep-2026 10:03:43 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/auth.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/auth.php on line 17
+[27-Sep-2026 10:03:43 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/cache.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/cache.php on line 18
+[27-Sep-2026 10:03:44 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function storage_path() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/dompdf.php:48
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/dompdf.php on line 48
+[27-Sep-2026 10:03:44 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/logging.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/logging.php on line 21
+[27-Sep-2026 10:03:44 UTC] PHP Fatal error:  Uncaught Error: Class "Maatwebsite\Excel\Excel" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/config/excel.php:165
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/excel.php on line 165
+[27-Sep-2026 10:03:44 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/filesystems.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/filesystems.php on line 16
+[27-Sep-2026 10:03:44 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/queue.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/queue.php on line 16
+[27-Sep-2026 10:03:44 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/mail.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/mail.php on line 17
+[27-Sep-2026 10:03:44 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/reminders.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/reminders.php on line 8
+[27-Sep-2026 10:03:44 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/services.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/services.php on line 18
+[27-Sep-2026 10:03:44 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/session.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/session.php on line 21
+[27-Sep-2026 10:03:44 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/weasyprint.php:33
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/weasyprint.php on line 33
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/auth.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/auth.php on line 17
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/app.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/app.php on line 19
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/database.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/database.php on line 19
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/cache.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/cache.php on line 18
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function storage_path() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/dompdf.php:48
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/dompdf.php on line 48
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/filesystems.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/filesystems.php on line 16
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Uncaught Error: Class "Maatwebsite\Excel\Excel" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/config/excel.php:165
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/excel.php on line 165
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/logging.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/logging.php on line 21
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/mail.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/mail.php on line 17
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/queue.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/queue.php on line 16
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/services.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/services.php on line 18
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/reminders.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/reminders.php on line 8
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/weasyprint.php:33
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/weasyprint.php on line 33
+[27-Sep-2026 10:03:47 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/session.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/session.php on line 21
+[28-Sep-2026 14:07:04 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/auth.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/auth.php on line 17
+[28-Sep-2026 14:07:04 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/app.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/app.php on line 19
+[28-Sep-2026 14:07:04 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/cache.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/cache.php on line 18
+[28-Sep-2026 14:07:04 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/database.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/database.php on line 19
+[28-Sep-2026 14:07:04 UTC] PHP Fatal error:  Uncaught Error: Class "Maatwebsite\Excel\Excel" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/config/excel.php:165
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/excel.php on line 165
+[28-Sep-2026 14:07:04 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function storage_path() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/dompdf.php:48
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/dompdf.php on line 48
+[28-Sep-2026 14:07:04 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/filesystems.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/filesystems.php on line 16
+[28-Sep-2026 14:07:04 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/logging.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/logging.php on line 21
+[28-Sep-2026 14:07:04 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/mail.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/mail.php on line 17
+[28-Sep-2026 14:07:04 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/queue.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/queue.php on line 16
+[28-Sep-2026 14:07:04 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/session.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/session.php on line 21
+[28-Sep-2026 14:07:04 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/reminders.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/reminders.php on line 8
+[28-Sep-2026 14:07:04 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/services.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/services.php on line 18
+[28-Sep-2026 14:07:04 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/weasyprint.php:33
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/weasyprint.php on line 33
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/app.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/app.php on line 19
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/auth.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/auth.php on line 17
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/database.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/database.php on line 19
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/cache.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/cache.php on line 18
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function storage_path() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/dompdf.php:48
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/dompdf.php on line 48
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/filesystems.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/filesystems.php on line 16
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/logging.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/logging.php on line 21
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Maatwebsite\Excel\Excel" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/config/excel.php:165
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/excel.php on line 165
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/mail.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/mail.php on line 17
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/reminders.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/reminders.php on line 8
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/services.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/services.php on line 18
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/session.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/session.php on line 21
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/weasyprint.php:33
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/weasyprint.php on line 33
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/config/queue.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/config/queue.php on line 16

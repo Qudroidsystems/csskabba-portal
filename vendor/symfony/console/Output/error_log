@@ -1,0 +1,12 @@
+[27-Sep-2026 10:06:22 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Console\Output\OutputInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Output/ConsoleOutputInterface.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Output/ConsoleOutputInterface.php on line 20
+[27-Sep-2026 10:09:31 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Console\Output\StreamOutput" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Output/ConsoleOutput.php:30
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Output/ConsoleOutput.php on line 30
+[27-Sep-2026 10:09:32 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Console\Output\OutputInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Output/Output.php:31
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Output/Output.php on line 31

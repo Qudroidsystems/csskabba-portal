@@ -1,0 +1,61 @@
+[27-Sep-2026 10:05:55 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Http\Message\StreamInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/AppendStream.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/AppendStream.php on line 14
+[27-Sep-2026 10:05:55 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Http\Message\StreamInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/BufferStream.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/BufferStream.php on line 17
+[27-Sep-2026 10:05:55 UTC] PHP Fatal error:  Trait "GuzzleHttp\Psr7\StreamDecoratorTrait" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/CachingStream.php on line 13
+[27-Sep-2026 10:05:55 UTC] PHP Fatal error:  Trait "GuzzleHttp\Psr7\StreamDecoratorTrait" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/DroppingStream.php on line 13
+[27-Sep-2026 10:05:55 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Http\Message\StreamInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/FnStream.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/FnStream.php on line 16
+[27-Sep-2026 10:05:55 UTC] PHP Fatal error:  Trait "GuzzleHttp\Psr7\StreamDecoratorTrait" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/InflateStream.php on line 20
+[27-Sep-2026 10:05:55 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Http\Message\RequestFactoryInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/HttpFactory.php:26
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/HttpFactory.php on line 26
+[27-Sep-2026 10:05:56 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Http\Message\StreamInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/Stream.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/Stream.php on line 12
+[27-Sep-2026 10:08:26 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Http\Message\StreamInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/AppendStream.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/AppendStream.php on line 14
+[27-Sep-2026 10:08:26 UTC] PHP Fatal error:  Trait "GuzzleHttp\Psr7\StreamDecoratorTrait" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/DroppingStream.php on line 13
+[27-Sep-2026 10:08:26 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Http\Message\StreamInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/BufferStream.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/BufferStream.php on line 17
+[27-Sep-2026 10:08:26 UTC] PHP Fatal error:  Trait "GuzzleHttp\Psr7\StreamDecoratorTrait" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/CachingStream.php on line 13
+[27-Sep-2026 10:08:27 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Http\Message\StreamInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/FnStream.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/FnStream.php on line 16
+[27-Sep-2026 10:08:27 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Http\Message\RequestFactoryInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/HttpFactory.php:26
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/HttpFactory.php on line 26
+[27-Sep-2026 10:08:27 UTC] PHP Fatal error:  Trait "GuzzleHttp\Psr7\StreamDecoratorTrait" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/InflateStream.php on line 20
+[27-Sep-2026 10:08:27 UTC] PHP Fatal error:  Trait "GuzzleHttp\Psr7\StreamDecoratorTrait" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/MultipartStream.php on line 13
+[27-Sep-2026 10:08:27 UTC] PHP Fatal error:  Trait "GuzzleHttp\Psr7\StreamDecoratorTrait" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/LazyOpenStream.php on line 13
+[27-Sep-2026 10:08:27 UTC] PHP Fatal error:  Trait "GuzzleHttp\Psr7\StreamDecoratorTrait" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/LimitStream.php on line 12
+[27-Sep-2026 10:08:27 UTC] PHP Fatal error:  Uncaught Error: Class "GuzzleHttp\Psr7\Request" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/ServerRequest.php:27
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/ServerRequest.php on line 27
+[27-Sep-2026 10:08:28 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Http\Message\StreamInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/Stream.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/Stream.php on line 12
+[27-Sep-2026 10:08:28 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Http\Message\UploadedFileInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/UploadedFile.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/UploadedFile.php on line 12
+[27-Sep-2026 10:08:28 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Http\Message\UriInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/Uri.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/psr7/src/Uri.php on line 17

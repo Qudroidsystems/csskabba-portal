@@ -1,0 +1,12 @@
+[27-Sep-2026 10:06:09 UTC] PHP Fatal error:  Uncaught Error: Class "Orchestra\Testbench\TestCase" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/rockett/pipeline/tests/InterruptibleProcessorTest.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/rockett/pipeline/tests/InterruptibleProcessorTest.php on line 11
+[27-Sep-2026 10:09:11 UTC] PHP Fatal error:  Uncaught Error: Class "Orchestra\Testbench\TestCase" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/rockett/pipeline/tests/InterruptibleProcessorTest.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/rockett/pipeline/tests/InterruptibleProcessorTest.php on line 11
+[27-Sep-2026 10:09:11 UTC] PHP Fatal error:  Uncaught Error: Class "Orchestra\Testbench\TestCase" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/rockett/pipeline/tests/PipelineTest.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/rockett/pipeline/tests/PipelineTest.php on line 13

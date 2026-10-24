@@ -1,0 +1,8 @@
+[27-Sep-2026 10:09:55 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Mime\Part\TextPart" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/Part/DataPart.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/Part/DataPart.php on line 20
+[27-Sep-2026 10:09:55 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Mime\Part\AbstractPart" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/Part/SMimePart.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/Part/SMimePart.php on line 19

@@ -1,0 +1,12 @@
+[27-Sep-2026 10:09:31 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Console\Exception\ExceptionInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Exception/InvalidArgumentException.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Exception/InvalidArgumentException.php on line 17
+[27-Sep-2026 10:09:31 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Console\Exception\ExceptionInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Exception/LogicException.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Exception/LogicException.php on line 17
+[27-Sep-2026 10:09:31 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Console\Exception\ExceptionInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Exception/CommandNotFoundException.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Exception/CommandNotFoundException.php on line 19

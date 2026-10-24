@@ -1,0 +1,11 @@
+[27-Sep-2026 10:08:46 UTC] PHP Fatal error:  Trait "Maatwebsite\Excel\DelegatedMacroable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maatwebsite/excel/src/Cell.php on line 13
+[27-Sep-2026 10:08:46 UTC] PHP Fatal error:  Trait "Illuminate\Support\Traits\Macroable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maatwebsite/excel/src/DelegatedMacroable.php on line 7
+[27-Sep-2026 10:08:46 UTC] PHP Fatal error:  Trait "Illuminate\Support\Traits\Macroable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maatwebsite/excel/src/Excel.php on line 13
+[27-Sep-2026 10:08:46 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\ServiceProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maatwebsite/excel/src/ExcelServiceProvider.php:23
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maatwebsite/excel/src/ExcelServiceProvider.php on line 23
+[27-Sep-2026 10:08:47 UTC] PHP Fatal error:  Trait "Maatwebsite\Excel\Concerns\Importable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maatwebsite/excel/src/HeadingRowImport.php on line 11
+[27-Sep-2026 10:08:47 UTC] PHP Fatal error:  Trait "Maatwebsite\Excel\DelegatedMacroable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maatwebsite/excel/src/Row.php on line 11
+[27-Sep-2026 10:08:47 UTC] PHP Fatal error:  Trait "Maatwebsite\Excel\DelegatedMacroable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maatwebsite/excel/src/Writer.php on line 25
+[27-Sep-2026 10:08:47 UTC] PHP Fatal error:  Trait "Maatwebsite\Excel\DelegatedMacroable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maatwebsite/excel/src/Reader.php on line 33

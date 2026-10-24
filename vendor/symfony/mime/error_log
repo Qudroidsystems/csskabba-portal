@@ -1,0 +1,44 @@
+[27-Sep-2026 10:05:41 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Mime\Email" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/DraftEmail.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/DraftEmail.php on line 20
+[27-Sep-2026 10:05:41 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Mime\Message" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/Email.php:26
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/Email.php on line 26
+[27-Sep-2026 10:05:41 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Mime\MimeTypeGuesserInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/FileBinaryMimeTypeGuesser.php:22
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/FileBinaryMimeTypeGuesser.php on line 22
+[27-Sep-2026 10:05:41 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Mime\RawMessage" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/Message.php:22
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/Message.php on line 22
+[27-Sep-2026 10:05:42 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Mime\MimeTypeGuesserInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/MimeTypesInterface.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/MimeTypesInterface.php on line 17
+[27-Sep-2026 10:07:39 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Mime\Email" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/DraftEmail.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/DraftEmail.php on line 20
+[27-Sep-2026 10:07:39 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Mime\MimeTypeGuesserInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/FileBinaryMimeTypeGuesser.php:22
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/FileBinaryMimeTypeGuesser.php on line 22
+[27-Sep-2026 10:07:39 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Mime\MimeTypeGuesserInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/FileinfoMimeTypeGuesser.php:23
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/FileinfoMimeTypeGuesser.php on line 23
+[27-Sep-2026 10:07:39 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Mime\RawMessage" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/Message.php:22
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/Message.php on line 22
+[27-Sep-2026 10:07:40 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Mime\MimeTypeGuesserInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/MimeTypesInterface.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/MimeTypesInterface.php on line 17
+[27-Sep-2026 10:07:40 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Mime\MimeTypesInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/MimeTypes.php:37
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/MimeTypes.php on line 37

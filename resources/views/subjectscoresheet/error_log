@@ -1,0 +1,1 @@
+[27-Sep-2026 10:06:03 UTC] PHP Fatal error:  Namespace declaration statement has to be the very first statement or after any declare call in the script in /home1/gozakma1/public_html/homaj.viteschools.ng/resources/views/subjectscoresheet/index.blade copy.php on line 1135

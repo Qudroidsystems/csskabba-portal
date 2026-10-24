@@ -1,0 +1,4 @@
+[27-Sep-2026 10:06:58 UTC] PHP Fatal error:  Uncaught Error: Interface "Psy\Formatter\ReflectorFormatter" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psy/psysh/src/Formatter/DocblockFormatter.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psy/psysh/src/Formatter/DocblockFormatter.php on line 20

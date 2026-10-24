@@ -1,0 +1,4 @@
+[27-Sep-2026 10:06:45 UTC] PHP Fatal error:  Uncaught Error: Interface "League\CommonMark\Delimiter\DelimiterInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/commonmark/src/Delimiter/Delimiter.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/commonmark/src/Delimiter/Delimiter.php on line 21

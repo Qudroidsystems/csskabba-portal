@@ -1,0 +1,4 @@
+[27-Sep-2026 10:06:35 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Mime\Header\AbstractHeader" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/Header/UnstructuredHeader.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/Header/UnstructuredHeader.php on line 19

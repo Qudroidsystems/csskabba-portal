@@ -1,0 +1,5 @@
+[27-Sep-2026 10:08:38 UTC] PHP Fatal error:  Trait "Illuminate\Foundation\Auth\RedirectsUsers" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/ui/auth-backend/ConfirmsPasswords.php on line 8
+[27-Sep-2026 10:08:38 UTC] PHP Fatal error:  Trait "Illuminate\Foundation\Auth\RedirectsUsers" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/ui/auth-backend/RegistersUsers.php on line 10
+[27-Sep-2026 10:08:38 UTC] PHP Fatal error:  Trait "Illuminate\Foundation\Auth\RedirectsUsers" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/ui/auth-backend/ResetsPasswords.php on line 15
+[27-Sep-2026 10:08:38 UTC] PHP Fatal error:  Trait "Illuminate\Foundation\Auth\RedirectsUsers" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/ui/auth-backend/AuthenticatesUsers.php on line 10
+[27-Sep-2026 10:08:38 UTC] PHP Fatal error:  Trait "Illuminate\Foundation\Auth\RedirectsUsers" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/ui/auth-backend/VerifiesEmails.php on line 10

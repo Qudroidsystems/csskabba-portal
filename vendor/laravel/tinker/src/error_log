@@ -1,0 +1,4 @@
+[27-Sep-2026 10:08:38 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\ServiceProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/tinker/src/TinkerServiceProvider.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/tinker/src/TinkerServiceProvider.php on line 11

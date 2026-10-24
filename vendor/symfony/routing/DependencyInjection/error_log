@@ -1,0 +1,2 @@
+[27-Sep-2026 10:06:37 UTC] PHP Fatal error:  Trait "Symfony\Component\DependencyInjection\Compiler\PriorityTaggedServiceTrait" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/routing/DependencyInjection/RoutingResolverPass.php on line 24
+[27-Sep-2026 10:06:37 UTC] PHP Fatal error:  Trait "Symfony\Component\DependencyInjection\Compiler\PriorityTaggedServiceTrait" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/routing/DependencyInjection/RoutingControllerPass.php on line 21

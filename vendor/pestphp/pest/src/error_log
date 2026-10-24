@@ -1,0 +1,2 @@
+[27-Sep-2026 10:06:03 UTC] PHP Fatal error:  Trait "Pest\Concerns\Extendable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/src/Expectation.php on line 53
+[27-Sep-2026 10:08:56 UTC] PHP Fatal error:  Trait "Pest\Concerns\Extendable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/src/Expectation.php on line 53

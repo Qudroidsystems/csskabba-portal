@@ -1,0 +1,8 @@
+[27-Sep-2026 10:07:54 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/Admin/MaintenanceController.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/Admin/MaintenanceController.php on line 16
+[27-Sep-2026 10:07:54 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/Admin/BackupController.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/Admin/BackupController.php on line 13

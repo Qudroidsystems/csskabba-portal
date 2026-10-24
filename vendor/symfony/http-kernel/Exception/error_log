@@ -1,0 +1,28 @@
+[27-Sep-2026 10:06:33 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\Exception\HttpException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Exception/NotAcceptableHttpException.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Exception/NotAcceptableHttpException.php on line 17
+[27-Sep-2026 10:09:43 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\Exception\HttpException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Exception/AccessDeniedHttpException.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Exception/AccessDeniedHttpException.php on line 18
+[27-Sep-2026 10:09:44 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\Exception\HttpException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Exception/MethodNotAllowedHttpException.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Exception/MethodNotAllowedHttpException.php on line 17
+[27-Sep-2026 10:09:44 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\Exception\HttpException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Exception/NotFoundHttpException.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Exception/NotFoundHttpException.php on line 17
+[27-Sep-2026 10:09:45 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\Exception\HttpException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Exception/PreconditionRequiredHttpException.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Exception/PreconditionRequiredHttpException.php on line 19
+[27-Sep-2026 10:09:45 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\Exception\HttpException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Exception/TooManyRequestsHttpException.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Exception/TooManyRequestsHttpException.php on line 19
+[27-Sep-2026 10:09:45 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\Exception\HttpException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Exception/UnprocessableEntityHttpException.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Exception/UnprocessableEntityHttpException.php on line 17

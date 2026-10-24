@@ -1,0 +1,8 @@
+[27-Sep-2026 10:06:24 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher/DependencyInjection/AddEventAliasesPass.php:22
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher/DependencyInjection/AddEventAliasesPass.php on line 22
+[27-Sep-2026 10:09:34 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher/DependencyInjection/AddEventAliasesPass.php:22
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher/DependencyInjection/AddEventAliasesPass.php on line 22

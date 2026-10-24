@@ -1,0 +1,20 @@
+[27-Sep-2026 10:07:03 UTC] PHP Fatal error:  Uncaught Error: Class "Sabberworm\CSS\Value\ValueList" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sabberworm/php-css-parser/src/Value/CSSFunction.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sabberworm/php-css-parser/src/Value/CSSFunction.php on line 17
+[27-Sep-2026 10:07:03 UTC] PHP Fatal error:  Uncaught Error: Class "Sabberworm\CSS\Value\CSSFunction" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sabberworm/php-css-parser/src/Value/CalcFunction.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sabberworm/php-css-parser/src/Value/CalcFunction.php on line 11
+[27-Sep-2026 10:07:03 UTC] PHP Fatal error:  Uncaught Error: Class "Sabberworm\CSS\Value\ValueList" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sabberworm/php-css-parser/src/Value/LineName.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sabberworm/php-css-parser/src/Value/LineName.php on line 18
+[27-Sep-2026 10:07:03 UTC] PHP Fatal error:  Uncaught Error: Class "Sabberworm\CSS\Value\ValueList" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sabberworm/php-css-parser/src/Value/RuleValueList.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sabberworm/php-css-parser/src/Value/RuleValueList.php on line 12
+[27-Sep-2026 10:07:03 UTC] PHP Fatal error:  Uncaught Error: Class "Sabberworm\CSS\Value\Value" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sabberworm/php-css-parser/src/Value/ValueList.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sabberworm/php-css-parser/src/Value/ValueList.php on line 16

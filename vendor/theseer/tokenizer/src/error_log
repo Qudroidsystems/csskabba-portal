@@ -1,0 +1,8 @@
+[27-Sep-2026 10:06:15 UTC] PHP Fatal error:  Uncaught Error: Class "TheSeer\Tokenizer\Exception" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/theseer/tokenizer/src/NamespaceUriException.php:4
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/theseer/tokenizer/src/NamespaceUriException.php on line 4
+[27-Sep-2026 10:09:21 UTC] PHP Fatal error:  Uncaught Error: Class "TheSeer\Tokenizer\Exception" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/theseer/tokenizer/src/NamespaceUriException.php:4
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/theseer/tokenizer/src/NamespaceUriException.php on line 4

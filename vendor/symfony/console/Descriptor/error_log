@@ -1,0 +1,8 @@
+[27-Sep-2026 10:06:20 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Console\Descriptor\DescriptorInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Descriptor/Descriptor.php:27
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Descriptor/Descriptor.php on line 27
+[27-Sep-2026 10:09:27 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Console\Descriptor\Descriptor" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Descriptor/JsonDescriptor.php:27
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Descriptor/JsonDescriptor.php on line 27

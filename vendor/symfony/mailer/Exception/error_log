@@ -1,0 +1,8 @@
+[27-Sep-2026 10:09:50 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Mailer\Exception\ExceptionInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mailer/Exception/LogicException.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mailer/Exception/LogicException.php on line 17
+[27-Sep-2026 10:09:50 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Mailer\Exception\ExceptionInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mailer/Exception/RuntimeException.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mailer/Exception/RuntimeException.php on line 17

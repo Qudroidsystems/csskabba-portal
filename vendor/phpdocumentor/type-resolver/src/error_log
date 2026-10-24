@@ -1,0 +1,8 @@
+[27-Sep-2026 10:06:02 UTC] PHP Fatal error:  Uncaught Error: Interface "phpDocumentor\Reflection\Type" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/phpdocumentor/type-resolver/src/PseudoType.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/phpdocumentor/type-resolver/src/PseudoType.php on line 16
+[27-Sep-2026 10:08:57 UTC] PHP Fatal error:  Uncaught Error: Interface "phpDocumentor\Reflection\Type" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/phpdocumentor/type-resolver/src/PseudoType.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/phpdocumentor/type-resolver/src/PseudoType.php on line 16

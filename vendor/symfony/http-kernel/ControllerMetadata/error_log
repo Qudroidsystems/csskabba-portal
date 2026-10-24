@@ -1,0 +1,4 @@
+[27-Sep-2026 10:09:39 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadataFactoryInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/ControllerMetadata/ArgumentMetadataFactory.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/ControllerMetadata/ArgumentMetadataFactory.php on line 19

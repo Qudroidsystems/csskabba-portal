@@ -1,0 +1,16 @@
+[27-Sep-2026 10:06:07 UTC] PHP Fatal error:  Uncaught Error: Interface "Psy\EnvInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psy/psysh/src/SuperglobalsEnv.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psy/psysh/src/SuperglobalsEnv.php on line 17
+[27-Sep-2026 10:09:04 UTC] PHP Fatal error:  Uncaught Error: Class "Psy\ExecutionClosure" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psy/psysh/src/ExecutionLoopClosure.php:23
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psy/psysh/src/ExecutionLoopClosure.php on line 23
+[27-Sep-2026 10:09:05 UTC] PHP Fatal error:  Uncaught Error: Interface "Psy\EnvInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psy/psysh/src/SystemEnv.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psy/psysh/src/SystemEnv.php on line 17
+[27-Sep-2026 10:09:05 UTC] PHP Fatal error:  Uncaught Error: Interface "Psy\EnvInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psy/psysh/src/SuperglobalsEnv.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psy/psysh/src/SuperglobalsEnv.php on line 17

@@ -1,0 +1,90 @@
+[27-Sep-2026 10:08:40 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Flysystem\FilesystemException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/CorruptedPathDetected.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/CorruptedPathDetected.php on line 7
+[27-Sep-2026 10:08:40 UTC] PHP Fatal error:  Trait "League\Flysystem\ProxyArrayAccessToProperties" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/DirectoryAttributes.php on line 7
+[27-Sep-2026 10:08:40 UTC] PHP Fatal error:  Trait "League\Flysystem\CalculateChecksumFromStream" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/Filesystem.php on line 18
+[27-Sep-2026 10:08:40 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Flysystem\FilesystemAdapter" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/DecoratedAdapter.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/DecoratedAdapter.php on line 7
+[27-Sep-2026 10:08:40 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Flysystem\FilesystemException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/FilesystemOperationFailed.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/FilesystemOperationFailed.php on line 7
+[27-Sep-2026 10:08:41 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Flysystem\FilesystemException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/PathTraversalDetected.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/PathTraversalDetected.php on line 9
+[27-Sep-2026 10:08:41 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Flysystem\FilesystemOperator" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/MountManager.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/MountManager.php on line 14
+[27-Sep-2026 10:08:41 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Flysystem\FilesystemException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/SymbolicLinkEncountered.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/SymbolicLinkEncountered.php on line 9
+[27-Sep-2026 10:08:41 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Flysystem\FilesystemOperationFailed" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToCheckExistence.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToCheckExistence.php on line 10
+[27-Sep-2026 10:08:41 UTC] PHP Fatal error:  Uncaught Error: Class "League\Flysystem\UnableToCheckExistence" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToCheckDirectoryExistence.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToCheckDirectoryExistence.php on line 7
+[27-Sep-2026 10:08:41 UTC] PHP Fatal error:  Uncaught Error: Class "League\Flysystem\UnableToCheckExistence" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToCheckFileExistence.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToCheckFileExistence.php on line 7
+[27-Sep-2026 10:08:41 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Flysystem\FilesystemOperationFailed" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToDeleteDirectory.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToDeleteDirectory.php on line 10
+[27-Sep-2026 10:08:42 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Flysystem\FilesystemOperationFailed" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToCopyFile.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToCopyFile.php on line 10
+[27-Sep-2026 10:08:42 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Flysystem\FilesystemException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToGeneratePublicUrl.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToGeneratePublicUrl.php on line 10
+[27-Sep-2026 10:08:42 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Flysystem\FilesystemException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToGenerateTemporaryUrl.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToGenerateTemporaryUrl.php on line 10
+[27-Sep-2026 10:08:42 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Flysystem\FilesystemOperationFailed" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToListContents.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToListContents.php on line 10
+[27-Sep-2026 10:08:42 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Flysystem\FilesystemException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToMountFilesystem.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToMountFilesystem.php on line 9
+[27-Sep-2026 10:08:42 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Flysystem\FilesystemException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToProvideChecksum.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToProvideChecksum.php on line 10
+[27-Sep-2026 10:08:42 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Flysystem\FilesystemException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToResolveFilesystemMount.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToResolveFilesystemMount.php on line 9
+[27-Sep-2026 10:08:42 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Flysystem\FilesystemOperationFailed" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToMoveFile.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToMoveFile.php on line 10
+[27-Sep-2026 10:08:42 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Flysystem\FilesystemOperationFailed" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToReadFile.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToReadFile.php on line 10
+[27-Sep-2026 10:08:42 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Flysystem\FilesystemOperationFailed" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToSetVisibility.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToSetVisibility.php on line 13
+[27-Sep-2026 10:08:42 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Flysystem\FilesystemOperationFailed" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToWriteFile.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/UnableToWriteFile.php on line 10
+[27-Sep-2026 10:08:43 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Flysystem\PathNormalizer" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/WhitespacePathNormalizer.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem/src/WhitespacePathNormalizer.php on line 13

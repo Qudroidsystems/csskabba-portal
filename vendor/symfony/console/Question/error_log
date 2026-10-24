@@ -1,0 +1,8 @@
+[27-Sep-2026 10:06:22 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Console\Question\Question" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Question/ConfirmationQuestion.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Question/ConfirmationQuestion.php on line 19
+[27-Sep-2026 10:09:32 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Console\Question\Question" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Question/ConfirmationQuestion.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Question/ConfirmationQuestion.php on line 19

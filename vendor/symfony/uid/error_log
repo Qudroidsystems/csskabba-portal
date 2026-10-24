@@ -1,0 +1,60 @@
+[27-Sep-2026 10:05:48 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Uid\HashableInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/AbstractUid.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/AbstractUid.php on line 19
+[27-Sep-2026 10:05:48 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Uid\Ulid" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/MaxUlid.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/MaxUlid.php on line 14
+[27-Sep-2026 10:05:48 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Uid\Ulid" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/NilUlid.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/NilUlid.php on line 14
+[27-Sep-2026 10:05:48 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Uid\Uuid" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/NilUuid.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/NilUuid.php on line 17
+[27-Sep-2026 10:05:48 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Uid\Uuid" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/UuidV1.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/UuidV1.php on line 19
+[27-Sep-2026 10:05:48 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Uid\AbstractUid" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/Ulid.php:23
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/Ulid.php on line 23
+[27-Sep-2026 10:05:49 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Uid\Uuid" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/UuidV4.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/UuidV4.php on line 19
+[27-Sep-2026 10:05:49 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Uid\Uuid" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/UuidV5.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/UuidV5.php on line 21
+[27-Sep-2026 10:05:49 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Uid\Uuid" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/UuidV7.php:25
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/UuidV7.php on line 25
+[27-Sep-2026 10:07:48 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Uid\HashableInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/AbstractUid.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/AbstractUid.php on line 19
+[27-Sep-2026 10:07:48 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Uid\Uuid" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/MaxUuid.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/MaxUuid.php on line 14
+[27-Sep-2026 10:07:49 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Uid\AbstractUid" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/Ulid.php:23
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/Ulid.php on line 23
+[27-Sep-2026 10:07:49 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Uid\AbstractUid" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/Uuid.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/Uuid.php on line 21
+[27-Sep-2026 10:07:49 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Uid\Uuid" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/NilUuid.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/NilUuid.php on line 17
+[27-Sep-2026 10:07:49 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Uid\Uuid" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/UuidV3.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/uid/UuidV3.php on line 21

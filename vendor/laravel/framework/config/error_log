@@ -1,0 +1,32 @@
+[27-Sep-2026 10:08:28 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/framework/config/app.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/framework/config/app.php on line 19
+[27-Sep-2026 10:08:29 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/framework/config/concurrency.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/framework/config/concurrency.php on line 18
+[27-Sep-2026 10:08:29 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/framework/config/broadcasting.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/framework/config/broadcasting.php on line 18
+[27-Sep-2026 10:08:29 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/framework/config/cache.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/framework/config/cache.php on line 18
+[27-Sep-2026 10:08:29 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/framework/config/database.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/framework/config/database.php on line 20
+[27-Sep-2026 10:08:29 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/framework/config/logging.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/framework/config/logging.php on line 21
+[27-Sep-2026 10:08:29 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/framework/config/queue.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/framework/config/queue.php on line 16
+[27-Sep-2026 10:08:29 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/framework/config/services.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/framework/config/services.php on line 18

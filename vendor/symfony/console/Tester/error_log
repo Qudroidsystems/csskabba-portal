@@ -1,0 +1,1 @@
+[27-Sep-2026 10:09:33 UTC] PHP Fatal error:  Trait "Symfony\Component\Console\Tester\TesterTrait" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Tester/CommandTester.php on line 23

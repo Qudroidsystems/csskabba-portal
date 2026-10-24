@@ -1,0 +1,8 @@
+[27-Sep-2026 10:05:53 UTC] PHP Fatal error:  Uncaught Error: Class "Composer\Pcre\PcreException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/composer/pcre/src/UnexpectedNullMatchException.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/composer/pcre/src/UnexpectedNullMatchException.php on line 14
+[27-Sep-2026 10:08:16 UTC] PHP Fatal error:  Uncaught Error: Class "Composer\Pcre\PcreException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/composer/pcre/src/UnexpectedNullMatchException.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/composer/pcre/src/UnexpectedNullMatchException.php on line 14

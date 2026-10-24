@@ -1,0 +1,4 @@
+[27-Sep-2026 10:08:38 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/tinker/config/tinker.php:61
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/tinker/config/tinker.php on line 61

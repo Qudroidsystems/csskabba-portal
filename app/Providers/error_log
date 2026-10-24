@@ -1,0 +1,56 @@
+[27-Sep-2026 10:03:54 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\ServiceProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/AppServiceProvider.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/AppServiceProvider.php on line 9
+[27-Sep-2026 10:03:54 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\ServiceProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/ActivityServiceProvider.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/ActivityServiceProvider.php on line 17
+[27-Sep-2026 10:03:54 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Support\Providers\AuthServiceProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/AuthServiceProvider.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/AuthServiceProvider.php on line 8
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Support\Providers\EventServiceProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/EventServiceProvider.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/EventServiceProvider.php on line 10
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\ServiceProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/BroadcastServiceProvider.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/BroadcastServiceProvider.php on line 8
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Support\Providers\RouteServiceProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/RouteServiceProvider.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/RouteServiceProvider.php on line 11
+[27-Sep-2026 10:03:57 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\ServiceProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/BroadcastServiceProvider.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/BroadcastServiceProvider.php on line 8
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\ServiceProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/ActivityServiceProvider.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/ActivityServiceProvider.php on line 17
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\ServiceProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/BroadcastServiceProvider.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/BroadcastServiceProvider.php on line 8
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\ServiceProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/AppServiceProvider.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/AppServiceProvider.php on line 9
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Support\Providers\AuthServiceProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/AuthServiceProvider.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/AuthServiceProvider.php on line 8
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Support\Providers\EventServiceProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/EventServiceProvider.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/EventServiceProvider.php on line 10
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Support\Providers\RouteServiceProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/RouteServiceProvider.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/RouteServiceProvider.php on line 11
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Support\Providers\AuthServiceProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/AuthServiceProvider.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Providers/AuthServiceProvider.php on line 8

@@ -1,0 +1,16 @@
+[27-Sep-2026 10:05:47 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Routing\Matcher\UrlMatcherInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/routing/RouterInterface.php:24
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/routing/RouterInterface.php on line 24
+[27-Sep-2026 10:05:47 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Routing\RouterInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/routing/Router.php:38
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/routing/Router.php on line 38
+[27-Sep-2026 10:07:47 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Routing\RouterInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/routing/Router.php:38
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/routing/Router.php on line 38
+[27-Sep-2026 10:07:47 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Routing\Matcher\UrlMatcherInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/routing/RouterInterface.php:24
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/routing/RouterInterface.php on line 24

@@ -1,0 +1,14 @@
+[27-Sep-2026 10:08:53 UTC] PHP Fatal error:  Uncaught Error: Class "Pest\Plugin" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest-plugin-arch/src/Autoload.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest-plugin-arch/src/Autoload.php on line 10
+[27-Sep-2026 10:08:53 UTC] PHP Fatal error:  Trait "PHPUnit\Architecture\ArchitectureAsserts" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest-plugin-arch/src/Blueprint.php on line 33
+[27-Sep-2026 10:08:53 UTC] PHP Fatal error:  Uncaught Error: Interface "Pest\Arch\Contracts\ArchExpectation" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest-plugin-arch/src/GroupArchExpectation.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest-plugin-arch/src/GroupArchExpectation.php on line 16
+[27-Sep-2026 10:08:53 UTC] PHP Fatal error:  Trait "Pest\Plugins\Concerns\HandleArguments" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest-plugin-arch/src/Plugin.php on line 13
+[27-Sep-2026 10:08:53 UTC] PHP Fatal error:  Uncaught Error: Interface "Pest\Arch\Contracts\ArchExpectation" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest-plugin-arch/src/SingleArchExpectation.php:22
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest-plugin-arch/src/SingleArchExpectation.php on line 22

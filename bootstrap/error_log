@@ -1,0 +1,16 @@
+[27-Sep-2026 10:03:43 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Application" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/bootstrap/app.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/bootstrap/app.php on line 9
+[27-Sep-2026 10:03:46 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Application" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/bootstrap/app.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/bootstrap/app.php on line 9
+[28-Sep-2026 14:07:03 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Application" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/bootstrap/app.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/bootstrap/app.php on line 9
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Application" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/bootstrap/app.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/bootstrap/app.php on line 9

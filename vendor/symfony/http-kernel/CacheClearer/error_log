@@ -1,0 +1,4 @@
+[27-Sep-2026 10:09:38 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\HttpKernel\CacheClearer\CacheClearerInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/CacheClearer/Psr6CacheClearer.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/CacheClearer/Psr6CacheClearer.php on line 19

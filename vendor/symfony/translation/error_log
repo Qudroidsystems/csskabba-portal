@@ -1,0 +1,42 @@
+[27-Sep-2026 10:05:49 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Contracts\Translation\TranslatorInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/DataCollectorTranslator.php:24
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/DataCollectorTranslator.php on line 24
+[27-Sep-2026 10:05:50 UTC] PHP Fatal error:  Trait "Symfony\Contracts\Translation\TranslatorTrait" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/IdentityTranslator.php on line 23
+[27-Sep-2026 10:05:50 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Contracts\Translation\TranslatorInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/LoggingTranslator.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/LoggingTranslator.php on line 21
+[27-Sep-2026 10:05:50 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Translation\MessageCatalogueInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/MessageCatalogue.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/MessageCatalogue.php on line 20
+[27-Sep-2026 10:05:50 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Contracts\Translation\TranslatorInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/Translator.php:34
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/Translator.php on line 34
+[27-Sep-2026 10:05:50 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Translation\TranslatorBagInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/TranslatorBag.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/TranslatorBag.php on line 17
+[27-Sep-2026 10:05:51 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Contracts\Translation\TranslatableInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/StaticMessage.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/StaticMessage.php on line 17
+[27-Sep-2026 10:07:51 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Contracts\Translation\TranslatorInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/DataCollectorTranslator.php:24
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/DataCollectorTranslator.php on line 24
+[27-Sep-2026 10:07:51 UTC] PHP Fatal error:  Trait "Symfony\Contracts\Translation\TranslatorTrait" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/IdentityTranslator.php on line 23
+[27-Sep-2026 10:07:51 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Contracts\Translation\TranslatorInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/LoggingTranslator.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/LoggingTranslator.php on line 21
+[27-Sep-2026 10:07:51 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Contracts\Translation\TranslatorInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/PseudoLocalizationTranslator.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/PseudoLocalizationTranslator.php on line 20
+[27-Sep-2026 10:07:52 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Contracts\Translation\TranslatorInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/Translator.php:34
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/Translator.php on line 34

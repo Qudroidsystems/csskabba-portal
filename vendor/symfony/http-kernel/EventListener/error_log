@@ -1,0 +1,24 @@
+[27-Sep-2026 10:06:31 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\EventDispatcher\EventSubscriberInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/EventListener/AbstractSessionListener.php:39
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/EventListener/AbstractSessionListener.php on line 39
+[27-Sep-2026 10:09:42 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\EventDispatcher\EventSubscriberInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/EventListener/AbstractSessionListener.php:39
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/EventListener/AbstractSessionListener.php on line 39
+[27-Sep-2026 10:09:42 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\EventDispatcher\EventSubscriberInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/EventListener/CacheAttributeListener.php:29
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/EventListener/CacheAttributeListener.php on line 29
+[27-Sep-2026 10:09:43 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\EventDispatcher\EventSubscriberInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/EventListener/ErrorListener.php:34
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/EventListener/ErrorListener.php on line 34
+[27-Sep-2026 10:09:43 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\EventListener\AbstractSessionListener" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/EventListener/SessionListener.php:24
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/EventListener/SessionListener.php on line 24
+[27-Sep-2026 10:09:43 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\EventDispatcher\EventSubscriberInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/EventListener/SurrogateListener.php:27
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/EventListener/SurrogateListener.php on line 27

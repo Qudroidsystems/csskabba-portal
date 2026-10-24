@@ -1,0 +1,4 @@
+[27-Sep-2026 10:09:40 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Config\FileLocator" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Config/FileLocator.php:22
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Config/FileLocator.php on line 22

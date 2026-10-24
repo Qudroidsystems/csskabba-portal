@@ -1,0 +1,4 @@
+[27-Sep-2026 10:09:52 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\ErrorHandler\ErrorEnhancer\ErrorEnhancerInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/error-handler/ErrorEnhancer/ClassNotFoundErrorEnhancer.php:22
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/error-handler/ErrorEnhancer/ClassNotFoundErrorEnhancer.php on line 22

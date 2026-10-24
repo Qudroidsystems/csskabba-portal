@@ -1,0 +1,896 @@
+[27-Sep-2026 10:04:03 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/0001_01_01_000000_create_users_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/0001_01_01_000000_create_users_table.php on line 7
+[27-Sep-2026 10:04:03 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2021_11_30_145417_subject.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2021_11_30_145417_subject.php on line 7
+[27-Sep-2026 10:04:03 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/0001_01_01_000002_create_jobs_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/0001_01_01_000002_create_jobs_table.php on line 7
+[27-Sep-2026 10:04:03 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_01_18_130905_student_result_check.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_01_18_130905_student_result_check.php on line 7
+[27-Sep-2026 10:04:04 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_03_26_190305_subject_registration_status.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_03_26_190305_subject_registration_status.php on line 7
+[27-Sep-2026 10:04:04 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_06_06_201448_create_schoolsettings_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_06_06_201448_create_schoolsettings_table.php on line 7
+[27-Sep-2026 10:04:04 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_06_06_201702_create_schoolhouses_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_06_06_201702_create_schoolhouses_table.php on line 7
+[27-Sep-2026 10:04:05 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_01_30_042557_add_columns_to_parentregistration_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_01_30_042557_add_columns_to_parentregistration_table.php on line 7
+[27-Sep-2026 10:04:05 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_02_07_125404_add_columns_to_student_bill_payment_record.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_02_07_125404_add_columns_to_student_bill_payment_record.php on line 7
+[27-Sep-2026 10:04:05 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_02_07_151817_add_columns_to_student_bill_invoice.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_02_07_151817_add_columns_to_student_bill_invoice.php on line 7
+[27-Sep-2026 10:04:05 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_02_07_153732_add_columns_to_student_bill_payment.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_02_07_153732_add_columns_to_student_bill_payment.php on line 7
+[27-Sep-2026 10:04:05 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_01_170852_create_results_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_01_170852_create_results_table.php on line 7
+[27-Sep-2026 10:04:05 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_01_210644_add_image_to_questions_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_01_210644_add_image_to_questions_table.php on line 7
+[27-Sep-2026 10:04:05 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_01_170821_create_options_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_01_170821_create_options_table.php on line 7
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_01164731_create_exams_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_01164731_create_exams_table.php on line 7
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_02_041457_add_student_id_to_users_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_02_041457_add_student_id_to_users_table.php on line 7
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_21_104334_create_permission_tables.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_21_104334_create_permission_tables.php on line 7
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_30_101704_add_avatar_to_users_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_30_101704_add_avatar_to_users_table.php on line 7
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_30_104026_staff_bio.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_30_104026_staff_bio.php on line 7
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_28_071326_create_schoolbroadsheet_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_28_071326_create_schoolbroadsheet_table.php on line 7
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_28_071440_create_schoolfirstterm_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_28_071440_create_schoolfirstterm_table.php on line 7
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_28_071531_create_schoolfirsttermmock_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_28_071531_create_schoolfirsttermmock_table.php on line 7
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_28_071602_create_schoolsecondtermmock_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_28_071602_create_schoolsecondtermmock_table.php on line 7
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_28_071455_create_schoolsecondterm_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_28_071455_create_schoolsecondterm_table.php on line 7
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_28_135701_rename_tittle_and_nationlity_columns_in_student_registration_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_28_135701_rename_tittle_and_nationlity_columns_in_student_registration_table.php on line 7
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_06_07_001749_create_broadsheets_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_06_07_001749_create_broadsheets_table.php on line 7
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_06_07_004857_create_broadsheetmock_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_06_07_004857_create_broadsheetmock_table.php on line 7
+[27-Sep-2026 10:04:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_06_23_154308_create_add_is_senior_to_classcategories.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_06_23_154308_create_add_is_senior_to_classcategories.php on line 7
+[27-Sep-2026 10:04:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_11_134732_create_subject_vettings_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_11_134732_create_subject_vettings_table.php on line 7
+[27-Sep-2026 10:04:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_11_145306_add_submiitedby_to_broadsheetmock_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_11_145306_add_submiitedby_to_broadsheetmock_table.php on line 7
+[27-Sep-2026 10:04:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_11_145250_add_submiitedby_to_broadsheets_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_11_145250_add_submiitedby_to_broadsheets_table.php on line 7
+[27-Sep-2026 10:04:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_11_155633_add_vettedby_to_broadsheetmock_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_11_155633_add_vettedby_to_broadsheetmock_table.php on line 7
+[27-Sep-2026 10:04:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_22_123914_mock_subject_vettings_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_22_123914_mock_subject_vettings_table.php on line 7
+[27-Sep-2026 10:04:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_11_155648_add_vettedby_to_broadsheets_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_11_155648_add_vettedby_to_broadsheets_table.php on line 7
+[27-Sep-2026 10:04:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_11_160221_add_vettedstatus_to_broadsheetmock_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_11_160221_add_vettedstatus_to_broadsheetmock_table.php on line 7
+[27-Sep-2026 10:04:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_08_31_021601_create_assessments_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_08_31_021601_create_assessments_table.php on line 7
+[27-Sep-2026 10:04:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_08_31_013901_add_phone_number_to_student_registration_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_08_31_013901_add_phone_number_to_student_registration_table.php on line 7
+[27-Sep-2026 10:04:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_09_01_230248_add_missing_columns_to_student_registration_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_09_01_230248_add_missing_columns_to_student_registration_table.php on line 7
+[27-Sep-2026 10:04:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_10_09_150445_add_label_to_options_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_10_09_150445_add_label_to_options_table.php on line 7
+[27-Sep-2026 10:04:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_10_09_162102_add_pause_fields_to_exam_attempts_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_10_09_162102_add_pause_fields_to_exam_attempts_table.php on line 7
+[27-Sep-2026 10:04:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_10_15_022429_create_sub_assessments_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_10_15_022429_create_sub_assessments_table.php on line 7
+[27-Sep-2026 10:04:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_10_15_050847_create_broadsheet_sub_assessment_scores_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_10_15_050847_create_broadsheet_sub_assessment_scores_table.php on line 7
+[27-Sep-2026 10:04:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_10_17_155953_create_schoolclass_classcategory_table.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_10_17_155953_create_schoolclass_classcategory_table.php on line 8
+[27-Sep-2026 10:04:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_10_20_041917_add_can_view_assessments_to_student_registration_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_10_20_041917_add_can_view_assessments_to_student_registration_table.php on line 7
+[27-Sep-2026 10:04:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_01_06_170914_add_columns_to_users_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_01_06_170914_add_columns_to_users_table.php on line 7
+[27-Sep-2026 10:04:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_02_08_031402_create_student_current_term_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_02_08_031402_create_student_current_term_table.php on line 7
+[27-Sep-2026 10:04:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_02_08_051229_add_status_to_schoolterm_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_02_08_051229_add_status_to_schoolterm_table.php on line 7
+[27-Sep-2026 10:04:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_04_125858_create_subject_unregistration_archive_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_04_125858_create_subject_unregistration_archive_table.php on line 7
+[27-Sep-2026 10:04:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_05_145843_add_snapshot_fields_to_archive_and_create_score_snapshots.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_05_145843_add_snapshot_fields_to_archive_and_create_score_snapshots.php on line 7
+[27-Sep-2026 10:04:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_08_133625_create_timetable_settings_table.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_08_133625_create_timetable_settings_table.php on line 8
+[27-Sep-2026 10:04:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_08_134723_create_timetable_slots_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_08_134723_create_timetable_slots_table.php on line 7
+[27-Sep-2026 10:04:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_08_133732_create_timetable_overrides_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_08_133732_create_timetable_overrides_table.php on line 7
+[27-Sep-2026 10:04:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_08_135241_create_room_bookings_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_08_135241_create_room_bookings_table.php on line 7
+[27-Sep-2026 10:04:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_08_135241_create_timetable_audit_logs_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_08_135241_create_timetable_audit_logs_table.php on line 7
+[27-Sep-2026 10:04:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_08_140215_create_exam_slots_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_08_140215_create_exam_slots_table.php on line 7
+[27-Sep-2026 10:04:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_08_140215_create_holidays_table.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_08_140215_create_holidays_table.php on line 8
+[27-Sep-2026 10:04:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_08_133624_create_rooms_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_08_133624_create_rooms_table.php on line 7
+[27-Sep-2026 10:04:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_22_100929_create_attendance_tables.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_22_100929_create_attendance_tables.php on line 7
+[27-Sep-2026 10:04:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_23_183617_fix_school_bill_table.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_23_183617_fix_school_bill_table.php on line 9
+[27-Sep-2026 10:04:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_23_183928_create_payment_batches_table.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_23_183928_create_payment_batches_table.php on line 8
+[27-Sep-2026 10:04:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_24_174853_create_all_finance_tables_safe.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_24_174853_create_all_finance_tables_safe.php on line 9
+[27-Sep-2026 10:04:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_25_145636_add_payroll_columns_to_staffbioinfo.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_25_145636_add_payroll_columns_to_staffbioinfo.php on line 7
+[27-Sep-2026 10:04:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_25_153028_create_payroll_tables.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_25_153028_create_payroll_tables.php on line 7
+[27-Sep-2026 10:04:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_04_170118_add_multiple_phones_stamp_and_closed_date_to_school_information.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_04_170118_add_multiple_phones_stamp_and_closed_date_to_school_information.php on line 7
+[27-Sep-2026 10:04:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_06_124514_check_scholarships_if_created_already_table.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_06_124514_check_scholarships_if_created_already_table.php on line 8
+[27-Sep-2026 10:04:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_06_131307_make_discount_id_nullable_in_discount_assignments.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_06_131307_make_discount_id_nullable_in_discount_assignments.php on line 8
+[27-Sep-2026 10:04:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_25_083109_create_scoresheet_locks_table.php.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_25_083109_create_scoresheet_locks_table.php.php on line 8
+[27-Sep-2026 10:04:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_25_083015_add_audit_and_lock_fields_to_broadsheets.php.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_25_083015_add_audit_and_lock_fields_to_broadsheets.php.php on line 8
+[27-Sep-2026 10:04:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_25_083152_add_teacher_editing_lock_to_subjectclass.php.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_25_083152_add_teacher_editing_lock_to_subjectclass.php.php on line 8
+[27-Sep-2026 10:04:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_14_151102_add_arm_position_to_broadsheets_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_14_151102_add_arm_position_to_broadsheets_table.php on line 7
+[27-Sep-2026 10:04:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_25_143613_add_scheduled_unlock_to_broadsheets.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_25_143613_add_scheduled_unlock_to_broadsheets.php on line 8
+[27-Sep-2026 10:04:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_06_05_082647_add_term_session_mingrade_to_compulsory_subject_classes.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_06_05_082647_add_term_session_mingrade_to_compulsory_subject_classes.php on line 8
+[27-Sep-2026 10:04:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_06_05_085545_add_promotion_pass_average_to_classcategories.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_06_05_085545_add_promotion_pass_average_to_classcategories.php on line 7
+[27-Sep-2026 10:04:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_06_05_085438_add_is_promotional_to_schoolterm.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_06_05_085438_add_is_promotional_to_schoolterm.php on line 7
+[27-Sep-2026 10:04:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_06_06_220121_create_promotion_settings_table.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_06_06_220121_create_promotion_settings_table.php on line 8
+[27-Sep-2026 10:04:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_06_07_223151_fix_promotion_settings_columns.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_06_07_223151_fix_promotion_settings_columns.php on line 8
+[27-Sep-2026 10:04:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_06_08_074558_upgrade_promotion_settings_grade_count_rules.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_06_08_074558_upgrade_promotion_settings_grade_count_rules.php on line 7
+[27-Sep-2026 10:04:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_06_08_172721_allow_multiple_promotion_settings.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_06_08_172721_allow_multiple_promotion_settings.php on line 9
+[27-Sep-2026 10:04:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_08_21_112222_add_unique_index_to_device_attendance_logs.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_08_21_112222_add_unique_index_to_device_attendance_logs.php on line 8
+[27-Sep-2026 10:04:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_08_23_203946_create_attendance_settings_table.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_08_23_203946_create_attendance_settings_table.php on line 12
+[27-Sep-2026 10:04:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_08_24_112734_create_staff_attendance_time_settings_table.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_08_24_112734_create_staff_attendance_time_settings_table.php on line 15
+[27-Sep-2026 10:04:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_04_204605_create_payment_audit_logs_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_04_204605_create_payment_audit_logs_table.php on line 7
+[27-Sep-2026 10:04:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_06_092715_add_scheduling_rules_to_timetable_settings.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_06_092715_add_scheduling_rules_to_timetable_settings.php on line 8
+[27-Sep-2026 10:04:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_06_093755_create_holidays_table.php.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_06_093755_create_holidays_table.php.php on line 8
+[27-Sep-2026 10:04:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_06_224748_add_missing_columns_to_timetable_settings_table.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_06_224748_add_missing_columns_to_timetable_settings_table.php on line 8
+[27-Sep-2026 10:04:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_07_054435_add_import_errors_to_student_batch_upload_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_07_054435_add_import_errors_to_student_batch_upload_table.php on line 7
+[27-Sep-2026 10:04:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_08_132325_make_description_nullable_on_schoolarm_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_08_132325_make_description_nullable_on_schoolarm_table.php on line 7
+[27-Sep-2026 10:04:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_08_145430_add_club.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_08_145430_add_club.php on line 7
+[27-Sep-2026 10:04:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_08_145507_add_sport.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_08_145507_add_sport.php on line 7
+[27-Sep-2026 10:04:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_08_145756_create_club_members_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_08_145756_create_club_members_table.php on line 7
+[27-Sep-2026 10:04:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_08_145816_create_sport_teams_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_08_145816_create_sport_teams_table.php on line 7
+[27-Sep-2026 10:04:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_10_031857_add_extended_details_to_student_and_parent_tables.php.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_10_031857_add_extended_details_to_student_and_parent_tables.php.php on line 7
+[27-Sep-2026 10:04:13 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_10_151544_make_optional_student_columns_nullable.php.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_10_151544_make_optional_student_columns_nullable.php.php on line 8
+[27-Sep-2026 10:04:13 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_12_043926_add_preview_flag_to_timetable_settings.php.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_12_043926_add_preview_flag_to_timetable_settings.php.php on line 7
+[27-Sep-2026 10:04:13 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_12_053818_create_timetable_generation_runs_table.php.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_12_053818_create_timetable_generation_runs_table.php.php on line 7
+[27-Sep-2026 10:04:13 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_12_053850_create_timetable_generation_run_settings_table.php.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_12_053850_create_timetable_generation_run_settings_table.php.php on line 7
+[27-Sep-2026 10:04:13 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_12_053919_add_restore_tracking_to_timetable_generation_runs.php.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_12_053919_add_restore_tracking_to_timetable_generation_runs.php.php on line 7
+[27-Sep-2026 10:04:13 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_12_053952_add_room_indexes.php.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_12_053952_add_room_indexes.php.php on line 7
+[27-Sep-2026 10:04:13 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_14_132138_add_extended_columns_to_school_information_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_14_132138_add_extended_columns_to_school_information_table.php on line 7
+[27-Sep-2026 10:04:13 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_18_120000_create_timetable_period_allocation_sets_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_18_120000_create_timetable_period_allocation_sets_table.php on line 7
+[27-Sep-2026 10:04:14 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_24_100000_create_result_access_tables.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_24_100000_create_result_access_tables.php on line 17
+[27-Sep-2026 10:04:14 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_25_100000_create_online_fee_payments_tables.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_25_100000_create_online_fee_payments_tables.php on line 17
+[27-Sep-2026 10:04:14 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_12_043809_create_timetable_period_limits_table.php.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_12_043809_create_timetable_period_limits_table.php.php on line 7
+[27-Sep-2026 10:04:14 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_26_120000_create_payment_receipt_messages_table.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_26_120000_create_payment_receipt_messages_table.php on line 8
+[27-Sep-2026 10:04:14 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_27_120000_create_notifications_table.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_27_120000_create_notifications_table.php on line 8
+[27-Sep-2026 10:04:14 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_27_100000_create_auto_messages_table.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_27_100000_create_auto_messages_table.php on line 11
+[27-Sep-2026 10:04:14 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_30_140000_improve_school_houses.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_30_140000_improve_school_houses.php on line 10
+[27-Sep-2026 10:04:14 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_10_05_100000_add_patron_to_schoolhouses.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_10_05_100000_add_patron_to_schoolhouses.php on line 8
+[27-Sep-2026 10:04:15 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_10_13_100000_create_ledger_postings.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_10_13_100000_create_ledger_postings.php on line 12
+[27-Sep-2026 10:04:15 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_10_20_100000_create_financial_audit_tables.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_10_20_100000_create_financial_audit_tables.php on line 14
+[27-Sep-2026 10:04:25 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/0001_01_01_000001_create_cache_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/0001_01_01_000001_create_cache_table.php on line 7
+[27-Sep-2026 10:04:26 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_01_13_122835_subjectclass.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_01_13_122835_subjectclass.php on line 7
+[27-Sep-2026 10:04:26 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2021_12_18_192100_schoolclass.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2021_12_18_192100_schoolclass.php on line 7
+[27-Sep-2026 10:04:26 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_02_01_115004_student_subject_registration.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_02_01_115004_student_subject_registration.php on line 7
+[27-Sep-2026 10:04:26 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_02_02_152139_class_teacher.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_02_02_152139_class_teacher.php on line 7
+[27-Sep-2026 10:04:26 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_02_04_230405_schoolterm.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_02_04_230405_schoolterm.php on line 7
+[27-Sep-2026 10:04:27 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_02_24_003159_broad_sheet_senior.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_02_24_003159_broad_sheet_senior.php on line 7
+[27-Sep-2026 10:04:27 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_03_17_180105_studentclass.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_03_17_180105_studentclass.php on line 7
+[27-Sep-2026 10:04:27 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_06_06_201522_create_studentpersonalityprofiles_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_06_06_201522_create_studentpersonalityprofiles_table.php on line 7
+[27-Sep-2026 10:04:27 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_06_06_201448_create_schoolsettings_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_06_06_201448_create_schoolsettings_table.php on line 7
+[27-Sep-2026 10:04:28 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_06_06_201607_create_classcategories_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_06_06_201607_create_classcategories_table.php on line 7
+[27-Sep-2026 10:04:28 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_06_09_085735_create_studenthouses_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_06_09_085735_create_studenthouses_table.php on line 7
+[27-Sep-2026 10:04:28 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_07_04_154918_addsschoolclassid_to_staffclasssettings_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_07_04_154918_addsschoolclassid_to_staffclasssettings_table.php on line 7
+[27-Sep-2026 10:04:28 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2024_07_21_200748_school_bill.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2024_07_21_200748_school_bill.php on line 7
+[27-Sep-2026 10:04:28 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2024_07_21_201002_school_bill_class_term_session.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2024_07_21_201002_school_bill_class_term_session.php on line 7
+[27-Sep-2026 10:04:29 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2023_12_14_092901_student_batch_upload.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2023_12_14_092901_student_batch_upload.php on line 7
+[27-Sep-2026 10:04:29 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2024_07_22_022326_student_bill_invoice.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2024_07_22_022326_student_bill_invoice.php on line 7
+[27-Sep-2026 10:04:29 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2024_08_24_185652_student_bill_payment_book_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2024_08_24_185652_student_bill_payment_book_table.php on line 7
+[27-Sep-2026 10:04:29 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2024_09_09_140847_add_remove_status_to_student_bill_payment_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2024_09_09_140847_add_remove_status_to_student_bill_payment_table.php on line 7
+[27-Sep-2026 10:04:29 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2024_09_10_140819_add_remove_status_to_student_bill_payment_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2024_09_10_140819_add_remove_status_to_student_bill_payment_table.php on line 7
+[27-Sep-2026 10:04:29 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_01_17_205603_student_registered_subject_record.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_01_17_205603_student_registered_subject_record.php on line 7
+[27-Sep-2026 10:04:30 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_01_30_045118_student_status_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_01_30_045118_student_status_table.php on line 7
+[27-Sep-2026 10:04:30 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_01_29_072933_add_columns_to_subjectclass_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_01_29_072933_add_columns_to_subjectclass_table.php on line 7
+[27-Sep-2026 10:04:30 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_02_07_153732_add_columns_to_student_bill_payment.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_02_07_153732_add_columns_to_student_bill_payment.php on line 7
+[27-Sep-2026 10:04:30 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_01_210644_add_image_to_questions_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_01_210644_add_image_to_questions_table.php on line 7
+[27-Sep-2026 10:04:31 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_02_041457_add_student_id_to_users_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_02_041457_add_student_id_to_users_table.php on line 7
+[27-Sep-2026 10:04:31 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_020710386_update_exams_table_add_subject_id_and_schoolclass_id.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_020710386_update_exams_table_add_subject_id_and_schoolclass_id.php on line 7
+[27-Sep-2026 10:04:31 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_21_104334_create_permission_tables.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_21_104334_create_permission_tables.php on line 7
+[27-Sep-2026 10:04:31 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_30_104026_staff_bio.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_30_104026_staff_bio.php on line 7
+[27-Sep-2026 10:04:31 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_30_104034_staffbioinfo.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_30_104034_staffbioinfo.php on line 7
+[27-Sep-2026 10:04:32 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_28_071440_create_schoolfirstterm_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_28_071440_create_schoolfirstterm_table.php on line 7
+[27-Sep-2026 10:04:32 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_28_071455_create_schoolsecondterm_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_28_071455_create_schoolsecondterm_table.php on line 7
+[27-Sep-2026 10:04:32 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_28_071531_create_schoolfirsttermmock_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_28_071531_create_schoolfirsttermmock_table.php on line 7
+[27-Sep-2026 10:04:32 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_28_071616_create_schoolthirdtermmock_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_28_071616_create_schoolthirdtermmock_table.php on line 7
+[27-Sep-2026 10:04:32 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_06_07_001749_create_broadsheets_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_06_07_001749_create_broadsheets_table.php on line 7
+[27-Sep-2026 10:04:32 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_06_09_125211_school_information_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_06_09_125211_school_information_table.php on line 7
+[27-Sep-2026 10:04:33 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_06_26_131356_create_job_progress_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_06_26_131356_create_job_progress_table.php on line 7
+[27-Sep-2026 10:04:33 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_08_142601_add_phone_number_to_users_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_08_142601_add_phone_number_to_users_table.php on line 7
+[27-Sep-2026 10:04:33 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_11_134732_create_subject_vettings_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_11_134732_create_subject_vettings_table.php on line 7
+[27-Sep-2026 10:04:33 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_11_145250_add_submiitedby_to_broadsheets_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_11_145250_add_submiitedby_to_broadsheets_table.php on line 7
+[27-Sep-2026 10:04:33 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_11_145306_add_submiitedby_to_broadsheetmock_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_11_145306_add_submiitedby_to_broadsheetmock_table.php on line 7
+[27-Sep-2026 10:04:34 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_08_31_021601_create_assessments_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_08_31_021601_create_assessments_table.php on line 7
+[27-Sep-2026 10:04:34 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_08_04_100316_add_times_opened_and_date_opened_to_school_information_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_08_04_100316_add_times_opened_and_date_opened_to_school_information_table.php on line 7
+[27-Sep-2026 10:04:34 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_09_01_060310_add_student_category_to_student_registration_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_09_01_060310_add_student_category_to_student_registration_table.php on line 7
+[27-Sep-2026 10:04:35 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_09_01_063537_add_student_status_to_student_registration_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_09_01_063537_add_student_status_to_student_registration_table.php on line 7
+[27-Sep-2026 10:04:35 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_08_31_013901_add_phone_number_to_student_registration_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_08_31_013901_add_phone_number_to_student_registration_table.php on line 7
+[27-Sep-2026 10:04:35 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_09_02_000509_add_father_city_and_parent_email_to_parent_registration_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_09_02_000509_add_father_city_and_parent_email_to_parent_registration_table.php on line 7
+[27-Sep-2026 10:04:35 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_10_06_193331_add_username_to_users_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_10_06_193331_add_username_to_users_table.php on line 7
+[27-Sep-2026 10:04:35 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_09_10_152943_rename_home_address_to_future_ambition_in_students_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_09_10_152943_rename_home_address_to_future_ambition_in_students_table.php on line 7
+[27-Sep-2026 10:04:36 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_10_19_202158_create_add_assessment_id_to_broadsheet_sub_assessment_scores_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_10_19_202158_create_add_assessment_id_to_broadsheet_sub_assessment_scores_table.php on line 7
+[27-Sep-2026 10:04:36 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_02_08_051229_add_status_to_schoolterm_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_02_08_051229_add_status_to_schoolterm_table.php on line 7
+[27-Sep-2026 10:04:36 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_02_11_131453_create_report_histories_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_02_11_131453_create_report_histories_table.php on line 7
+[27-Sep-2026 10:04:37 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_05_145843_add_snapshot_fields_to_archive_and_create_score_snapshots.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_05_145843_add_snapshot_fields_to_archive_and_create_score_snapshots.php on line 7
+[27-Sep-2026 10:04:38 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_08_135241_create_timetable_notifications_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_08_135241_create_timetable_notifications_table.php on line 7
+[27-Sep-2026 10:04:38 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_08_140216_create_notification_preferences_table.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_08_140216_create_notification_preferences_table.php on line 8
+[27-Sep-2026 10:04:38 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_23_183617_fix_school_bill_table.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_23_183617_fix_school_bill_table.php on line 9
+[27-Sep-2026 10:04:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_23_183928_create_payment_batches_table.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_23_183928_create_payment_batches_table.php on line 8
+[27-Sep-2026 10:04:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_25_145636_add_payroll_columns_to_staffbioinfo.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_04_25_145636_add_payroll_columns_to_staffbioinfo.php on line 7
+[27-Sep-2026 10:04:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_06_124514_check_scholarships_if_created_already_table.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_06_124514_check_scholarships_if_created_already_table.php on line 8
+[27-Sep-2026 10:04:40 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_14_152629_add_subject_position_columns_to_broadsheets_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_14_152629_add_subject_position_columns_to_broadsheets_table.php on line 7
+[27-Sep-2026 10:04:40 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_25_083152_add_teacher_editing_lock_to_subjectclass.php.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_05_25_083152_add_teacher_editing_lock_to_subjectclass.php.php on line 8
+[27-Sep-2026 10:04:40 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_06_05_082647_add_term_session_mingrade_to_compulsory_subject_classes.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_06_05_082647_add_term_session_mingrade_to_compulsory_subject_classes.php on line 8
+[27-Sep-2026 10:04:40 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_06_06_220121_create_promotion_settings_table.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_06_06_220121_create_promotion_settings_table.php on line 8
+[27-Sep-2026 10:04:41 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_08_18_150417_create_staff_attendance_table.php.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_08_18_150417_create_staff_attendance_table.php.php on line 7
+[27-Sep-2026 10:04:42 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_08_19_051311_device_outage_dates.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_08_19_051311_device_outage_dates.php on line 7
+[27-Sep-2026 10:04:42 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_08_23_203946_create_attendance_settings_table.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_08_23_203946_create_attendance_settings_table.php on line 12
+[27-Sep-2026 10:04:42 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_08_24_112734_create_staff_attendance_time_settings_table.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_08_24_112734_create_staff_attendance_time_settings_table.php on line 15
+[27-Sep-2026 10:04:42 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_04_204605_create_payment_audit_logs_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_04_204605_create_payment_audit_logs_table.php on line 7
+[27-Sep-2026 10:04:42 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_06_001747_create_reminder_logs_table.php.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_06_001747_create_reminder_logs_table.php.php on line 7
+[27-Sep-2026 10:04:42 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_06_092715_add_scheduling_rules_to_timetable_settings.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_06_092715_add_scheduling_rules_to_timetable_settings.php on line 8
+[27-Sep-2026 10:04:43 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_06_093711_add_publish_fields_to_timetable_settings_table.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_06_093711_add_publish_fields_to_timetable_settings_table.php on line 14
+[27-Sep-2026 10:04:43 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_07_054435_add_import_errors_to_student_batch_upload_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_07_054435_add_import_errors_to_student_batch_upload_table.php on line 7
+[27-Sep-2026 10:04:43 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_06_224748_add_missing_columns_to_timetable_settings_table.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_06_224748_add_missing_columns_to_timetable_settings_table.php on line 8
+[27-Sep-2026 10:04:43 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_08_145816_create_sport_teams_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_08_145816_create_sport_teams_table.php on line 7
+[27-Sep-2026 10:04:43 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_10_031857_add_extended_details_to_student_and_parent_tables.php.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_10_031857_add_extended_details_to_student_and_parent_tables.php.php on line 7
+[27-Sep-2026 10:04:44 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_11_163117_add_times_to_attendance_term_settings.php.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_11_163117_add_times_to_attendance_term_settings.php.php on line 7
+[27-Sep-2026 10:04:44 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_10_085123_create_studentclubs_and_studentsports_tables.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_10_085123_create_studentclubs_and_studentsports_tables.php on line 7
+[27-Sep-2026 10:04:45 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_12_053919_add_restore_tracking_to_timetable_generation_runs.php.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_12_053919_add_restore_tracking_to_timetable_generation_runs.php.php on line 7
+[27-Sep-2026 10:04:45 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_12_043654_create_room_class_subject_table.php.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_12_043654_create_room_class_subject_table.php.php on line 7
+[27-Sep-2026 10:04:45 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_14_140720_make_description_nullable_on_schoolclass_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_14_140720_make_description_nullable_on_schoolclass_table.php on line 7
+[27-Sep-2026 10:04:45 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_18_120001_create_timetable_period_allocations_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_18_120001_create_timetable_period_allocations_table.php on line 7
+[27-Sep-2026 10:04:46 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_18_140000_widen_timetable_reports_report_type_enum.php:6
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_18_140000_widen_timetable_reports_report_type_enum.php on line 6
+[27-Sep-2026 10:04:46 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_20_090000_make_legacy_holiday_columns_nullable.php:6
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_20_090000_make_legacy_holiday_columns_nullable.php on line 6
+[27-Sep-2026 10:04:46 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_24_100000_create_result_access_tables.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_09_24_100000_create_result_access_tables.php on line 17
+[27-Sep-2026 10:04:47 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_10_02_100000_payroll_scales_items_reviews.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_10_02_100000_payroll_scales_items_reviews.php on line 13
+[27-Sep-2026 10:04:47 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_10_07_100000_create_leave_tables.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_10_07_100000_create_leave_tables.php on line 9
+[27-Sep-2026 10:04:48 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_10_09_100000_create_payroll_payouts.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_10_09_100000_create_payroll_payouts.php on line 11
+[27-Sep-2026 10:04:48 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_10_14_100000_create_maintenance_settings.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_10_14_100000_create_maintenance_settings.php on line 13
+[27-Sep-2026 10:04:48 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_10_16_100000_create_student_leave_requests.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_10_16_100000_create_student_leave_requests.php on line 12
+[27-Sep-2026 10:04:49 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_10_22_100000_add_backdating_to_attendance_term_settings.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2026_10_22_100000_add_backdating_to_attendance_term_settings.php on line 13
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_02_24_000120_promotion_status.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_02_24_000120_promotion_status.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_03_26_190305_subject_registration_status.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_03_26_190305_subject_registration_status.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_06_06_201607_create_classcategories_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_06_06_201607_create_classcategories_table.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_06_09_085735_create_studenthouses_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_06_09_085735_create_studenthouses_table.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_07_04_154918_addsschoolclassid_to_staffclasssettings_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2022_07_04_154918_addsschoolclassid_to_staffclasssettings_table.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2024_07_21_200748_school_bill.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2024_07_21_200748_school_bill.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2024_07_21_201002_school_bill_class_term_session.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2024_07_21_201002_school_bill_class_term_session.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2024_09_10_140819_add_remove_status_to_student_bill_payment_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2024_09_10_140819_add_remove_status_to_student_bill_payment_table.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2024_09_10_141832_remove_last_payment_to_student_bill_payment_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2024_09_10_141832_remove_last_payment_to_student_bill_payment_table.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_01_29_072933_add_columns_to_subjectclass_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_01_29_072933_add_columns_to_subjectclass_table.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_01_30_045118_student_status_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_01_30_045118_student_status_table.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_01_170852_create_results_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_01_170852_create_results_table.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_020710386_update_exams_table_add_subject_id_and_schoolclass_id.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_020710386_update_exams_table_add_subject_id_and_schoolclass_id.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_30_101704_add_avatar_to_users_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_04_30_101704_add_avatar_to_users_table.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_23_081203_update_subjectclass_schema.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_05_23_081203_update_subjectclass_schema.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_06_23_151454_create_grades_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_06_23_151454_create_grades_table.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_06_23_154308_create_add_is_senior_to_classcategories.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_06_23_154308_create_add_is_senior_to_classcategories.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_08_142601_add_phone_number_to_users_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_08_142601_add_phone_number_to_users_table.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_04_233622_add_new_fields_to_studentpersonalityprofiles_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_04_233622_add_new_fields_to_studentpersonalityprofiles_table.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_10_200434_create_compulsory_subject_classes_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_10_200434_create_compulsory_subject_classes_table.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_11_134732_create_subject_vettings_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_07_11_134732_create_subject_vettings_table.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_09_01_060310_add_student_category_to_student_registration_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_09_01_060310_add_student_category_to_student_registration_table.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_09_01_063537_add_student_status_to_student_registration_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_09_01_063537_add_student_status_to_student_registration_table.php on line 7
+[28-Sep-2026 14:07:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_10_15_022429_create_sub_assessments_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/migrations/2025_10_15_022429_create_sub_assessments_table.php on line 7

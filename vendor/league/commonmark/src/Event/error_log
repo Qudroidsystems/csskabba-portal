@@ -1,0 +1,4 @@
+[27-Sep-2026 10:06:46 UTC] PHP Fatal error:  Uncaught Error: Class "League\CommonMark\Event\AbstractEvent" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/commonmark/src/Event/DocumentRenderedEvent.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/commonmark/src/Event/DocumentRenderedEvent.php on line 18

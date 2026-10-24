@@ -1,0 +1,12 @@
+[27-Sep-2026 10:08:15 UTC] PHP Fatal error:  Uncaught Error: Class "Brick\Math\BigNumber" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/brick/math/src/BigDecimal.php:39
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/brick/math/src/BigDecimal.php on line 39
+[27-Sep-2026 10:08:15 UTC] PHP Fatal error:  Uncaught Error: Class "Brick\Math\BigNumber" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/brick/math/src/BigInteger.php:48
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/brick/math/src/BigInteger.php on line 48
+[27-Sep-2026 10:08:15 UTC] PHP Fatal error:  Uncaught Error: Class "Brick\Math\BigNumber" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/brick/math/src/BigRational.php:32
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/brick/math/src/BigRational.php on line 32

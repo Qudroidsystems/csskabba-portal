@@ -1,0 +1,4 @@
+[27-Sep-2026 10:07:02 UTC] PHP Fatal error:  Uncaught Error: Interface "Ramsey\Uuid\UuidInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/Rfc4122/UuidInterface.php:26
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/Rfc4122/UuidInterface.php on line 26

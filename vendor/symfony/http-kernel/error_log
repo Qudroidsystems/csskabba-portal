@@ -1,0 +1,36 @@
+[27-Sep-2026 10:05:40 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\HttpKernel\HttpKernelInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/HttpClientKernel.php:32
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/HttpClientKernel.php on line 32
+[27-Sep-2026 10:05:40 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\HttpKernel\HttpKernelInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/HttpKernel.php:52
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/HttpKernel.php on line 52
+[27-Sep-2026 10:05:40 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\BrowserKit\AbstractBrowser" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/HttpKernelBrowser.php:30
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/HttpKernelBrowser.php on line 30
+[27-Sep-2026 10:05:40 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\HttpKernel\KernelInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Kernel.php:55
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Kernel.php on line 55
+[27-Sep-2026 10:05:40 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\HttpKernel\HttpKernelInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/KernelInterface.php:29
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/KernelInterface.php on line 29
+[27-Sep-2026 10:07:36 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\HttpKernel\HttpKernelInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/HttpKernel.php:52
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/HttpKernel.php on line 52
+[27-Sep-2026 10:07:36 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\HttpKernel\HttpKernelInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/HttpClientKernel.php:32
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/HttpClientKernel.php on line 32
+[27-Sep-2026 10:07:36 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\BrowserKit\AbstractBrowser" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/HttpKernelBrowser.php:30
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/HttpKernelBrowser.php on line 30
+[27-Sep-2026 10:07:36 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\HttpKernel\HttpKernelInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/KernelInterface.php:29
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/KernelInterface.php on line 29

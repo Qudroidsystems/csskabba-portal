@@ -1,0 +1,4 @@
+[27-Sep-2026 10:09:33 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\EventDispatcher\EventDispatcherInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher/Debug/TraceableEventDispatcher.php:31
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/event-dispatcher/Debug/TraceableEventDispatcher.php on line 31

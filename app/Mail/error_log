@@ -1,0 +1,116 @@
+[27-Sep-2026 10:03:48 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/InvoiceMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/InvoiceMail.php on line 12
+[27-Sep-2026 10:03:48 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/NoticeMail.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/NoticeMail.php on line 14
+[27-Sep-2026 10:03:48 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/ScholarshipApprovalMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/ScholarshipApprovalMail.php on line 12
+[27-Sep-2026 10:03:48 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/SubstituteRequestMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/SubstituteRequestMail.php on line 12
+[27-Sep-2026 10:03:48 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/TimetableChangeAlertMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/TimetableChangeAlertMail.php on line 12
+[27-Sep-2026 10:03:53 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/InvoiceMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/InvoiceMail.php on line 12
+[27-Sep-2026 10:03:53 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/NoticeMail.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/NoticeMail.php on line 14
+[27-Sep-2026 10:03:53 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/PaymentReceiptMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/PaymentReceiptMail.php on line 12
+[27-Sep-2026 10:03:53 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/PayslipMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/PayslipMail.php on line 12
+[27-Sep-2026 10:03:53 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/SubstituteRequestMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/SubstituteRequestMail.php on line 12
+[27-Sep-2026 10:03:53 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/ScholarshipApprovalMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/ScholarshipApprovalMail.php on line 12
+[27-Sep-2026 10:03:54 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/TimetableNotificationMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/TimetableNotificationMail.php on line 12
+[27-Sep-2026 10:03:54 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/TimetableChangeAlertMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/TimetableChangeAlertMail.php on line 12
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/InvoiceMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/InvoiceMail.php on line 12
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/NoticeMail.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/NoticeMail.php on line 14
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/PaymentReceiptMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/PaymentReceiptMail.php on line 12
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/ScholarshipApprovalMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/ScholarshipApprovalMail.php on line 12
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/PayslipMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/PayslipMail.php on line 12
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/SubstituteRequestMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/SubstituteRequestMail.php on line 12
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/TimetableChangeAlertMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/TimetableChangeAlertMail.php on line 12
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/TimetableNotificationMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/TimetableNotificationMail.php on line 12
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/InvoiceMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/InvoiceMail.php on line 12
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/NoticeMail.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/NoticeMail.php on line 14
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/PayslipMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/PayslipMail.php on line 12
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/PaymentReceiptMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/PaymentReceiptMail.php on line 12
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/TimetableNotificationMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/TimetableNotificationMail.php on line 12
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/ScholarshipApprovalMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/ScholarshipApprovalMail.php on line 12
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/TimetableChangeAlertMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/TimetableChangeAlertMail.php on line 12
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Mail\Mailable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/SubstituteRequestMail.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Mail/SubstituteRequestMail.php on line 12

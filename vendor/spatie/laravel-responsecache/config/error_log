@@ -1,0 +1,4 @@
+[27-Sep-2026 10:06:15 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/spatie/laravel-responsecache/config/responsecache.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/spatie/laravel-responsecache/config/responsecache.php on line 7

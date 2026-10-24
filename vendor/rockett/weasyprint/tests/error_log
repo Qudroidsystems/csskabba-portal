@@ -1,0 +1,8 @@
+[27-Sep-2026 10:06:12 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function describe() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/rockett/weasyprint/tests/ConfigTest.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/rockett/weasyprint/tests/ConfigTest.php on line 11
+[27-Sep-2026 10:09:13 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function describe() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/rockett/weasyprint/tests/SourceTest.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/rockett/weasyprint/tests/SourceTest.php on line 11

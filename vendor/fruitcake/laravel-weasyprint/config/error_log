@@ -1,0 +1,4 @@
+[27-Sep-2026 10:08:25 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/fruitcake/laravel-weasyprint/config/weasyprint.php:33
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/fruitcake/laravel-weasyprint/config/weasyprint.php on line 33

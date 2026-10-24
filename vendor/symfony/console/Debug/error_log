@@ -1,0 +1,4 @@
+[27-Sep-2026 10:09:27 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\Request" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Debug/CliRequest.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Debug/CliRequest.php on line 21

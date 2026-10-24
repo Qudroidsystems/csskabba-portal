@@ -1,0 +1,6 @@
+[27-Sep-2026 10:06:05 UTC] PHP Fatal error:  Trait "Psr\Log\LoggerTrait" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psr/log/src/AbstractLogger.php on line 12
+[27-Sep-2026 10:09:07 UTC] PHP Fatal error:  Trait "Psr\Log\LoggerTrait" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psr/log/src/AbstractLogger.php on line 12
+[27-Sep-2026 10:09:07 UTC] PHP Fatal error:  Uncaught Error: Class "Psr\Log\AbstractLogger" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psr/log/src/NullLogger.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psr/log/src/NullLogger.php on line 13

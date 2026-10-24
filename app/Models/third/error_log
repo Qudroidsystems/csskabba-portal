@@ -1,0 +1,4 @@
+[27-Sep-2026 10:05:23 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/third/term_broadsheet.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/third/term_broadsheet.php on line 8

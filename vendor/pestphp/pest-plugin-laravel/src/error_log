@@ -1,0 +1,15 @@
+[27-Sep-2026 10:08:54 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function Pest\Laravel\expect() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest-plugin-laravel/src/Expectations.php:12
+Stack trace:
+#0 /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest-plugin-laravel/src/Autoload.php(17): require_once()
+#1 /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest-plugin-laravel/src/Autoload.php(19): {closure}()
+#2 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest-plugin-laravel/src/Expectations.php on line 12
+[27-Sep-2026 10:08:54 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function Pest\Laravel\expect() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest-plugin-laravel/src/Expectations.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest-plugin-laravel/src/Expectations.php on line 12
+[27-Sep-2026 10:08:54 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\ServiceProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest-plugin-laravel/src/PestServiceProvider.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest-plugin-laravel/src/PestServiceProvider.php on line 13
+[27-Sep-2026 10:08:54 UTC] PHP Fatal error:  Trait "Pest\Plugins\Concerns\HandleArguments" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest-plugin-laravel/src/Plugin.php on line 17

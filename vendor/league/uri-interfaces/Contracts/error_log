@@ -1,0 +1,40 @@
+[27-Sep-2026 10:08:43 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Uri\Contracts\UriComponentInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Contracts/AuthorityInterface.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Contracts/AuthorityInterface.php on line 20
+[27-Sep-2026 10:08:44 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Uri\Contracts\PathInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Contracts/DataPathInterface.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Contracts/DataPathInterface.php on line 19
+[27-Sep-2026 10:08:44 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Uri\Contracts\UriComponentInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Contracts/FragmentInterface.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Contracts/FragmentInterface.php on line 19
+[27-Sep-2026 10:08:44 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Uri\Contracts\HostInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Contracts/DomainHostInterface.php:33
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Contracts/DomainHostInterface.php on line 33
+[27-Sep-2026 10:08:44 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Uri\Contracts\UriComponentInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Contracts/PortInterface.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Contracts/PortInterface.php on line 16
+[27-Sep-2026 10:08:44 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Uri\Contracts\HostInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Contracts/IpHostInterface.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Contracts/IpHostInterface.php on line 16
+[27-Sep-2026 10:08:44 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Uri\Contracts\UriComponentInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Contracts/PathInterface.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Contracts/PathInterface.php on line 21
+[27-Sep-2026 10:08:44 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Uri\Contracts\UriComponentInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Contracts/QueryInterface.php:51
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Contracts/QueryInterface.php on line 51
+[27-Sep-2026 10:08:44 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Uri\Contracts\PathInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Contracts/SegmentedPathInterface.php:25
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Contracts/SegmentedPathInterface.php on line 25
+[27-Sep-2026 10:08:44 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Uri\Contracts\UriComponentInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Contracts/UserInfoInterface.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/Contracts/UserInfoInterface.php on line 18

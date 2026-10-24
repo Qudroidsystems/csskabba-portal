@@ -1,0 +1,4 @@
+[27-Sep-2026 10:05:35 UTC] PHP Fatal error:  Uncaught Error: Class "Psr\Log\AbstractLogger" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/error-handler/BufferingLogger.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/error-handler/BufferingLogger.php on line 21

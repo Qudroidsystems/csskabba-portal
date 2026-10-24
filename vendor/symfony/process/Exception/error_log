@@ -1,0 +1,8 @@
+[27-Sep-2026 10:09:57 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Process\Exception\RuntimeException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/process/Exception/ProcessFailedException.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/process/Exception/ProcessFailedException.php on line 21
+[27-Sep-2026 10:09:57 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Process\Exception\ExceptionInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/process/Exception/LogicException.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/process/Exception/LogicException.php on line 19

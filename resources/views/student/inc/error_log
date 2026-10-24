@@ -1,0 +1,2 @@
+[27-Sep-2026 10:08:10 UTC] PHP Warning:  Undefined variable $user in /home1/gozakma1/public_html/homaj.viteschools.ng/resources/views/student/inc/navbar.blade.php on line 11
+[27-Sep-2026 10:08:10 UTC] PHP Warning:  Attempt to read property "avatar" on null in /home1/gozakma1/public_html/homaj.viteschools.ng/resources/views/student/inc/navbar.blade.php on line 11

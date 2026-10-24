@@ -1,0 +1,4 @@
+[27-Sep-2026 10:07:56 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/Payment/OnlinePaymentController.php:30
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/Payment/OnlinePaymentController.php on line 30

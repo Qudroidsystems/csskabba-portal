@@ -1,0 +1,68 @@
+[27-Sep-2026 10:08:31 UTC] PHP Fatal error:  Uncaught Error: Class "Laravel\Prompts\Prompt" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/Callout.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/Callout.php on line 7
+[27-Sep-2026 10:08:31 UTC] PHP Fatal error:  Uncaught Error: Class "Laravel\Prompts\Prompt" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/DataTablePrompt.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/DataTablePrompt.php on line 8
+[27-Sep-2026 10:08:31 UTC] PHP Fatal error:  Uncaught Error: Class "Laravel\Prompts\Prompt" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/Grid.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/Grid.php on line 7
+[27-Sep-2026 10:08:32 UTC] PHP Fatal error:  Uncaught Error: Class "Laravel\Prompts\Prompt" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/MultiSelectPrompt.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/MultiSelectPrompt.php on line 8
+[27-Sep-2026 10:08:32 UTC] PHP Fatal error:  Uncaught Error: Class "Laravel\Prompts\Prompt" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/MultiSearchPrompt.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/MultiSearchPrompt.php on line 8
+[27-Sep-2026 10:08:32 UTC] PHP Fatal error:  Uncaught Error: Class "Laravel\Prompts\Prompt" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/NotifyPrompt.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/NotifyPrompt.php on line 8
+[27-Sep-2026 10:08:32 UTC] PHP Fatal error:  Uncaught Error: Class "Laravel\Prompts\Prompt" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/PasswordPrompt.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/PasswordPrompt.php on line 7
+[27-Sep-2026 10:08:32 UTC] PHP Fatal error:  Uncaught Error: Class "Laravel\Prompts\Prompt" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/Progress.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/Progress.php on line 13
+[27-Sep-2026 10:08:32 UTC] PHP Fatal error:  Uncaught Error: Class "Laravel\Prompts\Prompt" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/PausePrompt.php:5
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/PausePrompt.php on line 5
+[27-Sep-2026 10:08:33 UTC] PHP Fatal error:  Uncaught Error: Class "Laravel\Prompts\Prompt" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/SearchPrompt.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/SearchPrompt.php on line 8
+[27-Sep-2026 10:08:33 UTC] PHP Fatal error:  Uncaught Error: Class "Laravel\Prompts\Prompt" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/SelectPrompt.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/SelectPrompt.php on line 9
+[27-Sep-2026 10:08:33 UTC] PHP Fatal error:  Uncaught Error: Class "Laravel\Prompts\Prompt" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/Spinner.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/Spinner.php on line 8
+[27-Sep-2026 10:08:33 UTC] PHP Fatal error:  Uncaught Error: Class "Laravel\Prompts\Prompt" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/Stream.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/Stream.php on line 7
+[27-Sep-2026 10:08:33 UTC] PHP Fatal error:  Uncaught Error: Class "Laravel\Prompts\Prompt" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/SuggestPrompt.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/SuggestPrompt.php on line 8
+[27-Sep-2026 10:08:33 UTC] PHP Fatal error:  Uncaught Error: Class "Laravel\Prompts\Prompt" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/Table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/Table.php on line 7
+[27-Sep-2026 10:08:33 UTC] PHP Fatal error:  Uncaught Error: Class "Laravel\Prompts\Prompt" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/Task.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/Task.php on line 10
+[27-Sep-2026 10:08:34 UTC] PHP Fatal error:  Uncaught Error: Class "Laravel\Prompts\Prompt" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/TextareaPrompt.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/laravel/prompts/src/TextareaPrompt.php on line 9

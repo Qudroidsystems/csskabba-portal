@@ -1,0 +1,8 @@
+[27-Sep-2026 10:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Ramsey\Uuid\Codec\StringCodec" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/Codec/GuidStringCodec.php:31
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/Codec/GuidStringCodec.php on line 31
+[27-Sep-2026 10:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Ramsey\Uuid\Codec\StringCodec" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/Codec/TimestampFirstCombCodec.php:51
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/Codec/TimestampFirstCombCodec.php on line 51

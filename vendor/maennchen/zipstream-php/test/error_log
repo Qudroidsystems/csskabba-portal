@@ -1,0 +1,25 @@
+[27-Sep-2026 10:08:49 UTC] PHP Fatal error:  Uncaught Error: Class "PHPUnit\Framework\TestCase" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maennchen/zipstream-php/test/CentralDirectoryFileHeaderTest.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maennchen/zipstream-php/test/CentralDirectoryFileHeaderTest.php on line 12
+[27-Sep-2026 10:08:49 UTC] PHP Fatal error:  Uncaught Error: Class "PHPUnit\Framework\TestCase" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maennchen/zipstream-php/test/DataDescriptorTest.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maennchen/zipstream-php/test/DataDescriptorTest.php on line 10
+[27-Sep-2026 10:08:49 UTC] PHP Fatal error:  Uncaught Error: Class "PHPUnit\Framework\TestCase" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maennchen/zipstream-php/test/EndOfCentralDirectoryTest.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maennchen/zipstream-php/test/EndOfCentralDirectoryTest.php on line 10
+[27-Sep-2026 10:08:49 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Http\Message\StreamInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maennchen/zipstream-php/test/EndlessCycleStream.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maennchen/zipstream-php/test/EndlessCycleStream.php on line 10
+[27-Sep-2026 10:08:50 UTC] PHP Warning:  require(/home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maennchen/zipstream-php/test/../vendor/autoload.php): Failed to open stream: No such file or directory in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maennchen/zipstream-php/test/bootstrap.php on line 7
+[27-Sep-2026 10:08:50 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maennchen/zipstream-php/test/../vendor/autoload.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maennchen/zipstream-php/test/bootstrap.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maennchen/zipstream-php/test/bootstrap.php on line 7
+[27-Sep-2026 10:08:50 UTC] PHP Fatal error:  Uncaught Error: Class "PHPUnit\Framework\TestCase" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maennchen/zipstream-php/test/ZipStreamTest.php:29
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maennchen/zipstream-php/test/ZipStreamTest.php on line 29

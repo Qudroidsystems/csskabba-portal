@@ -1,0 +1,4 @@
+[27-Sep-2026 10:08:16 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Console\Command\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/brianium/paratest/src/ParaTestCommand.php:25
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/brianium/paratest/src/ParaTestCommand.php on line 25

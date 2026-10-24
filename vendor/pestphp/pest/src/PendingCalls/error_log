@@ -1,0 +1,1 @@
+[27-Sep-2026 10:06:55 UTC] PHP Fatal error:  Trait "Pest\PendingCalls\Concerns\Describable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/src/PendingCalls/AfterEachCall.php on line 19

@@ -1,0 +1,4 @@
+[27-Sep-2026 10:08:54 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Route" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest-plugin-laravel/resources/routes.php:5
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest-plugin-laravel/resources/routes.php on line 5

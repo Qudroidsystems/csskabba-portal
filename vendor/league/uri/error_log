@@ -1,0 +1,28 @@
+[27-Sep-2026 10:04:56 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Http\Message\UriInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri/Http.php:35
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri/Http.php on line 35
+[27-Sep-2026 10:04:56 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Uri\Contracts\Conditionable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri/Urn.php:46
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri/Urn.php on line 46
+[27-Sep-2026 10:06:33 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Uri\Contracts\UriAccess" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri/BaseUri.php:50
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri/BaseUri.php on line 50
+[27-Sep-2026 10:06:33 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Uri\Contracts\Conditionable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri/Builder.php:33
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri/Builder.php on line 33
+[27-Sep-2026 10:06:33 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Http\Message\UriInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri/Http.php:35
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri/Http.php on line 35
+[27-Sep-2026 10:06:33 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Uri\Contracts\Conditionable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri/Uri.php:99
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri/Uri.php on line 99
+[27-Sep-2026 10:06:34 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Uri\Contracts\Conditionable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri/Urn.php:46
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri/Urn.php on line 46

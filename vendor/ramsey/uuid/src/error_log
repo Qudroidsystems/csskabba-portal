@@ -1,0 +1,20 @@
+[27-Sep-2026 10:06:08 UTC] PHP Fatal error:  Uncaught Error: Class "Ramsey\Uuid\Uuid" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/DegradedUuid.php:23
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/DegradedUuid.php on line 23
+[27-Sep-2026 10:06:09 UTC] PHP Fatal error:  Uncaught Error: Interface "Ramsey\Uuid\UuidFactoryInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/UuidFactory.php:47
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/UuidFactory.php on line 47
+[27-Sep-2026 10:09:09 UTC] PHP Fatal error:  Uncaught Error: Class "Ramsey\Uuid\Uuid" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/DegradedUuid.php:23
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/DegradedUuid.php on line 23
+[27-Sep-2026 10:09:10 UTC] PHP Fatal error:  Uncaught Error: Interface "Ramsey\Uuid\UuidFactoryInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/UuidFactory.php:47
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/UuidFactory.php on line 47
+[27-Sep-2026 10:09:10 UTC] PHP Fatal error:  Uncaught Error: Interface "Ramsey\Uuid\DeprecatedUuidInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/UuidInterface.php:29
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/UuidInterface.php on line 29

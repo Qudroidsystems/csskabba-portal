@@ -1,0 +1,1 @@
+[27-Sep-2026 10:07:01 UTC] PHP Fatal error:  Trait "Ramsey\Uuid\Fields\SerializableFieldsTrait" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/ramsey/uuid/src/Nonstandard/Fields.php on line 43

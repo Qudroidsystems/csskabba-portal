@@ -1,0 +1,12 @@
+[27-Sep-2026 10:06:54 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Console\Exception\ExceptionInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/src/Exceptions/DatasetAlreadyExists.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/src/Exceptions/DatasetAlreadyExists.php on line 15
+[27-Sep-2026 10:06:54 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Console\Exception\ExceptionInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/src/Exceptions/FileOrFolderNotFound.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/src/Exceptions/FileOrFolderNotFound.php on line 15
+[27-Sep-2026 10:06:54 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Console\Exception\ExceptionInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/src/Exceptions/MissingDependency.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pestphp/pest/src/Exceptions/MissingDependency.php on line 15

@@ -1,0 +1,16 @@
+[27-Sep-2026 10:05:39 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Mailer\Envelope" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mailer/DelayedEnvelope.php:24
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mailer/DelayedEnvelope.php on line 24
+[27-Sep-2026 10:05:39 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Mailer\MailerInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mailer/Mailer.php:26
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mailer/Mailer.php on line 26
+[27-Sep-2026 10:07:37 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Mailer\Envelope" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mailer/DelayedEnvelope.php:24
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mailer/DelayedEnvelope.php on line 24
+[27-Sep-2026 10:07:37 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Mailer\MailerInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mailer/Mailer.php:26
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mailer/Mailer.php on line 26

@@ -1,0 +1,12 @@
+[27-Sep-2026 10:09:35 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\Exception\UnexpectedValueException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/Exception/BadRequestException.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/Exception/BadRequestException.php on line 17
+[27-Sep-2026 10:09:36 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpFoundation\Exception\SignedUriException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/Exception/ExpiredSignedUriException.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/Exception/ExpiredSignedUriException.php on line 20
+[27-Sep-2026 10:09:36 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\HttpFoundation\Exception\RequestExceptionInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/Exception/SessionNotFoundException.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-foundation/Exception/SessionNotFoundException.php on line 21

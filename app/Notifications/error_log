@@ -1,0 +1,52 @@
+[27-Sep-2026 10:03:54 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Notifications\Notification" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/PaymentReminderNotification.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/PaymentReminderNotification.php on line 10
+[27-Sep-2026 10:03:54 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Notifications\Notification" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/PaymentReceiptNotification.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/PaymentReceiptNotification.php on line 10
+[27-Sep-2026 10:03:54 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Notifications\Notification" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/PortalNotification.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/PortalNotification.php on line 11
+[27-Sep-2026 10:03:54 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Notifications\Notification" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/ScholarshipApprovedNotification.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/ScholarshipApprovedNotification.php on line 10
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Notifications\Notification" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/PayslipGeneratedNotification.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/PayslipGeneratedNotification.php on line 10
+[27-Sep-2026 10:03:57 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Notifications\Notification" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/PaymentReceiptNotification.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/PaymentReceiptNotification.php on line 10
+[27-Sep-2026 10:03:57 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Notifications\Notification" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/ScholarshipApprovedNotification.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/ScholarshipApprovedNotification.php on line 10
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Notifications\Notification" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/PaymentReceiptNotification.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/PaymentReceiptNotification.php on line 10
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Notifications\Notification" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/PaymentReminderNotification.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/PaymentReminderNotification.php on line 10
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Notifications\Notification" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/PayslipGeneratedNotification.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/PayslipGeneratedNotification.php on line 10
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Notifications\Notification" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/ScholarshipApprovedNotification.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/ScholarshipApprovedNotification.php on line 10
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Notifications\Notification" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/PortalNotification.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/PortalNotification.php on line 11
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Notifications\Notification" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/PaymentReminderNotification.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Notifications/PaymentReminderNotification.php on line 10

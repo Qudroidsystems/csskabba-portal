@@ -1,0 +1,12 @@
+[27-Sep-2026 10:06:05 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Http\Client\ClientExceptionInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psr/http-client/src/NetworkExceptionInterface.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psr/http-client/src/NetworkExceptionInterface.php on line 14
+[27-Sep-2026 10:06:06 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Http\Client\ClientExceptionInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psr/http-client/src/RequestExceptionInterface.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psr/http-client/src/RequestExceptionInterface.php on line 14
+[27-Sep-2026 10:09:08 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Http\Client\ClientExceptionInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psr/http-client/src/NetworkExceptionInterface.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/psr/http-client/src/NetworkExceptionInterface.php on line 14

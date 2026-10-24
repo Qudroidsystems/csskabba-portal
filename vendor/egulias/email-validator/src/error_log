@@ -1,0 +1,16 @@
+[27-Sep-2026 10:05:54 UTC] PHP Fatal error:  Uncaught Error: Class "Egulias\EmailValidator\Parser" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/egulias/email-validator/src/EmailParser.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/egulias/email-validator/src/EmailParser.php on line 13
+[27-Sep-2026 10:08:24 UTC] PHP Fatal error:  Uncaught Error: Class "Doctrine\Common\Lexer\AbstractLexer" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/egulias/email-validator/src/EmailLexer.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/egulias/email-validator/src/EmailLexer.php on line 9
+[27-Sep-2026 10:08:24 UTC] PHP Fatal error:  Uncaught Error: Class "Egulias\EmailValidator\Parser" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/egulias/email-validator/src/EmailParser.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/egulias/email-validator/src/EmailParser.php on line 13
+[27-Sep-2026 10:08:24 UTC] PHP Fatal error:  Uncaught Error: Class "Egulias\EmailValidator\Parser" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/egulias/email-validator/src/MessageIDParser.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/egulias/email-validator/src/MessageIDParser.php on line 13

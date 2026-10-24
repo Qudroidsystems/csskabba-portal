@@ -1,0 +1,112 @@
+[27-Sep-2026 10:03:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetRecordMockFactory.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetRecordMockFactory.php on line 12
+[27-Sep-2026 10:03:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetRecordFactory.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetRecordFactory.php on line 12
+[27-Sep-2026 10:03:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetsFactory.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetsFactory.php on line 12
+[27-Sep-2026 10:03:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetsMockFactory.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetsMockFactory.php on line 12
+[27-Sep-2026 10:03:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/SchoolarmFactory.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/SchoolarmFactory.php on line 8
+[27-Sep-2026 10:03:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/ClasscategoryFactory.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/ClasscategoryFactory.php on line 8
+[27-Sep-2026 10:03:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/SchoolclassFactory.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/SchoolclassFactory.php on line 10
+[27-Sep-2026 10:03:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/SchoolsessionFactory.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/SchoolsessionFactory.php on line 8
+[27-Sep-2026 10:03:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/SchooltermFactory.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/SchooltermFactory.php on line 8
+[27-Sep-2026 10:03:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/UserFactory.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/UserFactory.php on line 12
+[27-Sep-2026 10:04:15 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetRecordFactory.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetRecordFactory.php on line 12
+[27-Sep-2026 10:04:15 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetsMockFactory.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetsMockFactory.php on line 12
+[27-Sep-2026 10:04:15 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetRecordMockFactory.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetRecordMockFactory.php on line 12
+[27-Sep-2026 10:04:15 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetsFactory.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetsFactory.php on line 12
+[27-Sep-2026 10:04:16 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/StudentBatchModelFactory.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/StudentBatchModelFactory.php on line 11
+[27-Sep-2026 10:04:16 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/StudentFactory.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/StudentFactory.php on line 9
+[27-Sep-2026 10:04:16 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/SubjectFactory.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/SubjectFactory.php on line 8
+[27-Sep-2026 10:04:16 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/SubjectclassFactory.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/SubjectclassFactory.php on line 13
+[27-Sep-2026 10:04:16 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/UserFactory.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/UserFactory.php on line 12
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetRecordFactory.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetRecordFactory.php on line 12
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetRecordMockFactory.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetRecordMockFactory.php on line 12
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetsFactory.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetsFactory.php on line 12
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetsMockFactory.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetsMockFactory.php on line 12
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/StudentFactory.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/StudentFactory.php on line 9
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetRecordMockFactory.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetRecordMockFactory.php on line 12
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetsMockFactory.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetsMockFactory.php on line 12
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetsFactory.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/BroadsheetsFactory.php on line 12
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/SchoolclassFactory.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/database/factories/SchoolclassFactory.php on line 10

@@ -1,0 +1,16 @@
+[27-Sep-2026 10:04:19 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function test() in /home1/gozakma1/public_html/homaj.viteschools.ng/tests/Unit/ExampleTest.php:3
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/tests/Unit/ExampleTest.php on line 3
+[27-Sep-2026 10:04:19 UTC] PHP Fatal error:  Uncaught Error: Class "PHPUnit\Framework\TestCase" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/tests/Unit/PayrollCalculatorTest.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/tests/Unit/PayrollCalculatorTest.php on line 9
+[27-Sep-2026 10:04:51 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function test() in /home1/gozakma1/public_html/homaj.viteschools.ng/tests/Unit/ExampleTest.php:3
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/tests/Unit/ExampleTest.php on line 3
+[27-Sep-2026 10:04:52 UTC] PHP Fatal error:  Uncaught Error: Class "PHPUnit\Framework\TestCase" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/tests/Unit/PayrollCalculatorTest.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/tests/Unit/PayrollCalculatorTest.php on line 9

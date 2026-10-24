@@ -1,0 +1,24 @@
+[27-Sep-2026 10:05:54 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\ServiceProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/fruitcake/laravel-weasyprint/src/WeasyPrintProvider.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/fruitcake/laravel-weasyprint/src/WeasyPrintProvider.php on line 8
+[27-Sep-2026 10:05:54 UTC] PHP Fatal error:  Uncaught Error: Class "Pontedilana\PhpWeasyPrint\Pdf" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/fruitcake/laravel-weasyprint/src/IlluminateWeasyPrintPdf.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/fruitcake/laravel-weasyprint/src/IlluminateWeasyPrintPdf.php on line 8
+[27-Sep-2026 10:05:54 UTC] PHP Fatal error:  Uncaught Error: Class "Fruitcake\WeasyPrint\WeasyPrintWrapper" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/fruitcake/laravel-weasyprint/src/WeasyPrintWrapperFaker.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/fruitcake/laravel-weasyprint/src/WeasyPrintWrapperFaker.php on line 9
+[27-Sep-2026 10:08:25 UTC] PHP Fatal error:  Uncaught Error: Class "Fruitcake\WeasyPrint\WeasyPrintWrapper" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/fruitcake/laravel-weasyprint/src/WeasyPrintWrapperFaker.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/fruitcake/laravel-weasyprint/src/WeasyPrintWrapperFaker.php on line 9
+[27-Sep-2026 10:08:25 UTC] PHP Fatal error:  Uncaught Error: Class "Pontedilana\PhpWeasyPrint\Pdf" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/fruitcake/laravel-weasyprint/src/IlluminateWeasyPrintPdf.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/fruitcake/laravel-weasyprint/src/IlluminateWeasyPrintPdf.php on line 8
+[27-Sep-2026 10:08:25 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\ServiceProvider" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/fruitcake/laravel-weasyprint/src/WeasyPrintProvider.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/fruitcake/laravel-weasyprint/src/WeasyPrintProvider.php on line 8

@@ -1,0 +1,8 @@
+[27-Sep-2026 10:06:43 UTC] PHP Fatal error:  Uncaught Error: Class "Egulias\EmailValidator\Parser\DomainPart" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/egulias/email-validator/src/Parser/IDRightPart.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/egulias/email-validator/src/Parser/IDRightPart.php on line 11
+[27-Sep-2026 10:06:43 UTC] PHP Fatal error:  Uncaught Error: Class "Egulias\EmailValidator\Parser\LocalPart" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/egulias/email-validator/src/Parser/IDLeftPart.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/egulias/email-validator/src/Parser/IDLeftPart.php on line 9

@@ -1,0 +1,25 @@
+[27-Sep-2026 10:06:12 UTC] PHP Fatal error:  Uncaught Error: Class "SebastianBergmann\CodeUnit\CodeUnit" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/code-unit/src/FunctionUnit.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/code-unit/src/FunctionUnit.php on line 15
+[27-Sep-2026 10:09:16 UTC] PHP Fatal error:  Uncaught Error: Class "SebastianBergmann\CodeUnit\CodeUnit" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/code-unit/src/ClassUnit.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/code-unit/src/ClassUnit.php on line 15
+[27-Sep-2026 10:09:17 UTC] PHP Fatal error:  Uncaught Error: Class "SebastianBergmann\CodeUnit\CodeUnit" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/code-unit/src/ClassMethodUnit.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/code-unit/src/ClassMethodUnit.php on line 15
+[27-Sep-2026 10:09:17 UTC] PHP Fatal error:  Could not check compatibility between SebastianBergmann\CodeUnit\CodeUnitCollection::getIterator(): SebastianBergmann\CodeUnit\CodeUnitCollectionIterator and IteratorAggregate::getIterator(): Traversable, because class SebastianBergmann\CodeUnit\CodeUnitCollectionIterator is not available in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/code-unit/src/CodeUnitCollection.php on line 51
+[27-Sep-2026 10:09:17 UTC] PHP Fatal error:  Uncaught Error: Class "SebastianBergmann\CodeUnit\CodeUnit" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/code-unit/src/FunctionUnit.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/code-unit/src/FunctionUnit.php on line 15
+[27-Sep-2026 10:09:17 UTC] PHP Fatal error:  Uncaught Error: Class "SebastianBergmann\CodeUnit\CodeUnit" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/code-unit/src/InterfaceMethodUnit.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/code-unit/src/InterfaceMethodUnit.php on line 15
+[27-Sep-2026 10:09:17 UTC] PHP Fatal error:  Uncaught Error: Class "SebastianBergmann\CodeUnit\CodeUnit" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/code-unit/src/InterfaceUnit.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/code-unit/src/InterfaceUnit.php on line 15

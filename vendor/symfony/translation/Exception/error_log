@@ -1,0 +1,4 @@
+[27-Sep-2026 10:06:40 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Translation\Exception\ExceptionInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/Exception/RuntimeException.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/Exception/RuntimeException.php on line 19

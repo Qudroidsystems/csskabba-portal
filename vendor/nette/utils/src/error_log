@@ -1,0 +1,2 @@
+[27-Sep-2026 10:08:52 UTC] PHP Warning:  Class "Nette\HtmlStringable" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/nette/utils/src/compatibility.php on line 18
+[27-Sep-2026 10:08:52 UTC] PHP Warning:  Class "Nette\Localization\Translator" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/nette/utils/src/compatibility.php on line 29

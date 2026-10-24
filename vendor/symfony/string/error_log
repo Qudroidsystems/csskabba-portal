@@ -1,0 +1,24 @@
+[27-Sep-2026 10:05:47 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\String\AbstractString" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/string/AbstractUnicodeString.php:29
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/string/AbstractUnicodeString.php on line 29
+[27-Sep-2026 10:05:47 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\String\AbstractString" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/string/ByteString.php:27
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/string/ByteString.php on line 27
+[27-Sep-2026 10:05:47 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\String\AbstractUnicodeString" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/string/UnicodeString.php:33
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/string/UnicodeString.php on line 33
+[27-Sep-2026 10:07:46 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\String\AbstractString" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/string/AbstractUnicodeString.php:29
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/string/AbstractUnicodeString.php on line 29
+[27-Sep-2026 10:07:46 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\String\AbstractUnicodeString" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/string/CodePointString.php:25
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/string/CodePointString.php on line 25
+[27-Sep-2026 10:07:46 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\String\AbstractUnicodeString" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/string/UnicodeString.php:33
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/string/UnicodeString.php on line 33

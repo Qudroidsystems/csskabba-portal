@@ -1,0 +1,320 @@
+[27-Sep-2026 10:05:13 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ActivityLogController.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ActivityLogController.php on line 11
+[27-Sep-2026 10:05:13 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ActivityController.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ActivityController.php on line 16
+[27-Sep-2026 10:05:13 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/AttendanceController.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/AttendanceController.php on line 21
+[27-Sep-2026 10:05:14 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/AttendanceSettingController.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/AttendanceSettingController.php on line 18
+[27-Sep-2026 10:05:14 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/BaseSubjectVettingController.php:35
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/BaseSubjectVettingController.php on line 35
+[27-Sep-2026 10:05:14 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/AuthController.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/AuthController.php on line 7
+[27-Sep-2026 10:05:14 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/BroadsheetController.php:27
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/BroadsheetController.php on line 27
+[27-Sep-2026 10:05:14 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/AutoMessageController.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/AutoMessageController.php on line 12
+[27-Sep-2026 10:05:14 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/BiodataController.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/BiodataController.php on line 20
+[27-Sep-2026 10:05:14 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/CalendarController.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/CalendarController.php on line 17
+[27-Sep-2026 10:05:14 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/CBTController.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/CBTController.php on line 20
+[27-Sep-2026 10:05:14 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ClassBroadsheetController.php:23
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ClassBroadsheetController.php on line 23
+[27-Sep-2026 10:05:14 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ClassOperationController.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ClassOperationController.php on line 7
+[27-Sep-2026 10:05:14 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ClassTeacherController.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ClassTeacherController.php on line 16
+[27-Sep-2026 10:05:15 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/CompulsorySubjectClassController.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/CompulsorySubjectClassController.php on line 17
+[27-Sep-2026 10:05:15 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Routing\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/Controller.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/Controller.php on line 10
+[27-Sep-2026 10:05:15 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/DeviceUserMappingController.php:27
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/DeviceUserMappingController.php on line 27
+[27-Sep-2026 10:05:15 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/EnhancedSchoolPaymentController.php:24
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/EnhancedSchoolPaymentController.php on line 24
+[27-Sep-2026 10:05:15 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ExamController.php:30
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ExamController.php on line 30
+[27-Sep-2026 10:05:15 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ExamPauseController.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ExamPauseController.php on line 12
+[27-Sep-2026 10:05:15 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ExamTimetableController.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ExamTimetableController.php on line 20
+[27-Sep-2026 10:05:15 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/GenerateReport.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/GenerateReport.php on line 7
+[27-Sep-2026 10:05:15 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/HolidayController.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/HolidayController.php on line 15
+[27-Sep-2026 10:05:15 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/HouseController.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/HouseController.php on line 16
+[27-Sep-2026 10:05:16 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/HomeController.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/HomeController.php on line 7
+[27-Sep-2026 10:05:16 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/JobStatusController.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/JobStatusController.php on line 9
+[27-Sep-2026 10:05:16 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/LeaveBoardController.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/LeaveBoardController.php on line 9
+[27-Sep-2026 10:05:16 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/LeaveController.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/LeaveController.php on line 12
+[27-Sep-2026 10:05:16 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/LiveAttendanceController.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/LiveAttendanceController.php on line 16
+[27-Sep-2026 10:05:16 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/MessagingSettingsController.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/MessagingSettingsController.php on line 16
+[27-Sep-2026 10:05:16 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/MyClassController.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/MyClassController.php on line 17
+[27-Sep-2026 10:05:16 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\BaseSubjectVettingController" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/MyMockSubjectVettingsController.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/MyMockSubjectVettingsController.php on line 15
+[27-Sep-2026 10:05:17 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/MySubjectController.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/MySubjectController.php on line 19
+[27-Sep-2026 10:05:17 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\BaseSubjectVettingController" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/MySubjectVettingsController.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/MySubjectVettingsController.php on line 9
+[27-Sep-2026 10:05:17 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/NotificationController.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/NotificationController.php on line 9
+[27-Sep-2026 10:05:17 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/MyresultroomController.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/MyresultroomController.php on line 17
+[27-Sep-2026 10:05:17 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ParentContactController.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ParentContactController.php on line 16
+[27-Sep-2026 10:05:18 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/PermissionController.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/PermissionController.php on line 11
+[27-Sep-2026 10:05:18 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/PromotionController.php:31
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/PromotionController.php on line 31
+[27-Sep-2026 10:05:18 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/PublicCalendarController.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/PublicCalendarController.php on line 13
+[27-Sep-2026 10:05:18 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/PromotionSettingController.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/PromotionSettingController.php on line 18
+[27-Sep-2026 10:05:18 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ReportApprovalController.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ReportApprovalController.php on line 16
+[27-Sep-2026 10:05:18 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ReportController.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ReportController.php on line 7
+[27-Sep-2026 10:05:18 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ResultAccessController.php:26
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ResultAccessController.php on line 26
+[27-Sep-2026 10:05:18 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ResultSendController.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ResultSendController.php on line 20
+[27-Sep-2026 10:05:19 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ResultController.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ResultController.php on line 7
+[27-Sep-2026 10:05:19 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ResultLinkController.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ResultLinkController.php on line 12
+[27-Sep-2026 10:05:19 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/RoleController.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/RoleController.php on line 18
+[27-Sep-2026 10:05:19 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/RoomController.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/RoomController.php on line 15
+[27-Sep-2026 10:05:19 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchoolArmController.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchoolArmController.php on line 11
+[27-Sep-2026 10:05:19 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchoolBillController.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchoolBillController.php on line 9
+[27-Sep-2026 10:05:19 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchoolBillTermSessionController.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchoolBillTermSessionController.php on line 17
+[27-Sep-2026 10:05:19 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchoolClassController.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchoolClassController.php on line 17
+[27-Sep-2026 10:05:19 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchoolHouseController.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchoolHouseController.php on line 15
+[27-Sep-2026 10:05:19 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchoolInformationController.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchoolInformationController.php on line 14
+[27-Sep-2026 10:05:19 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchoolNoticeController.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchoolNoticeController.php on line 19
+[27-Sep-2026 10:05:19 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchoolPaymentController.php:33
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchoolPaymentController.php on line 33
+[27-Sep-2026 10:05:20 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchoolsessionController.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchoolsessionController.php on line 9
+[27-Sep-2026 10:05:20 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchoolsettingController.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchoolsettingController.php on line 7
+[27-Sep-2026 10:05:20 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchooltermController.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SchooltermController.php on line 10
+[27-Sep-2026 10:05:20 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SearchController.php:28
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SearchController.php on line 28
+[27-Sep-2026 10:05:20 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SharkController.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SharkController.php on line 12
+[27-Sep-2026 10:05:20 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SportController.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SportController.php on line 15
+[27-Sep-2026 10:05:20 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StaffAttendanceController.php:25
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StaffAttendanceController.php on line 25
+[27-Sep-2026 10:05:20 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StaffController.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StaffController.php on line 14
+[27-Sep-2026 10:05:20 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StaffImageUploadController.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StaffImageUploadController.php on line 8
+[27-Sep-2026 10:05:20 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StaffsignatureuploadController.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StaffsignatureuploadController.php on line 7
+[27-Sep-2026 10:05:20 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StudentAssessmentController.php:28
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StudentAssessmentController.php on line 28
+[27-Sep-2026 10:05:20 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StudentClassController.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StudentClassController.php on line 7
+[27-Sep-2026 10:05:20 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StudentClassOperationsController.php:36
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StudentClassOperationsController.php on line 36
+[27-Sep-2026 10:05:21 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StudentHouseController.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StudentHouseController.php on line 10
+[27-Sep-2026 10:05:21 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StudentIdCardController.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StudentIdCardController.php on line 14
+[27-Sep-2026 10:05:21 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StudentImageUploadController.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StudentImageUploadController.php on line 12
+[27-Sep-2026 10:05:21 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StudentLeaveController.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StudentLeaveController.php on line 14
+[27-Sep-2026 10:05:21 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StudentPaymentController.php:40
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StudentPaymentController.php on line 40
+[27-Sep-2026 10:05:21 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StudentViewController.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/StudentViewController.php on line 7
+[27-Sep-2026 10:05:21 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SubjectController.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SubjectController.php on line 12
+[27-Sep-2026 10:05:22 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SubjectVettedController.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/SubjectVettedController.php on line 7
+[27-Sep-2026 10:05:22 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/TimetableReportController.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/TimetableReportController.php on line 19
+[27-Sep-2026 10:05:23 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ViewStudentMockReportController.php:22
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/ViewStudentMockReportController.php on line 22

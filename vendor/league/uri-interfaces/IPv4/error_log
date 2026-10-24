@@ -1,0 +1,12 @@
+[27-Sep-2026 10:08:45 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Uri\IPv4\Calculator" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/IPv4/BCMathCalculator.php:25
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/IPv4/BCMathCalculator.php on line 25
+[27-Sep-2026 10:08:45 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Uri\IPv4\Calculator" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/IPv4/GMPCalculator.php:29
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/IPv4/GMPCalculator.php on line 29
+[27-Sep-2026 10:08:45 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Uri\IPv4\Calculator" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/IPv4/NativeCalculator.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/uri-interfaces/IPv4/NativeCalculator.php on line 19

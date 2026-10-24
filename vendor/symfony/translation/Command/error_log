@@ -1,0 +1,16 @@
+[27-Sep-2026 10:06:39 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Console\Command\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/Command/TranslationPullCommand.php:33
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/Command/TranslationPullCommand.php on line 33
+[27-Sep-2026 10:06:39 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Console\Command\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/Command/TranslationLintCommand.php:32
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/Command/TranslationLintCommand.php on line 32
+[27-Sep-2026 10:10:02 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Console\Command\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/Command/TranslationPullCommand.php:33
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/Command/TranslationPullCommand.php on line 33
+[27-Sep-2026 10:10:02 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Console\Command\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/Command/TranslationLintCommand.php:32
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/translation/Command/TranslationLintCommand.php on line 32

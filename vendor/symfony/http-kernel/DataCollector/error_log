@@ -1,0 +1,24 @@
+[27-Sep-2026 10:09:40 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\DataCollector\DataCollector" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/DataCollector/ConfigDataCollector.php:28
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/DataCollector/ConfigDataCollector.php on line 28
+[27-Sep-2026 10:09:40 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/DataCollector/DataCollector.php:29
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/DataCollector/DataCollector.php on line 29
+[27-Sep-2026 10:09:41 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\DataCollector\DataCollector" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/DataCollector/DumpDataCollector.php:32
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/DataCollector/DumpDataCollector.php on line 32
+[27-Sep-2026 10:09:41 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\DataCollector\DataCollector" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/DataCollector/ExceptionDataCollector.php:23
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/DataCollector/ExceptionDataCollector.php on line 23
+[27-Sep-2026 10:09:41 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\DataCollector\DataCollector" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/DataCollector/RequestDataCollector.php:32
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/DataCollector/RequestDataCollector.php on line 32
+[27-Sep-2026 10:09:41 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\DataCollector\DataCollector" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/DataCollector/RouterDataCollector.php:22
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/DataCollector/RouterDataCollector.php on line 22

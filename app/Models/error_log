@@ -1,0 +1,2396 @@
+[27-Sep-2026 10:03:48 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo1.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo1.php on line 8
+[27-Sep-2026 10:03:48 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo2.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo2.php on line 8
+[27-Sep-2026 10:03:48 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo3.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo3.php on line 8
+[27-Sep-2026 10:03:48 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ActivityMembership.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ActivityMembership.php on line 7
+[27-Sep-2026 10:03:48 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ArchiveScoreSnapshot.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ArchiveScoreSnapshot.php on line 8
+[27-Sep-2026 10:03:48 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Answer.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Answer.php on line 8
+[27-Sep-2026 10:03:48 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AssetDepreciation.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AssetDepreciation.php on line 7
+[27-Sep-2026 10:03:49 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceHoliday.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceHoliday.php on line 11
+[27-Sep-2026 10:03:49 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceSetting.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceSetting.php on line 8
+[27-Sep-2026 10:03:49 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BackupSetting.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BackupSetting.php on line 7
+[27-Sep-2026 10:03:49 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Broadsheet.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Broadsheet.php on line 8
+[27-Sep-2026 10:03:49 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetAssessmentScore.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetAssessmentScore.php on line 8
+[27-Sep-2026 10:03:49 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetRecordMock.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetRecordMock.php on line 8
+[27-Sep-2026 10:03:49 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Broadsheets.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Broadsheets.php on line 10
+[27-Sep-2026 10:03:49 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetsMock.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetsMock.php on line 8
+[27-Sep-2026 10:03:49 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetRecord.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetRecord.php on line 8
+[27-Sep-2026 10:03:49 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BudgetLine.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BudgetLine.php on line 7
+[27-Sep-2026 10:03:49 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarAttachment.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarAttachment.php on line 7
+[27-Sep-2026 10:03:49 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarCategory.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarCategory.php on line 8
+[27-Sep-2026 10:03:49 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarEvent.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarEvent.php on line 9
+[27-Sep-2026 10:03:49 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarRsvp.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarRsvp.php on line 7
+[27-Sep-2026 10:03:49 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ClassTeacher.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ClassTeacher.php on line 8
+[27-Sep-2026 10:03:49 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Classcategory.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Classcategory.php on line 9
+[27-Sep-2026 10:03:50 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Classoperation.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Classoperation.php on line 8
+[27-Sep-2026 10:03:50 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CompulsorySubjectClass.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CompulsorySubjectClass.php on line 9
+[27-Sep-2026 10:03:50 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CoopMember.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CoopMember.php on line 7
+[27-Sep-2026 10:03:50 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DatabaseBackup.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DatabaseBackup.php on line 8
+[27-Sep-2026 10:03:50 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceAttendanceLog.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceAttendanceLog.php on line 8
+[27-Sep-2026 10:03:50 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceOutageDate.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceOutageDate.php on line 8
+[27-Sep-2026 10:03:50 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Club.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Club.php on line 7
+[27-Sep-2026 10:03:50 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceUserMapping.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceUserMapping.php on line 8
+[27-Sep-2026 10:03:50 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DiscountAssignment.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DiscountAssignment.php on line 10
+[27-Sep-2026 10:03:50 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Discount.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Discount.php on line 10
+[27-Sep-2026 10:03:50 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DiscountType.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DiscountType.php on line 9
+[27-Sep-2026 10:03:50 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamAttempt.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamAttempt.php on line 9
+[27-Sep-2026 10:03:50 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamTimetable.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamTimetable.php on line 7
+[27-Sep-2026 10:03:50 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamSlot.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamSlot.php on line 7
+[27-Sep-2026 10:03:50 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Exam.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Exam.php on line 8
+[27-Sep-2026 10:03:50 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExpenseCategory.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExpenseCategory.php on line 7
+[27-Sep-2026 10:03:50 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeatureSync.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeatureSync.php on line 10
+[27-Sep-2026 10:03:50 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeeInstalmentAssignment.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeeInstalmentAssignment.php on line 7
+[27-Sep-2026 10:03:50 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FinancialAuditLog.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FinancialAuditLog.php on line 7
+[27-Sep-2026 10:03:50 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeeInstalmentPlan.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeeInstalmentPlan.php on line 7
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FixedAsset.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FixedAsset.php on line 7
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JobProgress.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JobProgress.php on line 7
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JournalEntry.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JournalEntry.php on line 7
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JournalEntryLine.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JournalEntryLine.php on line 7
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanAdvance.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanAdvance.php on line 10
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanRepaymentSchedule.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanRepaymentSchedule.php on line 7
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MessagingSetting.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MessagingSetting.php on line 12
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MockSubjectVetting.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MockSubjectVetting.php on line 7
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NoticeDispatch.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NoticeDispatch.php on line 9
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NotificationPreference.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NotificationPreference.php on line 7
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/OnlineFeePayment.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/OnlineFeePayment.php on line 9
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayItem.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayItem.php on line 7
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentBatch.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentBatch.php on line 9
+[27-Sep-2026 10:03:51 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentBatchItem.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentBatchItem.php on line 9
+[27-Sep-2026 10:03:52 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayoutBatch.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayoutBatch.php on line 7
+[27-Sep-2026 10:03:52 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentGateway.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentGateway.php on line 20
+[27-Sep-2026 10:03:52 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayoutItem.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayoutItem.php on line 7
+[27-Sep-2026 10:03:52 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollRun.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollRun.php on line 9
+[27-Sep-2026 10:03:52 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollRunLine.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollRunLine.php on line 8
+[27-Sep-2026 10:03:52 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionSetting.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionSetting.php on line 10
+[27-Sep-2026 10:03:52 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionActionLog.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionActionLog.php on line 7
+[27-Sep-2026 10:03:53 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultSend.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultSend.php on line 9
+[27-Sep-2026 10:03:53 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Scholarship.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Scholarship.php on line 10
+[27-Sep-2026 10:03:53 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolThirdTerm.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolThirdTerm.php on line 8
+[27-Sep-2026 10:03:54 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolsetting.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolsetting.php on line 8
+[27-Sep-2026 10:03:54 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScoresheetLock.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScoresheetLock.php on line 8
+[27-Sep-2026 10:03:54 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffQualification.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffQualification.php on line 9
+[27-Sep-2026 10:03:54 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffRecord.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffRecord.php on line 10
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Staffsignatureupload.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Staffsignatureupload.php on line 8
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentCurrentTerm.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentCurrentTerm.php on line 8
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentLeaveRequest.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentLeaveRequest.php on line 7
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo1.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo1.php on line 8
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo2.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo2.php on line 8
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentStatus.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentStatus.php on line 8
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentSubjectRecord.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentSubjectRecord.php on line 8
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo3.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo3.php on line 8
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Studenthouse.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Studenthouse.php on line 8
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Studentpersonalityprofile.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Studentpersonalityprofile.php on line 9
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubAssessment.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubAssessment.php on line 8
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ActivityMembership.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ActivityMembership.php on line 7
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Answer.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Answer.php on line 8
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectRegistrationStatus.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectRegistrationStatus.php on line 8
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ArchiveScoreSnapshot.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ArchiveScoreSnapshot.php on line 8
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectUnregistrationArchive.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectUnregistrationArchive.php on line 13
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectTeacher.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectTeacher.php on line 11
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectVetting.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectVetting.php on line 7
+[27-Sep-2026 10:03:55 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Assessment.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Assessment.php on line 8
+[27-Sep-2026 10:03:56 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceSetting.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceSetting.php on line 8
+[27-Sep-2026 10:03:56 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AssetDepreciation.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AssetDepreciation.php on line 7
+[27-Sep-2026 10:03:56 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceHoliday.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceHoliday.php on line 11
+[27-Sep-2026 10:03:56 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TeacherWorkloadSetting.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TeacherWorkloadSetting.php on line 7
+[27-Sep-2026 10:03:56 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceSummary.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceSummary.php on line 9
+[27-Sep-2026 10:03:56 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableConstraint.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableConstraint.php on line 9
+[27-Sep-2026 10:03:56 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableGenerationRunSetting.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableGenerationRunSetting.php on line 8
+[27-Sep-2026 10:03:56 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceTermSetting.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceTermSetting.php on line 10
+[27-Sep-2026 10:03:56 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BackupSetting.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BackupSetting.php on line 7
+[27-Sep-2026 10:03:56 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableOverride.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableOverride.php on line 7
+[27-Sep-2026 10:03:56 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetablePeriod.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetablePeriod.php on line 10
+[27-Sep-2026 10:03:56 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BioModel.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BioModel.php on line 9
+[27-Sep-2026 10:03:56 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetablePeriodAllocationSet.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetablePeriodAllocationSet.php on line 8
+[27-Sep-2026 10:03:56 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Broadsheet.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Broadsheet.php on line 8
+[27-Sep-2026 10:03:56 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetablePeriodLimit.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetablePeriodLimit.php on line 8
+[27-Sep-2026 10:03:56 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetRecord.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetRecord.php on line 8
+[27-Sep-2026 10:03:56 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetAssessmentScore.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetAssessmentScore.php on line 8
+[27-Sep-2026 10:03:56 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetRecordMock.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetRecordMock.php on line 8
+[27-Sep-2026 10:03:57 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetsMock.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetsMock.php on line 8
+[27-Sep-2026 10:03:57 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Broadsheets.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Broadsheets.php on line 10
+[27-Sep-2026 10:03:57 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetSubAssessmentScore.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetSubAssessmentScore.php on line 8
+[27-Sep-2026 10:03:57 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/thirdterm_broadsheet.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/thirdterm_broadsheet.php on line 8
+[27-Sep-2026 10:03:57 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Budget.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Budget.php on line 7
+[27-Sep-2026 10:03:57 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BudgetLine.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BudgetLine.php on line 7
+[27-Sep-2026 10:03:57 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarAttachment.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarAttachment.php on line 7
+[27-Sep-2026 10:03:57 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarCategory.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarCategory.php on line 8
+[27-Sep-2026 10:03:57 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarEvent.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarEvent.php on line 9
+[27-Sep-2026 10:03:57 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarRsvp.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarRsvp.php on line 7
+[27-Sep-2026 10:03:57 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ChartOfAccount.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ChartOfAccount.php on line 9
+[27-Sep-2026 10:03:57 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Classcategory.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Classcategory.php on line 9
+[27-Sep-2026 10:03:57 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ClassTeacher.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ClassTeacher.php on line 8
+[27-Sep-2026 10:03:57 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Classoperation.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Classoperation.php on line 8
+[27-Sep-2026 10:03:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Club.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Club.php on line 7
+[27-Sep-2026 10:03:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CompulsorySubjectClass.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CompulsorySubjectClass.php on line 9
+[27-Sep-2026 10:03:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ClubMember.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ClubMember.php on line 7
+[27-Sep-2026 10:03:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CoopMember.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CoopMember.php on line 7
+[27-Sep-2026 10:03:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CoopTransaction.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CoopTransaction.php on line 7
+[27-Sep-2026 10:03:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DatabaseBackup.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DatabaseBackup.php on line 8
+[27-Sep-2026 10:03:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceAttendanceLog.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceAttendanceLog.php on line 8
+[27-Sep-2026 10:03:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceOutageDate.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceOutageDate.php on line 8
+[27-Sep-2026 10:03:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceUserMapping.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceUserMapping.php on line 8
+[27-Sep-2026 10:03:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Discount.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Discount.php on line 10
+[27-Sep-2026 10:03:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DiscountAssignment.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DiscountAssignment.php on line 10
+[27-Sep-2026 10:03:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Exam.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Exam.php on line 8
+[27-Sep-2026 10:03:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamAttempt.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamAttempt.php on line 9
+[27-Sep-2026 10:03:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamSlot.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamSlot.php on line 7
+[27-Sep-2026 10:03:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExpenseCategory.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExpenseCategory.php on line 7
+[27-Sep-2026 10:03:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExpenseVoucher.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExpenseVoucher.php on line 8
+[27-Sep-2026 10:03:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamTimetable.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamTimetable.php on line 7
+[27-Sep-2026 10:03:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeatureFlag.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeatureFlag.php on line 13
+[27-Sep-2026 10:04:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DiscountType.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DiscountType.php on line 9
+[27-Sep-2026 10:04:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeatureSync.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeatureSync.php on line 10
+[27-Sep-2026 10:04:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeeInstalmentAssignment.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeeInstalmentAssignment.php on line 7
+[27-Sep-2026 10:04:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeeInstalmentPlan.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeeInstalmentPlan.php on line 7
+[27-Sep-2026 10:04:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FinancialAuditReview.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FinancialAuditReview.php on line 7
+[27-Sep-2026 10:04:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FinancialAuditLog.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FinancialAuditLog.php on line 7
+[27-Sep-2026 10:04:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FixedAsset.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FixedAsset.php on line 7
+[27-Sep-2026 10:04:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Holiday.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Holiday.php on line 9
+[27-Sep-2026 10:04:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JobProgress.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JobProgress.php on line 7
+[27-Sep-2026 10:04:01 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JournalEntry.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JournalEntry.php on line 7
+[27-Sep-2026 10:04:01 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanAdvance.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanAdvance.php on line 10
+[27-Sep-2026 10:04:01 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Grade.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Grade.php on line 8
+[27-Sep-2026 10:04:01 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JournalEntryLine.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JournalEntryLine.php on line 7
+[27-Sep-2026 10:04:01 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanRepayment.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanRepayment.php on line 7
+[27-Sep-2026 10:04:01 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanRepaymentSchedule.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanRepaymentSchedule.php on line 7
+[27-Sep-2026 10:04:01 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MaintenanceSetting.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MaintenanceSetting.php on line 13
+[27-Sep-2026 10:04:01 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MessagingSetting.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MessagingSetting.php on line 12
+[27-Sep-2026 10:04:01 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NoticeDelivery.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NoticeDelivery.php on line 8
+[27-Sep-2026 10:04:01 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NoticeDispatch.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NoticeDispatch.php on line 9
+[27-Sep-2026 10:04:02 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NotificationPreference.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NotificationPreference.php on line 7
+[27-Sep-2026 10:04:02 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MockSubjectVetting.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MockSubjectVetting.php on line 7
+[27-Sep-2026 10:04:02 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/OnlineFeePayment.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/OnlineFeePayment.php on line 9
+[27-Sep-2026 10:04:02 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/OnlineFeePaymentItem.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/OnlineFeePaymentItem.php on line 8
+[27-Sep-2026 10:04:02 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Option.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Option.php on line 8
+[27-Sep-2026 10:04:02 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PasswordResetHistory.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PasswordResetHistory.php on line 9
+[27-Sep-2026 10:04:02 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ParentRegistration.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ParentRegistration.php on line 8
+[27-Sep-2026 10:04:02 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayItem.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayItem.php on line 7
+[27-Sep-2026 10:04:02 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentAuditLog.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentAuditLog.php on line 8
+[27-Sep-2026 10:04:02 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentBatch.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentBatch.php on line 9
+[27-Sep-2026 10:04:02 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentGateway.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentGateway.php on line 20
+[27-Sep-2026 10:04:02 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentBatchItem.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentBatchItem.php on line 9
+[27-Sep-2026 10:04:02 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayoutBatch.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayoutBatch.php on line 7
+[27-Sep-2026 10:04:03 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollPeriod.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollPeriod.php on line 9
+[27-Sep-2026 10:04:03 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayoutItem.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayoutItem.php on line 7
+[27-Sep-2026 10:04:03 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollRun.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollRun.php on line 9
+[27-Sep-2026 10:04:03 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollRunLine.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollRunLine.php on line 8
+[27-Sep-2026 10:04:03 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollStatutoryRate.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollStatutoryRate.php on line 7
+[27-Sep-2026 10:04:03 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Post.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Post.php on line 8
+[27-Sep-2026 10:04:03 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionRuleTemplate.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionRuleTemplate.php on line 9
+[27-Sep-2026 10:04:03 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Principalscomment.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Principalscomment.php on line 8
+[27-Sep-2026 10:04:03 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionActionLog.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionActionLog.php on line 7
+[27-Sep-2026 10:04:03 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionStatus.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionStatus.php on line 8
+[27-Sep-2026 10:04:03 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PurchaseRequest.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PurchaseRequest.php on line 7
+[27-Sep-2026 10:04:04 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionSetting.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionSetting.php on line 10
+[27-Sep-2026 10:04:04 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Question.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Question.php on line 8
+[27-Sep-2026 10:04:04 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ReportApproval.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ReportApproval.php on line 7
+[27-Sep-2026 10:04:04 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultAccessException.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultAccessException.php on line 8
+[27-Sep-2026 10:04:04 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultAccessSetting.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultAccessSetting.php on line 7
+[27-Sep-2026 10:04:04 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Result.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Result.php on line 8
+[27-Sep-2026 10:04:04 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultSend.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultSend.php on line 9
+[27-Sep-2026 10:04:05 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultSendItem.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultSendItem.php on line 9
+[27-Sep-2026 10:04:05 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Room.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Room.php on line 8
+[27-Sep-2026 10:04:05 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/RoomBooking.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/RoomBooking.php on line 9
+[27-Sep-2026 10:04:05 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/RoomClassSubject.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/RoomClassSubject.php on line 8
+[27-Sep-2026 10:04:05 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SalaryReview.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SalaryReview.php on line 7
+[27-Sep-2026 10:04:05 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Scholarship.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Scholarship.php on line 10
+[27-Sep-2026 10:04:05 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScholarshipAssignment.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScholarshipAssignment.php on line 10
+[27-Sep-2026 10:04:05 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScholarshipApplication.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScholarshipApplication.php on line 9
+[27-Sep-2026 10:04:05 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScholarshipType.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScholarshipType.php on line 9
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolBillModel.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolBillModel.php on line 10
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolBillTermSession.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolBillTermSession.php on line 10
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolNotice.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolNotice.php on line 9
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolInformation.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolInformation.php on line 9
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolSecondTerm.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolSecondTerm.php on line 8
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolThirdTermMock.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolThirdTermMock.php on line 8
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolThirdTerm.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolThirdTerm.php on line 8
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolarm.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolarm.php on line 8
+[27-Sep-2026 10:04:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolSecondTermMock.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolSecondTermMock.php on line 8
+[27-Sep-2026 10:04:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolclass.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolclass.php on line 10
+[27-Sep-2026 10:04:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolhouse.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolhouse.php on line 8
+[27-Sep-2026 10:04:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolsession.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolsession.php on line 8
+[27-Sep-2026 10:04:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolsetting.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolsetting.php on line 8
+[27-Sep-2026 10:04:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScoresheetLock.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScoresheetLock.php on line 8
+[27-Sep-2026 10:04:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SiblingGroup.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SiblingGroup.php on line 9
+[27-Sep-2026 10:04:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolterm.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolterm.php on line 9
+[27-Sep-2026 10:04:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffAttendance.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffAttendance.php on line 8
+[27-Sep-2026 10:04:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SportTeam.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SportTeam.php on line 7
+[27-Sep-2026 10:04:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffAttendanceTimeSetting.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffAttendanceTimeSetting.php on line 13
+[27-Sep-2026 10:04:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffPayItem.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffPayItem.php on line 7
+[27-Sep-2026 10:04:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffGradeHistory.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffGradeHistory.php on line 7
+[27-Sep-2026 10:04:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffPayProfile.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffPayProfile.php on line 12
+[27-Sep-2026 10:04:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffQualification.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffQualification.php on line 9
+[27-Sep-2026 10:04:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Staffclasssetting.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Staffclasssetting.php on line 8
+[27-Sep-2026 10:04:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Staffsignatureupload.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Staffsignatureupload.php on line 8
+[27-Sep-2026 10:04:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Staffpicture.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Staffpicture.php on line 9
+[27-Sep-2026 10:04:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBatchModel.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBatchModel.php on line 8
+[27-Sep-2026 10:04:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentAttendance.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentAttendance.php on line 9
+[27-Sep-2026 10:04:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBillInvoice.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBillInvoice.php on line 8
+[27-Sep-2026 10:04:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBillPaymentRecord.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBillPaymentRecord.php on line 10
+[27-Sep-2026 10:04:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentSport.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentSport.php on line 14
+[27-Sep-2026 10:04:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentClub.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentClub.php on line 14
+[27-Sep-2026 10:04:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentCurrentTerm.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentCurrentTerm.php on line 8
+[27-Sep-2026 10:04:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentLeaveRequest.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentLeaveRequest.php on line 7
+[27-Sep-2026 10:04:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentSubjectRecord.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentSubjectRecord.php on line 8
+[27-Sep-2026 10:04:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Studenthouse.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Studenthouse.php on line 8
+[27-Sep-2026 10:04:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Studentclass.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Studentclass.php on line 8
+[27-Sep-2026 10:04:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Studentpicture.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Studentpicture.php on line 9
+[27-Sep-2026 10:04:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubAssessment.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubAssessment.php on line 8
+[27-Sep-2026 10:04:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Studentpersonalityprofile.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Studentpersonalityprofile.php on line 9
+[27-Sep-2026 10:04:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Subject.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Subject.php on line 8
+[27-Sep-2026 10:04:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectTeacher.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectTeacher.php on line 11
+[27-Sep-2026 10:04:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectUnregistrationArchive.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectUnregistrationArchive.php on line 13
+[27-Sep-2026 10:04:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Subjectclass.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Subjectclass.php on line 9
+[27-Sep-2026 10:04:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Subjectoperation.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Subjectoperation.php on line 8
+[27-Sep-2026 10:04:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectVetting.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectVetting.php on line 7
+[27-Sep-2026 10:04:11 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TeacherAvailability.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TeacherAvailability.php on line 9
+[27-Sep-2026 10:04:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubstituteAssignment.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubstituteAssignment.php on line 7
+[27-Sep-2026 10:04:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TeacherWorkloadSetting.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TeacherWorkloadSetting.php on line 7
+[27-Sep-2026 10:04:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableAuditLog.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableAuditLog.php on line 8
+[27-Sep-2026 10:04:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableGenerationRunSetting.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableGenerationRunSetting.php on line 8
+[27-Sep-2026 10:04:12 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableOverride.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableOverride.php on line 7
+[27-Sep-2026 10:04:13 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableNotification.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableNotification.php on line 9
+[27-Sep-2026 10:04:13 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetablePeriodAllocation.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetablePeriodAllocation.php on line 8
+[27-Sep-2026 10:04:13 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetablePeriodAllocationSet.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetablePeriodAllocationSet.php on line 8
+[27-Sep-2026 10:04:13 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetablePeriodLimit.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetablePeriodLimit.php on line 8
+[27-Sep-2026 10:04:13 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/firstterm_broadsheet.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/firstterm_broadsheet.php on line 8
+[27-Sep-2026 10:04:13 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Vendor.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Vendor.php on line 7
+[27-Sep-2026 10:04:13 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Auth\User" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/User.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/User.php on line 15
+[27-Sep-2026 10:04:13 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableSubjectPriority.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableSubjectPriority.php on line 8
+[27-Sep-2026 10:04:14 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/secondterm_broadsheet.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/secondterm_broadsheet.php on line 8
+[27-Sep-2026 10:04:14 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/thirdterm_broadsheet.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/thirdterm_broadsheet.php on line 8
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo1.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo1.php on line 8
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo2.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo2.php on line 8
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo3.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo3.php on line 8
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ActivityMembership.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ActivityMembership.php on line 7
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Answer.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Answer.php on line 8
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ArchiveScoreSnapshot.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ArchiveScoreSnapshot.php on line 8
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Assessment.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Assessment.php on line 8
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AssetDepreciation.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AssetDepreciation.php on line 7
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceHoliday.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceHoliday.php on line 11
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceSetting.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceSetting.php on line 8
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceSummary.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceSummary.php on line 9
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceTermSetting.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceTermSetting.php on line 10
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BackupSetting.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BackupSetting.php on line 7
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Broadsheet.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Broadsheet.php on line 8
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetAssessmentScore.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetAssessmentScore.php on line 8
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BioModel.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BioModel.php on line 9
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetRecord.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetRecord.php on line 8
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetRecordMock.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetRecordMock.php on line 8
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetSubAssessmentScore.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetSubAssessmentScore.php on line 8
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Broadsheets.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Broadsheets.php on line 10
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetsMock.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetsMock.php on line 8
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Budget.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Budget.php on line 7
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarAttachment.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarAttachment.php on line 7
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BudgetLine.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BudgetLine.php on line 7
+[28-Sep-2026 14:07:06 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarCategory.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarCategory.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarEvent.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarEvent.php on line 9
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ChartOfAccount.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ChartOfAccount.php on line 9
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ClassTeacher.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ClassTeacher.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarRsvp.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarRsvp.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Classoperation.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Classoperation.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Classcategory.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Classcategory.php on line 9
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Club.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Club.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ClubMember.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ClubMember.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CompulsorySubjectClass.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CompulsorySubjectClass.php on line 9
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DatabaseBackup.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DatabaseBackup.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceAttendanceLog.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceAttendanceLog.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CoopTransaction.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CoopTransaction.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CoopMember.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CoopMember.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceOutageDate.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceOutageDate.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceUserMapping.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceUserMapping.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Discount.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Discount.php on line 10
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DiscountAssignment.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DiscountAssignment.php on line 10
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DiscountType.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DiscountType.php on line 9
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Exam.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Exam.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamAttempt.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamAttempt.php on line 9
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamSlot.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamSlot.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamTimetable.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamTimetable.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExpenseCategory.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExpenseCategory.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExpenseVoucher.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExpenseVoucher.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeatureFlag.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeatureFlag.php on line 13
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeatureSync.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeatureSync.php on line 10
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeeInstalmentAssignment.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeeInstalmentAssignment.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeeInstalmentPlan.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeeInstalmentPlan.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FinancialAuditLog.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FinancialAuditLog.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FinancialAuditReview.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FinancialAuditReview.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FixedAsset.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FixedAsset.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Grade.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Grade.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Holiday.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Holiday.php on line 9
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JobProgress.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JobProgress.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JournalEntry.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JournalEntry.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JournalEntryLine.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JournalEntryLine.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanAdvance.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanAdvance.php on line 10
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanRepayment.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanRepayment.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanRepaymentSchedule.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanRepaymentSchedule.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MaintenanceSetting.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MaintenanceSetting.php on line 13
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MessagingSetting.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MessagingSetting.php on line 12
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MockSubjectVetting.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MockSubjectVetting.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NoticeDelivery.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NoticeDelivery.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NoticeDispatch.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NoticeDispatch.php on line 9
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/OnlineFeePayment.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/OnlineFeePayment.php on line 9
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/OnlineFeePaymentItem.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/OnlineFeePaymentItem.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NotificationPreference.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NotificationPreference.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Option.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Option.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ParentRegistration.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ParentRegistration.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PasswordResetHistory.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PasswordResetHistory.php on line 9
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayItem.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayItem.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentAuditLog.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentAuditLog.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentBatch.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentBatch.php on line 9
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentBatchItem.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentBatchItem.php on line 9
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayoutItem.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayoutItem.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentGateway.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentGateway.php on line 20
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayoutBatch.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayoutBatch.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollPeriod.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollPeriod.php on line 9
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollRun.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollRun.php on line 9
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollRunLine.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollRunLine.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollStatutoryRate.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollStatutoryRate.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Post.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Post.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionRuleTemplate.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionRuleTemplate.php on line 9
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Principalscomment.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Principalscomment.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionActionLog.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionActionLog.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionSetting.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionSetting.php on line 10
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PurchaseRequest.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PurchaseRequest.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionStatus.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionStatus.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Question.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Question.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ReportHistory.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ReportHistory.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Result.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Result.php on line 8
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ReportApproval.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ReportApproval.php on line 7
+[28-Sep-2026 14:07:07 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultAccessException.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultAccessException.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultSend.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultSend.php on line 9
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultSendDelivery.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultSendDelivery.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultSendItem.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultSendItem.php on line 9
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultAccessSetting.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultAccessSetting.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Room.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Room.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/RoomBooking.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/RoomBooking.php on line 9
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/RoomClassSubject.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/RoomClassSubject.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SalaryGrade.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SalaryGrade.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SalaryGradeStep.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SalaryGradeStep.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SalaryReview.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SalaryReview.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Scholarship.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Scholarship.php on line 10
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScholarshipApplication.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScholarshipApplication.php on line 9
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScholarshipAssignment.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScholarshipAssignment.php on line 10
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScholarshipType.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScholarshipType.php on line 9
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolBillTermSession.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolBillTermSession.php on line 10
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolBillModel.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolBillModel.php on line 10
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolFirstTerm.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolFirstTerm.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolFirstTermMock.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolFirstTermMock.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolInformation.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolInformation.php on line 9
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolNotice.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolNotice.php on line 9
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo1.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo1.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo3.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo3.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo2.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Academicinfo2.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ActivityMembership.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ActivityMembership.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Answer.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Answer.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolSecondTerm.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolSecondTerm.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AssetDepreciation.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AssetDepreciation.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Assessment.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Assessment.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ArchiveScoreSnapshot.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ArchiveScoreSnapshot.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolSecondTermMock.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolSecondTermMock.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolThirdTermMock.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolThirdTermMock.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolThirdTerm.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolThirdTerm.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceHoliday.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceHoliday.php on line 11
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceSummary.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceSummary.php on line 9
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceSetting.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceSetting.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceTermSetting.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/AttendanceTermSetting.php on line 10
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BackupSetting.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BackupSetting.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolarm.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolarm.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BioModel.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BioModel.php on line 9
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Broadsheet.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Broadsheet.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolclass.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolclass.php on line 10
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolsession.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolsession.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolhouse.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolhouse.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetAssessmentScore.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetAssessmentScore.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetRecordMock.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetRecordMock.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetRecord.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetRecord.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetSubAssessmentScore.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetSubAssessmentScore.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Broadsheets.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Broadsheets.php on line 10
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Budget.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Budget.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BudgetLine.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BudgetLine.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetsMock.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/BroadsheetsMock.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolsetting.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolsetting.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolterm.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolterm.php on line 9
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SiblingGroup.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SiblingGroup.php on line 9
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScoresheetLock.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScoresheetLock.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarCategory.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarCategory.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarAttachment.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarAttachment.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarEvent.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarEvent.php on line 9
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarRsvp.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CalendarRsvp.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ChartOfAccount.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ChartOfAccount.php on line 9
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Sport.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Sport.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SportTeam.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SportTeam.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffAttendance.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffAttendance.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Staff.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Staff.php on line 10
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ClassTeacher.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ClassTeacher.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Classoperation.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Classoperation.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Classcategory.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Classcategory.php on line 9
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Club.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Club.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffDutyClaim.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffDutyClaim.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CompulsorySubjectClass.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CompulsorySubjectClass.php on line 9
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CoopMember.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CoopMember.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CoopTransaction.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/CoopTransaction.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ClubMember.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ClubMember.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffAttendanceTimeSetting.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffAttendanceTimeSetting.php on line 13
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffGradeHistory.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffGradeHistory.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffPayItem.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffPayItem.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DatabaseBackup.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DatabaseBackup.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceAttendanceLog.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceAttendanceLog.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceOutageDate.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceOutageDate.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceUserMapping.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DeviceUserMapping.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Discount.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Discount.php on line 10
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DiscountType.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DiscountType.php on line 9
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Exam.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Exam.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DiscountAssignment.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/DiscountAssignment.php on line 10
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffPayProfile.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffPayProfile.php on line 12
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffRecord.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffRecord.php on line 10
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffSalaryStructure.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffSalaryStructure.php on line 10
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamAttempt.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamAttempt.php on line 9
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamSlot.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamSlot.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamTimetable.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExamTimetable.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExpenseCategory.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExpenseCategory.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExpenseVoucher.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ExpenseVoucher.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeatureFlag.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeatureFlag.php on line 13
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeatureSync.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeatureSync.php on line 10
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeeInstalmentAssignment.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeeInstalmentAssignment.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Staffsignatureupload.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Staffsignatureupload.php on line 8
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StatutoryRemittance.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StatutoryRemittance.php on line 7
+[28-Sep-2026 14:07:08 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeeInstalmentPlan.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FeeInstalmentPlan.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FinancialAuditReview.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FinancialAuditReview.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FinancialAuditLog.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FinancialAuditLog.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FixedAsset.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/FixedAsset.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentAttendance.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentAttendance.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Grade.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Grade.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JobProgress.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JobProgress.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Holiday.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Holiday.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBatchModel.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBatchModel.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBillInvoice.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBillInvoice.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBillPayment.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBillPayment.php on line 10
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JournalEntry.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JournalEntry.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JournalEntryLine.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/JournalEntryLine.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanRepayment.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanRepayment.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanAdvance.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanAdvance.php on line 10
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBillPaymentRecord.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBillPaymentRecord.php on line 10
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentClub.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentClub.php on line 14
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanRepaymentSchedule.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/LoanRepaymentSchedule.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MessagingSetting.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MessagingSetting.php on line 12
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MaintenanceSetting.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MaintenanceSetting.php on line 13
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentStatus.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentStatus.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentCurrentTerm.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentCurrentTerm.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentLeaveRequest.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentLeaveRequest.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentSport.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentSport.php on line 14
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MockSubjectVetting.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/MockSubjectVetting.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NoticeDelivery.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NoticeDelivery.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NoticeDispatch.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NoticeDispatch.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Studentclass.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Studentclass.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NotificationPreference.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/NotificationPreference.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/OnlineFeePayment.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/OnlineFeePayment.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/OnlineFeePaymentItem.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/OnlineFeePaymentItem.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Studentpersonalityprofile.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Studentpersonalityprofile.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Studenthouse.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Studenthouse.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Option.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Option.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PasswordResetHistory.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PasswordResetHistory.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ParentRegistration.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ParentRegistration.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectRegistrationStatus.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectRegistrationStatus.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectTeacher.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectTeacher.php on line 11
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentBatch.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentBatch.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayItem.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayItem.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentAuditLog.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentAuditLog.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentBatchItem.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentBatchItem.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectVetting.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectVetting.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Subjectclass.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Subjectclass.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentGateway.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PaymentGateway.php on line 20
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollPeriod.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollPeriod.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayoutItem.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayoutItem.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayoutBatch.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayoutBatch.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TeacherWorkloadLog.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TeacherWorkloadLog.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TeacherAvailability.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TeacherAvailability.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollRunLine.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollRunLine.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TeacherWorkloadSetting.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TeacherWorkloadSetting.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollStatutoryRate.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollStatutoryRate.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollRun.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PayrollRun.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableAuditLog.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableAuditLog.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Post.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Post.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableConstraint.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableConstraint.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableChangeRequest.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableChangeRequest.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionActionLog.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionActionLog.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionSetting.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionSetting.php on line 10
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionRuleTemplate.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionRuleTemplate.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableGenerationRun.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableGenerationRun.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableGenerationRunSetting.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableGenerationRunSetting.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionStatus.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PromotionStatus.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableOverride.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableOverride.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Question.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Question.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableNotification.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableNotification.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PurchaseRequest.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/PurchaseRequest.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Principalscomment.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Principalscomment.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Result.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Result.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ReportHistory.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ReportHistory.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultAccessException.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultAccessException.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ReportApproval.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ReportApproval.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultAccessSetting.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultAccessSetting.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultSendItem.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultSendItem.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableSetting.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableSetting.php on line 11
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultSend.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultSend.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableSlot.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableSlot.php on line 10
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultSendDelivery.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ResultSendDelivery.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Room.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Room.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/RoomClassSubject.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/RoomClassSubject.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SalaryGrade.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SalaryGrade.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/RoomBooking.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/RoomBooking.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Scholarship.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Scholarship.php on line 10
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SalaryReview.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SalaryReview.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SalaryGradeStep.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SalaryGradeStep.php on line 7
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScholarshipAssignment.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScholarshipAssignment.php on line 10
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScholarshipType.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScholarshipType.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScholarshipApplication.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScholarshipApplication.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolBillModel.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolBillModel.php on line 10
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolBillTermSession.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolBillTermSession.php on line 10
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolFirstTerm.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolFirstTerm.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolFirstTermMock.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolFirstTermMock.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolInformation.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolInformation.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolNotice.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolNotice.php on line 9
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolSecondTerm.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolSecondTerm.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolThirdTerm.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolThirdTerm.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolSecondTermMock.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolSecondTermMock.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolarm.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolarm.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolThirdTermMock.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SchoolThirdTermMock.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolhouse.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolhouse.php on line 8
+[28-Sep-2026 14:07:09 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolclass.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolclass.php on line 10
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolsession.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolsession.php on line 8
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolsetting.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolsetting.php on line 8
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolterm.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Schoolterm.php on line 9
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScoresheetLock.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/ScoresheetLock.php on line 8
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Sport.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Sport.php on line 7
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SiblingGroup.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SiblingGroup.php on line 9
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Staff.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Staff.php on line 10
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SportTeam.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SportTeam.php on line 7
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffAttendance.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffAttendance.php on line 8
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffGradeHistory.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffGradeHistory.php on line 7
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffAttendanceTimeSetting.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffAttendanceTimeSetting.php on line 13
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffDutyClaim.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffDutyClaim.php on line 7
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffPayItem.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffPayItem.php on line 7
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffPayProfile.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffPayProfile.php on line 12
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffPayment.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffPayment.php on line 10
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffQualification.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffQualification.php on line 9
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffRecord.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffRecord.php on line 10
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffSalaryStructure.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StaffSalaryStructure.php on line 10
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StatutoryRemittance.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StatutoryRemittance.php on line 7
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Student.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Student.php on line 15
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentAttendance.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentAttendance.php on line 9
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBillInvoice.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBillInvoice.php on line 8
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBillPayment.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBillPayment.php on line 10
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBillPaymentBook.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBillPaymentBook.php on line 9
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBillPaymentRecord.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentBillPaymentRecord.php on line 10
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentClub.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentClub.php on line 14
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentStatus.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/StudentStatus.php on line 8
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectRegistrationStatus.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectRegistrationStatus.php on line 8
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectUnregistrationArchive.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/SubjectUnregistrationArchive.php on line 13
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Subjectoperation.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Subjectoperation.php on line 8
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Subjectclass.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Subjectclass.php on line 9
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TeacherAvailability.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TeacherAvailability.php on line 9
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TeacherWorkloadSetting.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TeacherWorkloadSetting.php on line 7
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TeacherWorkloadLog.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TeacherWorkloadLog.php on line 7
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableNotification.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableNotification.php on line 9
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetablePeriod.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetablePeriod.php on line 10
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableOverride.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetableOverride.php on line 7
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetablePeriodAllocationSet.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetablePeriodAllocationSet.php on line 8
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetablePeriodLimit.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/TimetablePeriodLimit.php on line 8
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Auth\User" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/User.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/User.php on line 15
+[28-Sep-2026 14:07:10 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Vendor.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Models/Vendor.php on line 7

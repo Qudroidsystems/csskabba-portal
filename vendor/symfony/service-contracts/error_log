@@ -1,0 +1,24 @@
+[27-Sep-2026 10:05:46 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Contracts\Service\ContainerProviderInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/service-contracts/ContainerAwareInterface.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/service-contracts/ContainerAwareInterface.php on line 17
+[27-Sep-2026 10:05:46 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Contracts\Service\ServiceProviderInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/service-contracts/ServiceCollectionInterface.php:24
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/service-contracts/ServiceCollectionInterface.php on line 24
+[27-Sep-2026 10:05:46 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Container\ContainerInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/service-contracts/ServiceProviderInterface.php:24
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/service-contracts/ServiceProviderInterface.php on line 24
+[27-Sep-2026 10:07:45 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Contracts\Service\ContainerProviderInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/service-contracts/ContainerAwareInterface.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/service-contracts/ContainerAwareInterface.php on line 17
+[27-Sep-2026 10:07:45 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Contracts\Service\ServiceProviderInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/service-contracts/ServiceCollectionInterface.php:24
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/service-contracts/ServiceCollectionInterface.php on line 24
+[27-Sep-2026 10:07:45 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function Symfony\Contracts\Service\trigger_deprecation() in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/service-contracts/ServiceSubscriberTrait.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/service-contracts/ServiceSubscriberTrait.php on line 18

@@ -1,0 +1,4 @@
+[27-Sep-2026 10:09:34 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Finder\Comparator\Comparator" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/finder/Comparator/NumberComparator.php:35
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/finder/Comparator/NumberComparator.php on line 35

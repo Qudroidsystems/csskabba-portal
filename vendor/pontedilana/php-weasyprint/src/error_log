@@ -1,0 +1,8 @@
+[27-Sep-2026 10:09:03 UTC] PHP Fatal error:  Uncaught Error: Interface "Pontedilana\PhpWeasyPrint\GeneratorInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pontedilana/php-weasyprint/src/AbstractGenerator.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pontedilana/php-weasyprint/src/AbstractGenerator.php on line 20
+[27-Sep-2026 10:09:03 UTC] PHP Fatal error:  Uncaught Error: Class "Pontedilana\PhpWeasyPrint\AbstractGenerator" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pontedilana/php-weasyprint/src/Pdf.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/pontedilana/php-weasyprint/src/Pdf.php on line 10

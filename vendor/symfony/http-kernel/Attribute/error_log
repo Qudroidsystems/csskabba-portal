@@ -1,0 +1,8 @@
+[27-Sep-2026 10:06:28 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\Attribute\ValueResolver" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Attribute/MapQueryString.php:25
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Attribute/MapQueryString.php on line 25
+[27-Sep-2026 10:09:38 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\Attribute\ValueResolver" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Attribute/MapDateTime.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Attribute/MapDateTime.php on line 21

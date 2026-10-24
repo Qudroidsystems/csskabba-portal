@@ -1,0 +1,8 @@
+[27-Sep-2026 10:09:18 UTC] PHP Fatal error:  Uncaught Error: Class "SebastianBergmann\Comparator\ObjectComparator" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/comparator/src/DOMNodeComparator.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/comparator/src/DOMNodeComparator.php on line 19
+[27-Sep-2026 10:09:19 UTC] PHP Fatal error:  Uncaught Error: Class "SebastianBergmann\Comparator\Comparator" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/comparator/src/ScalarComparator.php:26
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/sebastian/comparator/src/ScalarComparator.php on line 26

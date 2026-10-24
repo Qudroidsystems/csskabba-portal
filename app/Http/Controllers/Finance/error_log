@@ -1,0 +1,24 @@
+[27-Sep-2026 10:07:55 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/Finance/AssetController.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/Finance/AssetController.php on line 13
+[27-Sep-2026 10:07:55 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/Finance/BudgetController.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/Finance/BudgetController.php on line 13
+[27-Sep-2026 10:07:56 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/Finance/PayoutController.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/Finance/PayoutController.php on line 17
+[27-Sep-2026 10:07:56 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/Finance/PayrollController.php:23
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/Finance/PayrollController.php on line 23
+[27-Sep-2026 10:07:56 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/Finance/PayrollMonthController.php:23
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/Finance/PayrollMonthController.php on line 23
+[27-Sep-2026 10:07:56 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/Finance/PayrollSetupController.php:21
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/app/Http/Controllers/Finance/PayrollSetupController.php on line 21

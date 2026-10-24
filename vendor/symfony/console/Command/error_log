@@ -1,0 +1,16 @@
+[27-Sep-2026 10:09:25 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Console\Command\SignalableCommandInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Command/Command.php:35
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Command/Command.php on line 35
+[27-Sep-2026 10:09:25 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Console\Command\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Command/DumpCompletionCommand.php:28
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Command/DumpCompletionCommand.php on line 28
+[27-Sep-2026 10:09:26 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Console\Command\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Command/HelpCommand.php:26
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Command/HelpCommand.php on line 26
+[27-Sep-2026 10:09:26 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Console\Command\SignalableCommandInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Command/InvokableCommand.php:36
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/console/Command/InvokableCommand.php on line 36

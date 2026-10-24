@@ -1,0 +1,12 @@
+[27-Sep-2026 10:06:34 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\Mime\Encoder\Base64Encoder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/Encoder/Base64MimeHeaderEncoder.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/Encoder/Base64MimeHeaderEncoder.php on line 17
+[27-Sep-2026 10:09:54 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Mime\Encoder\EncoderInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/Encoder/ContentEncoderInterface.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/Encoder/ContentEncoderInterface.php on line 17
+[27-Sep-2026 10:09:55 UTC] PHP Fatal error:  Uncaught Error: Interface "Symfony\Component\Mime\Encoder\EncoderInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/Encoder/QpEncoder.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/mime/Encoder/QpEncoder.php on line 19

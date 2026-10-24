@@ -1,0 +1,24 @@
+[27-Sep-2026 10:05:54 UTC] PHP Fatal error:  Uncaught Error: Class "GuzzleHttp\Promise\RejectionException" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/promises/src/AggregateException.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/promises/src/AggregateException.php on line 10
+[27-Sep-2026 10:05:55 UTC] PHP Fatal error:  Uncaught Error: Interface "GuzzleHttp\Promise\PromiseInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/promises/src/Coroutine.php:46
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/promises/src/Coroutine.php on line 46
+[27-Sep-2026 10:05:55 UTC] PHP Fatal error:  Uncaught Error: Interface "GuzzleHttp\Promise\PromiseInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/promises/src/FulfilledPromise.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/promises/src/FulfilledPromise.php on line 15
+[27-Sep-2026 10:05:55 UTC] PHP Fatal error:  Uncaught Error: Interface "GuzzleHttp\Promise\PromiseInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/promises/src/Promise.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/promises/src/Promise.php on line 14
+[27-Sep-2026 10:05:55 UTC] PHP Fatal error:  Uncaught Error: Interface "GuzzleHttp\Promise\PromiseInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/promises/src/RejectedPromise.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/promises/src/RejectedPromise.php on line 15
+[27-Sep-2026 10:05:55 UTC] PHP Fatal error:  Uncaught Error: Interface "GuzzleHttp\Promise\TaskQueueInterface" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/promises/src/TaskQueue.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/guzzlehttp/promises/src/TaskQueue.php on line 18

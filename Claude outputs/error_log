@@ -1,0 +1,596 @@
+[27-Sep-2026 10:03:38 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_09_100000_create_payroll_payouts.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_09_100000_create_payroll_payouts.php on line 11
+[27-Sep-2026 10:03:38 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_10_100000_create_staff_loans_and_cooperative.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_10_100000_create_staff_loans_and_cooperative.php on line 12
+[27-Sep-2026 10:03:38 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_11_100000_create_staff_duty_claims.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_11_100000_create_staff_duty_claims.php on line 8
+[27-Sep-2026 10:03:38 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_09_100000_create_payroll_payouts.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_09_100000_create_payroll_payouts.php on line 11
+[27-Sep-2026 10:03:38 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_12_100000_create_expenses_budgets_assets.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_12_100000_create_expenses_budgets_assets.php on line 12
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_15_100000_create_feature_flags.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_15_100000_create_feature_flags.php on line 19
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_13_100000_create_ledger_postings.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_13_100000_create_ledger_postings.php on line 12
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_11_100000_create_staff_duty_claims.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_11_100000_create_staff_duty_claims.php on line 8
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AccountingController.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AccountingController.php on line 17
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_12_100000_create_expenses_budgets_assets.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_12_100000_create_expenses_budgets_assets.php on line 12
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AccountingSetupSeeder.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AccountingSetupSeeder.php on line 15
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AssetController.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AssetController.php on line 13
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_10_100000_create_staff_loans_and_cooperative.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_10_100000_create_staff_loans_and_cooperative.php on line 12
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_13_100000_create_ledger_postings.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_13_100000_create_ledger_postings.php on line 12
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AttendancePayController.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AttendancePayController.php on line 14
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopController.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopController.php on line 13
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/BudgetController.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/BudgetController.php on line 13
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopMember.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopMember.php on line 7
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AccountingController.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AccountingController.php on line 17
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_15_100000_create_feature_flags.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_15_100000_create_feature_flags.php on line 19
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/ExpenseController.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/ExpenseController.php on line 20
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopTransaction.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopTransaction.php on line 7
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AccountingSetupSeeder.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AccountingSetupSeeder.php on line 15
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/DepreciateAssets.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/DepreciateAssets.php on line 8
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlag.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlag.php on line 13
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagApiController.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagApiController.php on line 13
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagPermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagPermissionSeeder.php on line 9
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/BudgetController.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/BudgetController.php on line 13
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagController.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagController.php on line 12
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureSync.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureSync.php on line 10
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AssetController.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AssetController.php on line 13
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FinanceOpsPermissionSeeder.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FinanceOpsPermissionSeeder.php on line 10
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopController.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopController.php on line 13
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AttendancePayController.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AttendancePayController.php on line 14
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanAdvance.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanAdvance.php on line 10
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanRepayment.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanRepayment.php on line 7
+[27-Sep-2026 10:03:39 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanController.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanController.php on line 14
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/Models.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/Models.php on line 14
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanRepaymentSchedule.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanRepaymentSchedule.php on line 7
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/DepreciateAssets.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/DepreciateAssets.php on line 8
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopMember.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopMember.php on line 7
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/MyFinanceController.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/MyFinanceController.php on line 16
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopTransaction.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopTransaction.php on line 7
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutItem.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutItem.php on line 7
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutBatch.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutBatch.php on line 7
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutController.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutController.php on line 17
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagApiController.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagApiController.php on line 13
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "App\Services\Payment\PaystackGateway" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PaystackTransfers.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PaystackTransfers.php on line 13
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PurchaseRequestController.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PurchaseRequestController.php on line 12
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PullFeatureFlags.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PullFeatureFlags.php on line 9
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/StaffDutyClaim.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/StaffDutyClaim.php on line 7
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/ExpenseController.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/ExpenseController.php on line 20
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlag.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlag.php on line 13
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagPermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagPermissionSeeder.php on line 9
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/SyncFeesToLedger.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/SyncFeesToLedger.php on line 8
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagController.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagController.php on line 12
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureSync.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureSync.php on line 10
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FinanceOpsPermissionSeeder.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FinanceOpsPermissionSeeder.php on line 10
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanAdvance.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanAdvance.php on line 10
+[27-Sep-2026 10:03:40 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanRepayment.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanRepayment.php on line 7
+[27-Sep-2026 10:03:41 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanController.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanController.php on line 14
+[27-Sep-2026 10:03:41 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/Models.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/Models.php on line 14
+[27-Sep-2026 10:03:41 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanRepaymentSchedule.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanRepaymentSchedule.php on line 7
+[27-Sep-2026 10:03:41 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/MyFinanceController.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/MyFinanceController.php on line 16
+[27-Sep-2026 10:03:41 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutBatch.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutBatch.php on line 7
+[27-Sep-2026 10:03:41 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutController.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutController.php on line 17
+[27-Sep-2026 10:03:41 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutItem.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutItem.php on line 7
+[27-Sep-2026 10:03:41 UTC] PHP Fatal error:  Uncaught Error: Class "App\Services\Payment\PaystackGateway" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PaystackTransfers.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PaystackTransfers.php on line 13
+[27-Sep-2026 10:03:41 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/StaffDutyClaim.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/StaffDutyClaim.php on line 7
+[27-Sep-2026 10:03:41 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PullFeatureFlags.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PullFeatureFlags.php on line 9
+[27-Sep-2026 10:03:42 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PurchaseRequestController.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PurchaseRequestController.php on line 12
+[27-Sep-2026 10:03:42 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/SyncFeesToLedger.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/SyncFeesToLedger.php on line 8
+[27-Sep-2026 10:03:43 UTC] PHP Warning:  Undefined variable $anchor in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/public.blade.php on line 2
+[27-Sep-2026 10:03:43 UTC] PHP Fatal error:  Uncaught Error: Call to a member function copy() on null in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/public.blade.php:2
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/public.blade.php on line 2
+[27-Sep-2026 10:03:45 UTC] PHP Warning:  Undefined variable $anchor in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/public.blade.php on line 2
+[27-Sep-2026 10:03:45 UTC] PHP Fatal error:  Uncaught Error: Call to a member function copy() on null in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/public.blade.php:2
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/public.blade.php on line 2
+[28-Sep-2026 14:06:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_09_100000_create_payroll_payouts.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_09_100000_create_payroll_payouts.php on line 11
+[28-Sep-2026 14:06:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_10_100000_create_staff_loans_and_cooperative.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_10_100000_create_staff_loans_and_cooperative.php on line 12
+[28-Sep-2026 14:06:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_11_100000_create_staff_duty_claims.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_11_100000_create_staff_duty_claims.php on line 8
+[28-Sep-2026 14:06:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_12_100000_create_expenses_budgets_assets.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_12_100000_create_expenses_budgets_assets.php on line 12
+[28-Sep-2026 14:06:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_13_100000_create_ledger_postings.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_13_100000_create_ledger_postings.php on line 12
+[28-Sep-2026 14:06:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_15_100000_create_feature_flags.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_15_100000_create_feature_flags.php on line 19
+[28-Sep-2026 14:06:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AccountingSetupSeeder.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AccountingSetupSeeder.php on line 15
+[28-Sep-2026 14:06:58 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AccountingController.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AccountingController.php on line 17
+[28-Sep-2026 14:06:58 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AssetController.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AssetController.php on line 13
+[28-Sep-2026 14:06:58 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AttendancePayController.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AttendancePayController.php on line 14
+[28-Sep-2026 14:06:58 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/BudgetController.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/BudgetController.php on line 13
+[28-Sep-2026 14:06:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopMember.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopMember.php on line 7
+[28-Sep-2026 14:06:58 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopController.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopController.php on line 13
+[28-Sep-2026 14:06:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/DepreciateAssets.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/DepreciateAssets.php on line 8
+[28-Sep-2026 14:06:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopTransaction.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopTransaction.php on line 7
+[28-Sep-2026 14:06:58 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/ExpenseController.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/ExpenseController.php on line 20
+[28-Sep-2026 14:06:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlag.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlag.php on line 13
+[28-Sep-2026 14:06:58 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagController.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagController.php on line 12
+[28-Sep-2026 14:06:58 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagApiController.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagApiController.php on line 13
+[28-Sep-2026 14:06:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagPermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagPermissionSeeder.php on line 9
+[28-Sep-2026 14:06:58 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureSync.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureSync.php on line 10
+[28-Sep-2026 14:06:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FinanceOpsPermissionSeeder.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FinanceOpsPermissionSeeder.php on line 10
+[28-Sep-2026 14:06:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanAdvance.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanAdvance.php on line 10
+[28-Sep-2026 14:06:59 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanController.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanController.php on line 14
+[28-Sep-2026 14:06:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanRepaymentSchedule.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanRepaymentSchedule.php on line 7
+[28-Sep-2026 14:06:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanRepayment.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanRepayment.php on line 7
+[28-Sep-2026 14:06:59 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/MyFinanceController.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/MyFinanceController.php on line 16
+[28-Sep-2026 14:06:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/Models.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/Models.php on line 14
+[28-Sep-2026 14:06:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutBatch.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutBatch.php on line 7
+[28-Sep-2026 14:06:59 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutController.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutController.php on line 17
+[28-Sep-2026 14:06:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutItem.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutItem.php on line 7
+[28-Sep-2026 14:06:59 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PurchaseRequestController.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PurchaseRequestController.php on line 12
+[28-Sep-2026 14:06:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PullFeatureFlags.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PullFeatureFlags.php on line 9
+[28-Sep-2026 14:06:59 UTC] PHP Fatal error:  Uncaught Error: Class "App\Services\Payment\PaystackGateway" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PaystackTransfers.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PaystackTransfers.php on line 13
+[28-Sep-2026 14:06:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/StaffDutyClaim.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/StaffDutyClaim.php on line 7
+[28-Sep-2026 14:06:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/SyncFeesToLedger.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/SyncFeesToLedger.php on line 8
+[28-Sep-2026 14:06:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_09_100000_create_payroll_payouts.php:11
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_09_100000_create_payroll_payouts.php on line 11
+[28-Sep-2026 14:06:59 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_10_100000_create_staff_loans_and_cooperative.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_10_100000_create_staff_loans_and_cooperative.php on line 12
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_11_100000_create_staff_duty_claims.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_11_100000_create_staff_duty_claims.php on line 8
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_12_100000_create_expenses_budgets_assets.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_12_100000_create_expenses_budgets_assets.php on line 12
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_15_100000_create_feature_flags.php:19
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_15_100000_create_feature_flags.php on line 19
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_13_100000_create_ledger_postings.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/2026_10_13_100000_create_ledger_postings.php on line 12
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AccountingController.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AccountingController.php on line 17
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AssetController.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AssetController.php on line 13
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AccountingSetupSeeder.php:15
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AccountingSetupSeeder.php on line 15
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AttendancePayController.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/AttendancePayController.php on line 14
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/BudgetController.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/BudgetController.php on line 13
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopMember.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopMember.php on line 7
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopController.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopController.php on line 13
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopTransaction.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/CoopTransaction.php on line 7
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/DepreciateAssets.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/DepreciateAssets.php on line 8
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/ExpenseController.php:20
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/ExpenseController.php on line 20
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlag.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlag.php on line 13
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagApiController.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagApiController.php on line 13
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagController.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagController.php on line 12
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureSync.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureSync.php on line 10
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagPermissionSeeder.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FeatureFlagPermissionSeeder.php on line 9
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Seeder" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FinanceOpsPermissionSeeder.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/FinanceOpsPermissionSeeder.php on line 10
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanAdvance.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanAdvance.php on line 10
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanRepayment.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanRepayment.php on line 7
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanRepaymentSchedule.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanRepaymentSchedule.php on line 7
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanController.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/LoanController.php on line 14
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/Models.php:14
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/Models.php on line 14
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/MyFinanceController.php:16
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/MyFinanceController.php on line 16
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutBatch.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutBatch.php on line 7
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutController.php:17
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutController.php on line 17
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutItem.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PayoutItem.php on line 7
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PullFeatureFlags.php:9
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PullFeatureFlags.php on line 9
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "App\Services\Payment\PaystackGateway" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PaystackTransfers.php:13
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PaystackTransfers.php on line 13
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/StaffDutyClaim.php:7
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/StaffDutyClaim.php on line 7
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PurchaseRequestController.php:12
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/PurchaseRequestController.php on line 12
+[28-Sep-2026 14:07:00 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Console\Command" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/SyncFeesToLedger.php:8
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/SyncFeesToLedger.php on line 8
+[28-Sep-2026 14:07:02 UTC] PHP Warning:  Undefined variable $anchor in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/public.blade.php on line 2
+[28-Sep-2026 14:07:02 UTC] PHP Fatal error:  Uncaught Error: Call to a member function copy() on null in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/public.blade.php:2
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/public.blade.php on line 2
+[28-Sep-2026 14:07:04 UTC] PHP Warning:  Undefined variable $anchor in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/public.blade.php on line 2
+[28-Sep-2026 14:07:04 UTC] PHP Fatal error:  Uncaught Error: Call to a member function copy() on null in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/public.blade.php:2
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/Claude outputs/public.blade.php on line 2

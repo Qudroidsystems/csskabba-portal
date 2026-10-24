@@ -1,0 +1,4 @@
+[27-Sep-2026 10:08:45 UTC] PHP Fatal error:  Uncaught Error: Class "PhpOffice\PhpSpreadsheet\Reader\Csv" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maatwebsite/excel/config/excel.php:131
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/maatwebsite/excel/config/excel.php on line 131

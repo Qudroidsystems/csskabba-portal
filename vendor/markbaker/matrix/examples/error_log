@@ -1,0 +1,6 @@
+[27-Sep-2026 10:08:51 UTC] PHP Warning:  include(/home1/gozakma1/public_html/homaj.viteschools.ng/vendor/markbaker/matrix/examples/../vendor/autoload.php): Failed to open stream: No such file or directory in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/markbaker/matrix/examples/test.php on line 6
+[27-Sep-2026 10:08:51 UTC] PHP Warning:  include(): Failed opening '/home1/gozakma1/public_html/homaj.viteschools.ng/vendor/markbaker/matrix/examples/../vendor/autoload.php' for inclusion (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/markbaker/matrix/examples/test.php on line 6
+[27-Sep-2026 10:08:51 UTC] PHP Fatal error:  Uncaught Error: Class "Matrix\Matrix" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/markbaker/matrix/examples/test.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/markbaker/matrix/examples/test.php on line 18

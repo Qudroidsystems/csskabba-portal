@@ -1,0 +1,8 @@
+[27-Sep-2026 10:04:55 UTC] PHP Fatal error:  Uncaught Error: Interface "League\Flysystem\FilesystemAdapter" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem-local/LocalFilesystemAdapter.php:49
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem-local/LocalFilesystemAdapter.php on line 49
+[27-Sep-2026 10:06:30 UTC] PHP Fatal error:  Uncaught Error: Interface "League\MimeTypeDetection\MimeTypeDetector" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem-local/FallbackMimeTypeDetector.php:10
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/league/flysystem-local/FallbackMimeTypeDetector.php on line 10

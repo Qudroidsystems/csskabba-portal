@@ -1,0 +1,24 @@
+[27-Sep-2026 10:06:31 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\Event\KernelEvent" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Event/ResponseEvent.php:27
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Event/ResponseEvent.php on line 27
+[27-Sep-2026 10:06:31 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\Event\KernelEvent" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Event/TerminateEvent.php:26
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Event/TerminateEvent.php on line 26
+[27-Sep-2026 10:09:41 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\Event\KernelEvent" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Event/ControllerEvent.php:28
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Event/ControllerEvent.php on line 28
+[27-Sep-2026 10:09:41 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\Event\KernelEvent" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Event/ControllerArgumentsEvent.php:29
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Event/ControllerArgumentsEvent.php on line 29
+[27-Sep-2026 10:09:41 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\Event\RequestEvent" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Event/ExceptionEvent.php:30
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Event/ExceptionEvent.php on line 30
+[27-Sep-2026 10:09:42 UTC] PHP Fatal error:  Uncaught Error: Class "Symfony\Component\HttpKernel\Event\KernelEvent" not found in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Event/RequestEvent.php:25
+Stack trace:
+#0 {main}
+  thrown in /home1/gozakma1/public_html/homaj.viteschools.ng/vendor/symfony/http-kernel/Event/RequestEvent.php on line 25
