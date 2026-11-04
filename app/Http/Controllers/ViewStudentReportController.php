@@ -1409,6 +1409,7 @@ class ViewStudentReportController extends Controller
                         $assessmentScores[] = [
                             'assessment_id' => $as->assessment_id,
                             'score'         => $as->score !== null ? (float) $as->score : null,
+                            'is_absent'     => method_exists($as, 'isAbsent') ? $as->isAbsent() : false,
                         ];
                     }
                 }

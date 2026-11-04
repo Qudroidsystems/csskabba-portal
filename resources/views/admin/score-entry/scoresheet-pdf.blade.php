@@ -547,9 +547,9 @@ table.score-table tbody td.adm-cell {
                 @foreach($assessments as $assessment)
                 @php
                     $so = $broadsheet->assessmentScores->where('assessment_id', $assessment->id)->first();
-                    $sv = $so ? number_format($so->score, 1) : '0.0';
+                    $sv = $so ? ($so->isAbsent() ? 'ABS' : number_format($so->score, 1)) : '0.0';
                 @endphp
-                <td>{{ $sv }}</td>
+                <td @if($sv === 'ABS') style="color:#b91c1c;font-weight:700;" @endif>{{ $sv }}</td>
                 @endforeach
                 <td style="font-weight: bold; color: #1e3a5f;">{{ number_format($broadsheet->total ?? 0, 1) }}</td>
                 <td><span class="grade-chip {{ $gradeClass }}">{{ $grade }}</span></td>
@@ -593,6 +593,9 @@ table.score-table tbody td.adm-cell {
             @endforeach
         </tbody>
     </table>
+@if(collect($broadsheets)->contains(fn($b) => collect($b->assessmentScores ?? [])->contains(fn($s) => $s->isAbsent())))
+    <div style="font-size:8.5px;color:#555;margin-top:3px;"><strong style="color:#b91c1c;">ABS</strong> = student was absent (counted as 0 in the total).</div>
+@endif
 
     {{-- ══ SIGNATURE BLOCK ════════════════════════════════════════════ --}}
     <div class="footer-sig">

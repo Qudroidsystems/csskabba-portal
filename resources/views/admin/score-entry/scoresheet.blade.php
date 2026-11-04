@@ -32,6 +32,9 @@
 .score-input.is-invalid { border-color: var(--ss-danger)  !important; background: #fef2f2; }
 .score-input.is-saved   { border-color: var(--ss-success) !important; background: #f0fdf4; }
 .score-input:disabled   { background: #f3f4f6; cursor: not-allowed; opacity: 0.7; }
+.score-input.is-absent, .score-input-large.is-absent { color: #b91c1c; font-weight: 700; letter-spacing: .5px; background: #fff7ed; border-color: #fdba74; }
+.score-input.is-absent.is-saved { border-color: var(--ss-success) !important; }
+.abs-hint kbd { background: #fff7ed; color: #b91c1c; border: 1px solid #fdba74; font-weight: 700; padding: 0 4px; }
 
 #scoresheetTable { font-size: 12.5px; }
 #scoresheetTable thead tr { background: var(--ss-primary); color: #fff; }
@@ -929,17 +932,20 @@
                                 @php
                                     $scoreObj   = $broadsheet->assessmentScores->where('assessment_id', $assessment->id)->first();
                                     $scoreValue = $scoreObj ? $scoreObj->score : 0;
+                                    $isAbsent   = $scoreObj ? $scoreObj->isAbsent() : false;
+                                    $shownValue = $isAbsent ? 'ABS' : $scoreValue;
                                 @endphp
                                 <td class="col-assessment-{{ $assessment->id }} assessment-col text-center">
-                                    <input type="number"
-                                           class="score-input"
+                                    <input type="text"
+                                           class="score-input {{ $isAbsent ? 'is-absent' : '' }}"
                                            data-field="{{ $assessment->id }}"
                                            data-max="{{ $assessment->max_score }}"
                                            data-id="{{ $broadsheet->id }}"
-                                           data-original="{{ $scoreValue }}"
+                                           data-original="{{ $shownValue }}"
                                            data-assessment-name="{{ $assessment->name }}"
-                                           value="{{ $scoreValue }}"
-                                           min="0" max="{{ $assessment->max_score }}" step="0.1"
+                                           value="{{ $shownValue }}"
+                                           maxlength="6" autocomplete="off"
+                                           title="Enter a score (max {{ $assessment->max_score }}), or ABS if the student was absent"
                                            {{ $isLocked ? 'disabled' : '' }}>
                                 </td>
                             @empty
@@ -1171,6 +1177,7 @@
                         </button>
                     </div>
                     <div class="d-flex align-items-center gap-2">
+                        <small class="text-muted abs-hint"><i class="ri-user-unfollow-line me-1"></i>Student absent? Type <kbd>ABS</kbd> (or <kbd>A</kbd>) instead of 0</small>
                         <small class="text-muted"><i class="ri-keyboard-line me-1"></i>Ctrl+S to save</small>
                         <button class="btn btn-success btn-sm px-4" id="bulkUpdateScores">
                             <i class="ri-save-line me-1"></i>Save All Scores
@@ -1485,17 +1492,32 @@ function showToast(msg, type = 'info') {
     setTimeout(() => document.getElementById(id)?.remove(), 4500);
 }
 
-function validateInput(inp) {
+/* ── Absent ("ABS") handling ─────────────────────────────────────────
+   Staff type ABS (or A / ABSENT) in a score cell when the student was
+   absent. It counts as 0 in every calculation, but is saved and shown as
+   ABS so it is not confused with a real score of 0.                       */
+const isAbs        = v => /^\s*(abs|absent|a)\s*$/i.test(String(v ?? ''));
+const scoreNum     = v => isAbs(v) ? 0 : (parseFloat(v) || 0);
+const scoreKey     = v => isAbs(v) ? 'ABS' : String(scoreNum(v));
+const scorePayload = v => isAbs(v) ? 'ABS' : scoreNum(v);
+
+function validateInput(inp, normalize = false) {
+    const raw = String(inp.value ?? '').trim();
+    const abs = isAbs(raw);
+    if (abs && normalize) inp.value = 'ABS';
+    inp.classList.toggle('is-absent', abs);
+    if (abs || raw === '') { inp.classList.remove('is-invalid'); return true; }
+
     const max = parseFloat(inp.dataset.max) || 0;
-    const val = parseFloat(inp.value) || 0;
-    inp.classList.toggle('is-invalid', val > max);
-    return val <= max;
+    const ok  = /^\d*\.?\d+$|^\d+\.$/.test(raw) && parseFloat(raw) >= 0 && parseFloat(raw) <= max;
+    inp.classList.toggle('is-invalid', !ok);
+    return ok;
 }
 
 function updateRowGrades(row) {
     let totalRaw = 0;
     row.querySelectorAll('.score-input').forEach(inp => {
-        totalRaw += parseFloat(inp.value) || 0;
+        totalRaw += scoreNum(inp.value);
     });
 
     const bf = parseFloat(row.dataset.bf) || 0;
@@ -1523,10 +1545,9 @@ function updateRowGrades(row) {
 
 function saveIndividualScore(input) {
     const row = input.closest('tr');
-    const originalValue = parseFloat(input.dataset.original) || 0;
-    const newValue = parseFloat(input.value) || 0;
-
-    if (Math.abs(newValue - originalValue) < 0.01) return;
+    const originalValue = input.dataset.original ?? '';
+    if (scoreKey(originalValue) === scoreKey(input.value)) return;
+    const newValue = scorePayload(input.value);
 
     fetch(routes.singleUpdate, {
         method: 'POST',
@@ -1578,13 +1599,13 @@ function saveIndividualScore(input) {
             }
         } else {
             showToast(data.message || 'Error saving score', 'danger');
-            input.value = originalValue;
+            input.value = originalValue; validateInput(input);
         }
     })
     .catch(err => {
         console.error(err);
         showToast('Network error', 'danger');
-        input.value = originalValue;
+        input.value = originalValue; validateInput(input);
     });
 }
 
@@ -1715,9 +1736,10 @@ function ssClose() {
 }
 
 function bulkSaveScores() {
+    document.querySelectorAll('.score-input:not(:disabled)').forEach(i => validateInput(i, true));
     const invalid = document.querySelectorAll('.score-input.is-invalid').length;
     if (invalid) {
-        Swal.fire({ icon:'warning', title:'Invalid Scores', text:`${invalid} score(s) exceed their maximum.` });
+        Swal.fire({ icon:'warning', title:'Invalid Scores', text:`${invalid} score(s) are not valid. Enter a number up to the maximum, or ABS if the student was absent.` });
         return;
     }
 
@@ -1726,7 +1748,7 @@ function bulkSaveScores() {
         if (row.dataset.isLocked === 'true') return;
         const assessments = {};
         row.querySelectorAll('.score-input').forEach(inp => {
-            assessments[inp.dataset.field] = parseFloat(inp.value) || 0;
+            assessments[inp.dataset.field] = scorePayload(inp.value);
         });
         if (Object.keys(assessments).length) {
             scores.push({ id: row.dataset.id, assessments });
@@ -1807,7 +1829,8 @@ function bulkSaveScores() {
 
                 row.querySelectorAll('.score-input').forEach(inp => {
                     const assessmentId = inp.dataset.field;
-                    const newScore = bs.assessment_scores?.find(a => a.assessment_id == assessmentId)?.score;
+                    const rec = bs.assessment_scores?.find(a => a.assessment_id == assessmentId);
+                    const newScore = rec ? (rec.is_absent ? 'ABS' : rec.score) : undefined;
                     if (newScore !== undefined) {
                         inp.dataset.original = newScore;
                         inp.classList.add('is-saved');
@@ -1898,9 +1921,9 @@ function openScoreEntryModal(broadsheetId, studentName, studentAdmission, studen
     let currentTotal = 0;
     const scoresMap = {};
     assessments.forEach(a => {
-        const score = currentScores[a.id] || 0;
+        const score = currentScores[a.id] ?? 0;
         scoresMap[a.id] = score;
-        currentTotal += score;
+        currentTotal += scoreNum(score);
     });
 
     const grade = currentTotal >= 70 ? 'A' : (currentTotal >= 60 ? 'B' : (currentTotal >= 50 ? 'C' : (currentTotal >= 40 ? 'D' : 'F')));
@@ -1919,14 +1942,15 @@ function openScoreEntryModal(broadsheetId, studentName, studentAdmission, studen
             <div class="assessment-score-row">
                 <div>
                     <strong>${a.name}</strong>
-                    <small class="text-muted ms-2">(Max: ${a.max_score})</small>
+                    <small class="text-muted ms-2">(Max: ${a.max_score}, or ABS if absent)</small>
                 </div>
-                <input type="number"
-                       class="form-control score-input-large"
+                <input type="text"
+                       class="form-control score-input-large ${isAbs(scoreValue) ? 'is-absent' : ''}"
                        data-assessment-id="${a.id}"
                        data-max="${a.max_score}"
-                       value="${scoreValue}"
-                       min="0" max="${a.max_score}" step="0.1"
+                       value="${isAbs(scoreValue) ? 'ABS' : scoreValue}"
+                       maxlength="6" autocomplete="off"
+                       oninput="this.classList.toggle('is-absent', isAbs(this.value))"
                        style="width: 100px;">
             </div>
         `;
@@ -1947,9 +1971,11 @@ function saveModalScores() {
     assessmentInputs.forEach(input => {
         const assessmentId = input.dataset.assessmentId;
         const maxScore = parseFloat(input.dataset.max);
-        let value = parseFloat(input.value) || 0;
-        if (value > maxScore) {
-            Swal.fire({ icon: 'error', title: 'Invalid Score', text: `Score cannot exceed ${maxScore}` });
+        if (isAbs(input.value)) { scores[assessmentId] = 'ABS'; return; }
+        const raw = String(input.value ?? '').trim();
+        let value = parseFloat(raw) || 0;
+        if ((raw !== '' && !/^\d*\.?\d+$|^\d+\.$/.test(raw)) || value > maxScore || value < 0) {
+            Swal.fire({ icon: 'error', title: 'Invalid Score', text: `Score must be between 0 and ${maxScore}, or ABS if the student was absent.` });
             hasError = true;
             return;
         }
@@ -1990,7 +2016,7 @@ function saveModalScores() {
             if (row) {
                 for (const [assessmentId, score] of Object.entries(scores)) {
                     const input = row.querySelector(`.score-input[data-field="${assessmentId}"]`);
-                    if (input) { input.value = score; input.dataset.original = score; }
+                    if (input) { input.value = score; input.dataset.original = score; validateInput(input); }
                 }
                 updateRowGrades(row);
             }
@@ -2215,7 +2241,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const currentScores = {};
         if (row) {
             row.querySelectorAll('.score-input').forEach(input => {
-                currentScores[input.dataset.field] = parseFloat(input.value) || 0;
+                currentScores[input.dataset.field] = isAbs(input.value) ? 'ABS' : scoreNum(input.value);
             });
         }
 
@@ -2240,7 +2266,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (row) updateRowGrades(row);
         });
         inp.addEventListener('blur', function() {
-            if (!validateInput(this)) { this.value = this.dataset.original || 0; return; }
+            if (!validateInput(this, true)) { this.value = this.dataset.original || 0; validateInput(this); return; }
             saveIndividualScore(this);
         });
         inp.addEventListener('keydown', function(e) {
@@ -2355,10 +2381,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function tipRefresh(inp) {
         if (!inp) return;
         const row = inp.closest('tr');
-        const val = parseFloat(inp.value) || 0, max = parseFloat(inp.dataset.max) || 100;
+        const val = scoreNum(inp.value), max = parseFloat(inp.dataset.max) || 100;
         const asmtName = inp.dataset.assessmentName || 'Score';
         let total = 0, totalMax = 0;
-        row.querySelectorAll('.score-input').forEach(i => { total += parseFloat(i.value)||0; totalMax += parseFloat(i.dataset.max)||0; });
+        row.querySelectorAll('.score-input').forEach(i => { total += scoreNum(i.value); totalMax += parseFloat(i.dataset.max)||0; });
         const grade = clientGrade(total);
         const pct   = totalMax > 0 ? Math.min(total / totalMax * 100, 100) : 0;
         const col   = getGradeColor(grade);
@@ -2366,7 +2392,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('stAvatar').src = row.dataset.avatar || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
         document.getElementById('stName').textContent = row.dataset.name || '—';
         document.getElementById('stMeta').textContent = (row.dataset.admissionno || '—') + ' · ' + asmtName + ' (max ' + max + ')';
-        document.getElementById('stVal').textContent = val % 1 === 0 ? String(val) : val.toFixed(1);
+        document.getElementById('stVal').textContent = isAbs(inp.value) ? 'ABS (absent)' : val % 1 === 0 ? String(val) : val.toFixed(1);
         document.getElementById('stTotal').textContent = total.toFixed(1);
         const gEl = document.getElementById('stGrade'); gEl.textContent = grade; gEl.style.color = col;
         document.getElementById('stProgLabel').textContent = total.toFixed(1) + ' / ' + totalMax + ' marks';

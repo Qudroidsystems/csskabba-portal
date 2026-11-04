@@ -387,7 +387,7 @@ class AdminScoreEntryController extends Controller
                 ->where('broadsheets.term_id', $termId)
                 ->where('broadsheet_records.session_id', $sessionId)
                 ->where('broadsheet_assessment_scores.assessment_id', $assessmentId)
-                ->where('broadsheet_assessment_scores.score', '>', 0)
+                ->whereRaw(BroadsheetAssessmentScore::enteredSql())
                 ->distinct('broadsheet_records.student_id')
                 ->count('broadsheet_records.student_id');
 
@@ -457,7 +457,7 @@ class AdminScoreEntryController extends Controller
             ->leftJoin('broadsheet_assessment_scores', function($join) use ($assessmentIds) {
                 $join->on('broadsheet_assessment_scores.broadsheet_id', '=', 'broadsheets.id')
                      ->whereIn('broadsheet_assessment_scores.assessment_id', $assessmentIds)
-                     ->where('broadsheet_assessment_scores.score', '>', 0);
+                     ->whereRaw(BroadsheetAssessmentScore::enteredSql());
             })
             ->where('broadsheets.subjectclass_id', $subjectclassId)
             ->where('broadsheets.term_id', $termId)
@@ -954,7 +954,8 @@ class AdminScoreEntryController extends Controller
             $validated = $request->validate([
                 'broadsheet_id'     => 'required|exists:broadsheets,id',
                 'assessment_id'     => 'required|exists:assessments,id',
-                'score'             => 'required|numeric|min:0',
+                // a number, or "ABS" when the student was absent
+                'score'             => BroadsheetAssessmentScore::scoreRule(),
                 'is_sub'            => 'boolean',
                 'sub_assessment_id' => 'nullable|exists:sub_assessments,id',
                 'total'             => 'nullable|numeric',
@@ -963,7 +964,8 @@ class AdminScoreEntryController extends Controller
 
             $broadsheetId    = $validated['broadsheet_id'];
             $assessmentId    = $validated['assessment_id'];
-            $score           = $validated['score'];
+            $isAbsent        = BroadsheetAssessmentScore::isAbsentMark($validated['score']);
+            $score           = $isAbsent ? 0.0 : (float) $validated['score'];
             $isSub           = $validated['is_sub'] ?? false;
             $subAssessmentId = $validated['sub_assessment_id'] ?? null;
 
@@ -999,7 +1001,7 @@ class AdminScoreEntryController extends Controller
                 ? $schoolclass->classcategories->first()->is_senior ?? false : false;
 
             DB::transaction(function () use (
-                $broadsheetId, $assessmentId, $score, $broadsheet, $isSub,
+                $broadsheetId, $assessmentId, $score, $isAbsent, $broadsheet, $isSub,
                 $subAssessmentId, $broadsheetRecord, $schoolclass, $sessionId, $termId
             ) {
                 if ($isSub) {
@@ -1014,13 +1016,13 @@ class AdminScoreEntryController extends Controller
                         $normalized = $subMaxSum > 0 ? ($subTotal / $subMaxSum) * $assessment->max_score : 0;
                         BroadsheetAssessmentScore::updateOrCreate(
                             ['broadsheet_id' => $broadsheetId, 'assessment_id' => $assessmentId],
-                            ['score' => max(0, min($normalized, $assessment->max_score))]
+                            BroadsheetAssessmentScore::scoreAttributes(max(0, min($normalized, $assessment->max_score)), false)
                         );
                     }
                 } else {
                     BroadsheetAssessmentScore::updateOrCreate(
                         ['broadsheet_id' => $broadsheetId, 'assessment_id' => $assessmentId],
-                        ['score' => $score]
+                        BroadsheetAssessmentScore::scoreAttributes($score, $isAbsent)
                     );
                 }
 
@@ -1049,6 +1051,7 @@ class AdminScoreEntryController extends Controller
                 'success' => true,
                 'message' => 'Score updated successfully!',
                 'data'    => [
+                    'is_absent'                    => $isAbsent,
                     'total'                        => $broadsheet->total,
                     // Both figures returned under their real names so the UI can show
                     // the raw running sum ("cum") and the per-term average ("cum_ave")
@@ -1197,18 +1200,19 @@ class AdminScoreEntryController extends Controller
                         $normalized = $subMaxSum > 0 ? ($subTotal / $subMaxSum) * $parentAssessment->max_score : 0;
                         BroadsheetAssessmentScore::updateOrCreate(
                             ['broadsheet_id' => $broadsheetId, 'assessment_id' => $assessment_id],
-                            ['score' => max(0, min($normalized, $parentAssessment->max_score))]
+                            BroadsheetAssessmentScore::scoreAttributes(max(0, min($normalized, $parentAssessment->max_score)), false)
                         );
                     }
                 } else {
                     foreach ($assessmentsData as $componentId => $inputScore) {
                         $componentId = (int) $componentId;
-                        $inputScore  = max(0, (float) $inputScore);
+                        $isAbsent    = BroadsheetAssessmentScore::isAbsentMark($inputScore);
+                        $inputScore  = $isAbsent ? 0.0 : max(0, (float) $inputScore);
                         $model       = $assessments->where('id', $componentId)->first();
                         if (!$model) { $localErrors[] = "Assessment {$componentId} invalid."; continue; }
                         BroadsheetAssessmentScore::updateOrCreate(
                             ['broadsheet_id' => $broadsheetId, 'assessment_id' => $componentId],
-                            ['score' => min($inputScore, $model->max_score)]
+                            BroadsheetAssessmentScore::scoreAttributes(min($inputScore, $model->max_score), $isAbsent)
                         );
                     }
                 }
@@ -2510,7 +2514,7 @@ class AdminScoreEntryController extends Controller
             $assessmentScores = [];
             foreach ($assessments as $a) {
                 $s = $b->assessmentScores->where('assessment_id', $a->id)->first();
-                $assessmentScores[] = ['assessment_id' => $a->id, 'assessment_name' => $a->name, 'max_score' => $a->max_score, 'score' => $s ? floatval($s->score) : 0];
+                $assessmentScores[] = ['assessment_id' => $a->id, 'assessment_name' => $a->name, 'max_score' => $a->max_score, 'score' => $s ? floatval($s->score) : 0, 'is_absent' => $s ? $s->isAbsent() : false];
             }
             $formatted[] = ['id' => $b->id, 'admissionno' => $b->admissionno, 'fname' => $b->fname, 'lname' => $b->lname, 'mname' => $b->mname, 'total' => floatval($b->total), 'bf' => floatval($b->bf), 'cum' => floatval($b->cum), 'cum_ave' => floatval($b->cum_ave ?? 0), 'grade' => $b->grade, 'position' => $b->position, 'position_total' => $b->position_total, 'arm_position' => $b->arm_position, 'arm_position_cum' => $b->arm_position_cum, 'remark' => $b->remark, 'avg' => floatval($b->avg ?? 0), 'assessment_scores' => $assessmentScores];
         }

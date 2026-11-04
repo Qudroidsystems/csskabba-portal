@@ -172,7 +172,8 @@ class MyScoreSheetController extends Controller
             $validated = $request->validate([
                 'broadsheet_id' => 'required|exists:broadsheets,id',
                 'assessment_id' => 'required|exists:assessments,id',
-                'score' => 'required|numeric|min:0',
+                // a number, or "ABS" when the student was absent
+                'score' => BroadsheetAssessmentScore::scoreRule(),
                 'is_sub' => 'boolean',
                 'sub_assessment_id' => 'nullable|exists:sub_assessments,id',
                 'total' => 'nullable|numeric',
@@ -181,7 +182,8 @@ class MyScoreSheetController extends Controller
 
             $broadsheetId = $validated['broadsheet_id'];
             $assessmentId = $validated['assessment_id'];
-            $score = $validated['score'];
+            $isAbsent = BroadsheetAssessmentScore::isAbsentMark($validated['score']);
+            $score = $isAbsent ? 0.0 : (float) $validated['score'];
             $isSub = $validated['is_sub'] ?? false;
             $subAssessmentId = $validated['sub_assessment_id'] ?? null;
 
@@ -220,6 +222,7 @@ class MyScoreSheetController extends Controller
                 $broadsheetId,
                 $assessmentId,
                 $score,
+                $isAbsent,
                 $broadsheet,
                 $isSub,
                 $subAssessmentId,
@@ -247,13 +250,13 @@ class MyScoreSheetController extends Controller
                             : 0;
                         BroadsheetAssessmentScore::updateOrCreate(
                             ['broadsheet_id' => $broadsheetId, 'assessment_id' => $assessmentId],
-                            ['score' => max(0, min($normalized, $assessment->max_score))]
+                            BroadsheetAssessmentScore::scoreAttributes(max(0, min($normalized, $assessment->max_score)), false)
                         );
                     }
                 } else {
                     BroadsheetAssessmentScore::updateOrCreate(
                         ['broadsheet_id' => $broadsheetId, 'assessment_id' => $assessmentId],
-                        ['score' => $score]
+                        BroadsheetAssessmentScore::scoreAttributes($score, $isAbsent)
                     );
                 }
 
@@ -296,6 +299,7 @@ class MyScoreSheetController extends Controller
                 'success' => true,
                 'message' => 'Score updated successfully!',
                 'data' => [
+                    'is_absent' => $isAbsent,
                     'total' => $broadsheet->total,
                     // Both figures returned under their real names so the UI can show the
                     // raw running sum ("cum") and the per-term average ("cum_ave") separately.
@@ -452,13 +456,14 @@ class MyScoreSheetController extends Controller
 
                         BroadsheetAssessmentScore::updateOrCreate(
                             ['broadsheet_id' => $broadsheetId, 'assessment_id' => $assessment_id],
-                            ['score' => max(0, min($normalized, $parentAssessment->max_score))]
+                            BroadsheetAssessmentScore::scoreAttributes(max(0, min($normalized, $parentAssessment->max_score)), false)
                         );
                     }
                 } else {
                     foreach ($assessmentsData as $componentId => $inputScore) {
                         $componentId = (int) $componentId;
-                        $inputScore = max(0, (float) $inputScore);
+                        $isAbsent = BroadsheetAssessmentScore::isAbsentMark($inputScore);
+                        $inputScore = $isAbsent ? 0.0 : max(0, (float) $inputScore);
 
                         $model = $assessments->where('id', $componentId)->first();
                         if (!$model) {
@@ -468,7 +473,7 @@ class MyScoreSheetController extends Controller
 
                         BroadsheetAssessmentScore::updateOrCreate(
                             ['broadsheet_id' => $broadsheetId, 'assessment_id' => $componentId],
-                            ['score' => min($inputScore, $model->max_score)]
+                            BroadsheetAssessmentScore::scoreAttributes(min($inputScore, $model->max_score), $isAbsent)
                         );
                     }
                 }
@@ -1338,6 +1343,7 @@ class MyScoreSheetController extends Controller
                     'assessment_name' => $a->name,
                     'max_score' => $a->max_score,
                     'score' => $s ? floatval($s->score) : 0,
+                    'is_absent' => $s ? $s->isAbsent() : false,
                 ];
             }
             $formatted[] = [

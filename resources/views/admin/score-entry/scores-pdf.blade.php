@@ -259,7 +259,11 @@
                             $score = $student->assessmentScores->where('assessment_id', $assessment->id)->first();
                             $scoreValue = $score ? $score->score : 0;
                         @endphp
-                        <td class="score-col">{{ number_format($scoreValue, 1) }}</td>
+                        @if($score && $score->isAbsent())
+                            <td class="score-col" style="color:#b91c1c;font-weight:700;">ABS</td>
+                        @else
+                            <td class="score-col">{{ number_format($scoreValue, 1) }}</td>
+                        @endif
                     @endforeach
                     <td class="score-col"><strong>{{ number_format($student->total ?? 0, 1) }}</strong></td>
                     <td class="score-col"><strong>{{ $student->grade ?? '-' }}</strong></td>
@@ -293,6 +297,9 @@
         </tfoot>
         @endif
     </table>
+@if(collect($broadsheets)->contains(fn($b) => collect($b->assessmentScores ?? [])->contains(fn($s) => $s->isAbsent())))
+    <div style="font-size:8.5px;color:#555;margin-top:3px;"><strong style="color:#b91c1c;">ABS</strong> = student was absent (counted as 0 in the total).</div>
+@endif
 
     <div class="footer">
         <div class="footer-row">

@@ -1,0 +1,889 @@
+diff --git a/app/Http/Controllers/Admin/AdminScoreEntryController.php b/app/Http/Controllers/Admin/AdminScoreEntryController.php
+index 3881234..bca4a53 100644
+--- a/app/Http/Controllers/Admin/AdminScoreEntryController.php
++++ b/app/Http/Controllers/Admin/AdminScoreEntryController.php
+@@ -296,7 +296,9 @@ protected function getTeacherSubjects($termId, $sessionId)
+                     $q->where('ca1', '>', 0)
+                       ->orWhere('ca2', '>', 0)
+                       ->orWhere('ca3', '>', 0)
+-                      ->orWhere('exam', '>', 0);
++                      ->orWhere('exam', '>', 0)
++                      // a student marked ABS has been dealt with by the teacher
++                      ->orWhereNotNull('absent_fields');
+                 })
+                 ->count();
+ 
+@@ -486,10 +488,11 @@ public function singleUpdate(Request $request)
+ 
+             $validated = $request->validate([
+                 'broadsheet_id' => 'required|exists:broadsheets,id',
+-                'ca1'           => 'nullable|numeric|min:0|max:100',
+-                'ca2'           => 'nullable|numeric|min:0|max:100',
+-                'ca3'           => 'nullable|numeric|min:0|max:100',
+-                'exam'          => 'nullable|numeric|min:0|max:100',
++                // number 0–100, or "ABS" when the student was absent
++                'ca1'           => Broadsheets::scoreRule(),
++                'ca2'           => Broadsheets::scoreRule(),
++                'ca3'           => Broadsheets::scoreRule(),
++                'exam'          => Broadsheets::scoreRule(),
+             ]);
+ 
+             $broadsheet = Broadsheets::findOrFail($broadsheetId);
+@@ -500,10 +503,8 @@ public function singleUpdate(Request $request)
+                 return response()->json(['success' => false, 'message' => 'Broadsheet record missing.'], 404);
+             }
+ 
+-            $ca1  = (float) ($validated['ca1']  ?? 0);
+-            $ca2  = (float) ($validated['ca2']  ?? 0);
+-            $ca3  = (float) ($validated['ca3']  ?? 0);
+-            $exam = (float) ($validated['exam'] ?? 0);
++            [$scoreVals, $absentFields] = Broadsheets::readScoreInput($validated);
++            ['ca1' => $ca1, 'ca2' => $ca2, 'ca3' => $ca3, 'exam' => $exam] = $scoreVals;
+ 
+             $caAverage = ($ca1 + $ca2 + $ca3) / 3;
+             $total = round(($caAverage + $exam) / 2, 1);
+@@ -521,6 +522,7 @@ public function singleUpdate(Request $request)
+                 'ca2'              => $ca2,
+                 'ca3'              => $ca3,
+                 'exam'             => $exam,
++                'absent_fields'    => $absentFields,
+                 'total'            => $total,
+                 'bf'               => $bf,
+                 'cum'              => $cum,
+@@ -546,6 +548,7 @@ public function singleUpdate(Request $request)
+                     'ca2'    => (float) $fresh->ca2,
+                     'ca3'    => (float) $fresh->ca3,
+                     'exam'   => (float) $fresh->exam,
++                    'absent_fields' => $fresh->absentFieldList(),
+                     'total'  => (float) $fresh->total,
+                     'bf'     => (float) $fresh->bf,
+                     'cum'    => (float) $fresh->cum,
+@@ -633,10 +636,10 @@ public function bulkUpdate(Request $request)
+         $validated = $request->validate([
+             'scores'            => 'required|array',
+             'scores.*.id'       => 'required|exists:broadsheets,id',
+-            'scores.*.ca1'      => 'nullable|numeric|min:0|max:100',
+-            'scores.*.ca2'      => 'nullable|numeric|min:0|max:100',
+-            'scores.*.ca3'      => 'nullable|numeric|min:0|max:100',
+-            'scores.*.exam'     => 'nullable|numeric|min:0|max:100',
++            'scores.*.ca1'      => Broadsheets::scoreRule(),
++            'scores.*.ca2'      => Broadsheets::scoreRule(),
++            'scores.*.ca3'      => Broadsheets::scoreRule(),
++            'scores.*.exam'     => Broadsheets::scoreRule(),
+             'term_id'           => 'required|exists:schoolterm,id',
+             'session_id'        => 'required|exists:schoolsession,id',
+             'subjectclass_id'   => 'required|exists:subjectclass,id',
+@@ -678,10 +681,8 @@ public function bulkUpdate(Request $request)
+                 $broadsheet = Broadsheets::find($score['id']);
+                 if (!$broadsheet) continue;
+ 
+-                $ca1  = (float) ($score['ca1']  ?? 0);
+-                $ca2  = (float) ($score['ca2']  ?? 0);
+-                $ca3  = (float) ($score['ca3']  ?? 0);
+-                $exam = (float) ($score['exam'] ?? 0);
++                [$scoreVals, $absentFields] = Broadsheets::readScoreInput($score);
++                ['ca1' => $ca1, 'ca2' => $ca2, 'ca3' => $ca3, 'exam' => $exam] = $scoreVals;
+ 
+                 $caAverage = ($ca1 + $ca2 + $ca3) / 3;
+                 $total     = round(($caAverage + $exam) / 2, 1);
+@@ -701,6 +702,7 @@ public function bulkUpdate(Request $request)
+                     'ca2'              => $ca2,
+                     'ca3'              => $ca3,
+                     'exam'             => $exam,
++                    'absent_fields'    => $absentFields,
+                     'total'            => $total,
+                     'bf'               => $bf,
+                     'cum'              => $cum,
+@@ -1672,6 +1674,7 @@ protected function getBroadsheets($staffId, $termId, $sessionId, $schoolClassId
+             'broadsheets.ca2',
+             'broadsheets.ca3',
+             'broadsheets.exam',
++            'broadsheets.absent_fields',
+ 
+             'broadsheets.total',
+             'broadsheets.bf',
+diff --git a/app/Http/Controllers/MyScoreSheetController.php b/app/Http/Controllers/MyScoreSheetController.php
+index bd80de0..5e72647 100644
+--- a/app/Http/Controllers/MyScoreSheetController.php
++++ b/app/Http/Controllers/MyScoreSheetController.php
+@@ -241,6 +241,7 @@ protected function getBroadsheets($staffId, $termId, $sessionId, $schoolClassId
+             'broadsheets.ca2',
+             'broadsheets.ca3',
+             'broadsheets.exam',
++            'broadsheets.absent_fields',
+ 
+             'broadsheets.total',
+             'broadsheets.bf',
+@@ -686,11 +687,13 @@ public function update(Request $request, $id)
+             ], 423);
+         }
+ 
++        // Each score is a number 0–100, or "ABS" when the student was absent.
++        $scoreRule = Broadsheets::scoreRule();
+         $request->validate([
+-            'ca1'  => 'nullable|numeric|min:0|max:100',
+-            'ca2'  => 'nullable|numeric|min:0|max:100',
+-            'ca3'  => 'nullable|numeric|min:0|max:100',
+-            'exam' => 'nullable|numeric|min:0|max:100',
++            'ca1'  => $scoreRule,
++            'ca2'  => $scoreRule,
++            'ca3'  => $scoreRule,
++            'exam' => $scoreRule,
+         ]);
+ 
+         $broadsheet = Broadsheets::findOrFail($id);
+@@ -703,10 +706,8 @@ public function update(Request $request, $id)
+             return response()->json(['success' => false, 'message' => 'Broadsheet record not found.'], 404);
+         }
+ 
+-        $ca1  = (float) ($request->ca1 ?? 0);
+-        $ca2  = (float) ($request->ca2 ?? 0);
+-        $ca3  = (float) ($request->ca3 ?? 0);
+-        $exam = (float) ($request->exam ?? 0);
++        [$scoreVals, $absentFields] = $this->readScoreInput($request->only(Broadsheets::SCORE_FIELDS));
++        ['ca1' => $ca1, 'ca2' => $ca2, 'ca3' => $ca3, 'exam' => $exam] = $scoreVals;
+ 
+         $caAverage = ($ca1 + $ca2 + $ca3) / 3;
+         $total = round(($caAverage + $exam) / 2, 1);
+@@ -724,6 +725,7 @@ public function update(Request $request, $id)
+             'ca2'              => $ca2,
+             'ca3'              => $ca3,
+             'exam'             => $exam,
++            'absent_fields'    => $absentFields,
+             'total'            => $total,
+             'bf'               => $bf,
+             'cum'              => $cum,
+@@ -747,6 +749,7 @@ public function update(Request $request, $id)
+                 'ca2'    => (float) $fresh->ca2,
+                 'ca3'    => (float) $fresh->ca3,
+                 'exam'   => (float) $fresh->exam,
++                'absent_fields' => $fresh->absentFieldList(),
+                 'total'  => (float) $fresh->total,
+                 'bf'     => (float) $fresh->bf,
+                 'cum'    => (float) $fresh->cum,
+@@ -807,10 +810,8 @@ public function bulkUpdateScores(Request $request)
+                 $broadsheet = Broadsheets::find($score['id']);
+                 if (!$broadsheet) continue;
+ 
+-                $ca1  = (float) ($score['ca1']  ?? 0);
+-                $ca2  = (float) ($score['ca2']  ?? 0);
+-                $ca3  = (float) ($score['ca3']  ?? 0);
+-                $exam = (float) ($score['exam'] ?? 0);
++                [$scoreVals, $absentFields] = $this->readScoreInput($score);
++                ['ca1' => $ca1, 'ca2' => $ca2, 'ca3' => $ca3, 'exam' => $exam] = $scoreVals;
+ 
+                 $caAverage = ($ca1 + $ca2 + $ca3) / 3;
+                 $total = round(($caAverage + $exam) / 2, 1);
+@@ -833,6 +834,7 @@ public function bulkUpdateScores(Request $request)
+                     'ca2'              => $ca2,
+                     'ca3'              => $ca3,
+                     'exam'             => $exam,
++                    'absent_fields'    => $absentFields,
+                     'total'            => $total,
+                     'bf'               => $bf,
+                     'cum'              => $cum,
+@@ -903,6 +905,18 @@ public function destroy(Request $request)
+     // GRADE HELPERS
+     // =========================================================================
+ 
++    /**
++     * Turn posted ca1/ca2/ca3/exam values into numbers, noting which ones were
++     * entered as "ABS" (absent). An absent field scores 0 in every calculation,
++     * but is remembered so the scoresheet shows ABS instead of a plain 0.
++     *
++     * @return array{0: array<string,float>, 1: ?string}  [scores, absent_fields]
++     */
++    protected function readScoreInput(array $input): array
++    {
++        return Broadsheets::readScoreInput($input);
++    }
++
+     protected function getDefaultGrade($score)
+     {
+         if ($score >= 70 && $score <= 100) return 'A';
+diff --git a/app/Http/Controllers/ViewStudentReportController.php b/app/Http/Controllers/ViewStudentReportController.php
+index b9d5636..f0ab114 100644
+--- a/app/Http/Controllers/ViewStudentReportController.php
++++ b/app/Http/Controllers/ViewStudentReportController.php
+@@ -278,6 +278,7 @@ private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
+                     'broadsheets.ca2',
+                     'broadsheets.ca3',
+                     'broadsheets.exam',
++                    'broadsheets.absent_fields',
+                     'broadsheets.total',
+                     'broadsheets.bf',
+                     'broadsheets.cum',
+@@ -397,6 +398,15 @@ private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
+                 $score->cum_score    = $this->formatScore($columnH);
+                 $score->cum_numeric  = $columnH;
+ 
++                // Fields the teacher/admin marked ABS on the scoresheet: show
++                // "ABS" instead of 0. The score still counts as 0 in the maths,
++                // exactly as on the scoresheet, so totals/positions agree.
++                foreach (['ca1', 'ca2', 'ca3', 'exam'] as $f) {
++                    if ($score->isAbsentFor($f)) {
++                        $score->{$f . '_display'} = 'ABS';
++                    }
++                }
++
+                 if ($score->cum_numeric !== null && is_numeric($score->cum_numeric)) {
+                     $score->grade  = $isSenior
+                         ? $this->calculateSeniorGrade($score->cum_numeric)
+@@ -913,6 +923,7 @@ public function drawerData($studentId, $schoolclassId, $sessionId, $termId)
+                     'ca2'               => $score->ca2  !== null ? (float) $score->ca2  : null,
+                     'ca3'               => $score->ca3  !== null ? (float) $score->ca3  : null,
+                     'exam'              => $score->exam !== null ? (float) $score->exam : null,
++                    'absent_fields'     => $score->absentFieldList(),
+                     'total'             => $score->total !== null ? (float) $score->total : null,
+                     'bf'                => $score->bf    !== null ? (float) $score->bf    : null,
+                     'cum'               => $score->cum    !== null ? (float) $score->cum    : null,
+diff --git a/app/Models/Broadsheets.php b/app/Models/Broadsheets.php
+index 061be53..3f15715 100644
+--- a/app/Models/Broadsheets.php
++++ b/app/Models/Broadsheets.php
+@@ -24,6 +24,7 @@ class Broadsheets extends Model
+         'ca2',
+         'ca3',
+         'exam',
++        'absent_fields',   // comma list of fields the student was absent for
+ 
+         // ── Computed ────────────────────────────────────────────────────
+         'total',
+@@ -253,6 +254,75 @@ public function cancelScheduledUnlock()
+         return $this;
+     }
+ 
++    // =========================================================================
++    // ABSENCE ("ABS") HELPERS
++    // =========================================================================
++
++    public const SCORE_FIELDS = ['ca1', 'ca2', 'ca3', 'exam'];
++
++    /** True when a typed score value means "absent" (ABS / ABSENT / A). */
++    public static function isAbsentMark($value): bool
++    {
++        return is_string($value)
++            && in_array(strtoupper(trim($value)), ['ABS', 'ABSENT', 'A'], true);
++    }
++
++    /**
++     * Fields this student is marked absent for. A field only counts as absent
++     * while its stored score is still 0, so a real score entered later
++     * (e.g. by an admin or an import) always wins over a stale ABS flag.
++     */
++    public function absentFieldList(): array
++    {
++        $list = array_filter(array_map('trim', explode(',', (string) ($this->absent_fields ?? ''))));
++
++        return array_values(array_filter($list, function ($f) {
++            return in_array($f, self::SCORE_FIELDS, true) && (float) ($this->$f ?? 0) == 0.0;
++        }));
++    }
++
++    /**
++     * Turn posted ca1/ca2/ca3/exam values into numbers, noting which were
++     * entered as "ABS". An absent field scores 0 in every calculation but is
++     * remembered so scoresheets show ABS instead of a plain 0.
++     *
++     * @return array{0: array<string,float>, 1: ?string}  [scores, absent_fields]
++     */
++    public static function readScoreInput(array $input): array
++    {
++        $values = [];
++        $absent = [];
++
++        foreach (self::SCORE_FIELDS as $field) {
++            $raw = $input[$field] ?? null;
++            if (self::isAbsentMark($raw)) {
++                $absent[]       = $field;
++                $values[$field] = 0.0;
++            } else {
++                $values[$field] = is_numeric($raw) ? (float) $raw : 0.0;
++            }
++        }
++
++        return [$values, $absent ? implode(',', $absent) : null];
++    }
++
++    /** Validation rule: a number 0–100, or ABS for absent. */
++    public static function scoreRule(): array
++    {
++        return ['nullable', function ($attribute, $value, $fail) {
++            if (self::isAbsentMark($value)) return;
++            if (!is_numeric($value) || $value < 0 || $value > 100) {
++                $label = strtoupper(\Illuminate\Support\Str::afterLast($attribute, '.'));
++                $fail($label . ' must be a number between 0 and 100, or ABS if the student was absent.');
++            }
++        }];
++    }
++
++    public function isAbsentFor(string $field): bool
++    {
++        return in_array($field, $this->absentFieldList(), true);
++    }
++
+     public function hasScheduledUnlock(): bool
+     {
+         return !is_null($this->scheduled_unlock_at);
+diff --git a/database/migrations/2026_10_21_170000_add_absent_fields_to_broadsheets_table.php b/database/migrations/2026_10_21_170000_add_absent_fields_to_broadsheets_table.php
+new file mode 100644
+index 0000000..f9547ff
+--- /dev/null
++++ b/database/migrations/2026_10_21_170000_add_absent_fields_to_broadsheets_table.php
+@@ -0,0 +1,29 @@
++<?php
++// Records which score columns (ca1, ca2, ca3, exam) a student was ABSENT for,
++// so the scoresheet can tell "absent" apart from a genuine score of 0.
++// Stored as a comma list, e.g. "exam" or "ca2,exam". The score itself stays 0.
++
++use Illuminate\Database\Migrations\Migration;
++use Illuminate\Database\Schema\Blueprint;
++use Illuminate\Support\Facades\Schema;
++
++return new class extends Migration
++{
++    public function up()
++    {
++        if (!Schema::hasColumn('broadsheets', 'absent_fields')) {
++            Schema::table('broadsheets', function (Blueprint $table) {
++                $table->string('absent_fields', 50)->nullable()->after('exam');
++            });
++        }
++    }
++
++    public function down()
++    {
++        if (Schema::hasColumn('broadsheets', 'absent_fields')) {
++            Schema::table('broadsheets', function (Blueprint $table) {
++                $table->dropColumn('absent_fields');
++            });
++        }
++    }
++};
+diff --git a/resources/views/admin/score-entry/scoresheet.blade.php b/resources/views/admin/score-entry/scoresheet.blade.php
+index d4ec013..77e2c3a 100644
+--- a/resources/views/admin/score-entry/scoresheet.blade.php
++++ b/resources/views/admin/score-entry/scoresheet.blade.php
+@@ -35,6 +35,9 @@
+ .score-input.is-invalid { border-color: var(--ss-danger)  !important; background: #fef2f2; }
+ .score-input.is-saved   { border-color: var(--ss-success) !important; background: #f0fdf4; }
+ .score-input:disabled   { background: #f3f4f6; cursor: not-allowed; opacity: 0.7; }
++.score-input.is-absent, .score-input-large.is-absent { color: #b91c1c; font-weight: 700; letter-spacing: .5px; background: #fff7ed; border-color: #fdba74; }
++.score-input.is-absent.is-saved { border-color: var(--ss-success) !important; }
++.abs-hint kbd { background: #fff7ed; color: #b91c1c; border: 1px solid #fdba74; font-weight: 700; padding: 0 4px; }
+ 
+ /* ══ TABLE ══ */
+ #scoresheetTable { font-size: 12.5px; }
+@@ -868,43 +871,51 @@ class="rounded-circle student-image"
+ 
+                             {{-- ══ FIXED CA FIELDS ══ --}}
+                             <td class="col-ca1 text-center">
+-                                <input type="number" class="score-input"
++                                @php $shown = $broadsheet->isAbsentFor('ca1') ? 'ABS' : $ca1; @endphp
++                                <input type="text" class="score-input {{ $shown === 'ABS' ? 'is-absent' : '' }}"
+                                        data-field="ca1" data-max="100"
+                                        data-id="{{ $broadsheet->id }}"
+-                                       data-original="{{ $ca1 }}"
++                                       data-original="{{ $shown }}"
+                                        data-assessment-name="CA1"
+-                                       value="{{ $ca1 }}"
+-                                       min="0" max="100" step="0.1"
++                                       value="{{ $shown }}"
++                                       maxlength="6" autocomplete="off"
++                                       title="Enter a score (0–100), or ABS if the student was absent"
+                                        {{ $isLocked ? 'disabled' : '' }}>
+                             </td>
+                             <td class="col-ca2 text-center">
+-                                <input type="number" class="score-input"
++                                @php $shown = $broadsheet->isAbsentFor('ca2') ? 'ABS' : $ca2; @endphp
++                                <input type="text" class="score-input {{ $shown === 'ABS' ? 'is-absent' : '' }}"
+                                        data-field="ca2" data-max="100"
+                                        data-id="{{ $broadsheet->id }}"
+-                                       data-original="{{ $ca2 }}"
++                                       data-original="{{ $shown }}"
+                                        data-assessment-name="CA2"
+-                                       value="{{ $ca2 }}"
+-                                       min="0" max="100" step="0.1"
++                                       value="{{ $shown }}"
++                                       maxlength="6" autocomplete="off"
++                                       title="Enter a score (0–100), or ABS if the student was absent"
+                                        {{ $isLocked ? 'disabled' : '' }}>
+                             </td>
+                             <td class="col-ca3 text-center">
+-                                <input type="number" class="score-input"
++                                @php $shown = $broadsheet->isAbsentFor('ca3') ? 'ABS' : $ca3; @endphp
++                                <input type="text" class="score-input {{ $shown === 'ABS' ? 'is-absent' : '' }}"
+                                        data-field="ca3" data-max="100"
+                                        data-id="{{ $broadsheet->id }}"
+-                                       data-original="{{ $ca3 }}"
++                                       data-original="{{ $shown }}"
+                                        data-assessment-name="CA3"
+-                                       value="{{ $ca3 }}"
+-                                       min="0" max="100" step="0.1"
++                                       value="{{ $shown }}"
++                                       maxlength="6" autocomplete="off"
++                                       title="Enter a score (0–100), or ABS if the student was absent"
+                                        {{ $isLocked ? 'disabled' : '' }}>
+                             </td>
+                             <td class="col-exam text-center">
+-                                <input type="number" class="score-input"
++                                @php $shown = $broadsheet->isAbsentFor('exam') ? 'ABS' : $exam; @endphp
++                                <input type="text" class="score-input {{ $shown === 'ABS' ? 'is-absent' : '' }}"
+                                        data-field="exam" data-max="100"
+                                        data-id="{{ $broadsheet->id }}"
+-                                       data-original="{{ $exam }}"
++                                       data-original="{{ $shown }}"
+                                        data-assessment-name="Exam"
+-                                       value="{{ $exam }}"
+-                                       min="0" max="100" step="0.1"
++                                       value="{{ $shown }}"
++                                       maxlength="6" autocomplete="off"
++                                       title="Enter a score (0–100), or ABS if the student was absent"
+                                        {{ $isLocked ? 'disabled' : '' }}>
+                             </td>
+ 
+@@ -1112,6 +1123,7 @@ class="rounded-circle student-image"
+                         </button>
+                     </div>
+                     <div class="d-flex align-items-center gap-2">
++                        <small class="text-muted abs-hint"><i class="ri-user-unfollow-line me-1"></i>Student absent? Type <kbd>ABS</kbd> (or <kbd>A</kbd>) instead of 0</small>
+                         <small class="text-muted"><i class="ri-keyboard-line me-1"></i>Ctrl+S to save</small>
+                         <button class="btn btn-success btn-sm px-4" id="bulkUpdateScores">
+                             <i class="ri-save-line me-1"></i>Save All Scores
+@@ -1417,11 +1429,27 @@ function showToast(msg, type = 'info') {
+     setTimeout(() => document.getElementById(id)?.remove(), 4500);
+ }
+ 
+-function validateInput(inp) {
++/* ── Absent ("ABS") handling ─────────────────────────────────────────
++   Type ABS (or A / ABSENT) in a score cell when the student was absent.
++   It counts as 0 in every calculation, but is saved and shown as ABS so
++   it is not confused with a real score of 0.                              */
++const isAbs        = v => /^\s*(abs|absent|a)\s*$/i.test(String(v ?? ''));
++const scoreNum     = v => isAbs(v) ? 0 : (parseFloat(v) || 0);
++const scoreKey     = v => isAbs(v) ? 'ABS' : String(scoreNum(v));
++const scorePayload = v => isAbs(v) ? 'ABS' : scoreNum(v);
++const cellVal      = (row, f) => row.querySelector(`.score-input[data-field="${f}"]`)?.value;
++
++function validateInput(inp, normalize = false) {
++    const raw = String(inp.value ?? '').trim();
++    const abs = isAbs(raw);
++    if (abs && normalize) inp.value = 'ABS';
++    inp.classList.toggle('is-absent', abs);
++    if (abs || raw === '') { inp.classList.remove('is-invalid'); return true; }
++
+     const max = parseFloat(inp.dataset.max) || 100;
+-    const val = parseFloat(inp.value) || 0;
+-    inp.classList.toggle('is-invalid', val > max || val < 0);
+-    return val <= max && val >= 0;
++    const ok  = /^\d*\.?\d+$|^\d+\.$/.test(raw) && parseFloat(raw) >= 0 && parseFloat(raw) <= max;
++    inp.classList.toggle('is-invalid', !ok);
++    return ok;
+ }
+ 
+ // ══ Update row totals from CA fields ══
+@@ -1461,18 +1489,16 @@ function updateRowGrades(row) {
+ // ══ Single CA save ══
+ function saveIndividualScore(input) {
+     const row = input.closest('tr');
+-    const originalValue = parseFloat(input.dataset.original) || 0;
+-    const newValue = parseFloat(input.value) || 0;
+-
+-    if (Math.abs(newValue - originalValue) < 0.01) return;
++    const originalValue = input.dataset.original ?? '';
++    if (scoreKey(originalValue) === scoreKey(input.value)) return;
+ 
+     // Collect ALL 4 CA fields from the row
+     const payload = {
+         broadsheet_id: input.dataset.id,
+-        ca1:  parseFloat(row.querySelector('.score-input[data-field="ca1"]')?.value)  || 0,
+-        ca2:  parseFloat(row.querySelector('.score-input[data-field="ca2"]')?.value)  || 0,
+-        ca3:  parseFloat(row.querySelector('.score-input[data-field="ca3"]')?.value)  || 0,
+-        exam: parseFloat(row.querySelector('.score-input[data-field="exam"]')?.value) || 0,
++        ca1:  scorePayload(cellVal(row, 'ca1')),
++        ca2:  scorePayload(cellVal(row, 'ca2')),
++        ca3:  scorePayload(cellVal(row, 'ca3')),
++        exam: scorePayload(cellVal(row, 'exam')),
+         term_id: CTX.termId,
+         session_id: CTX.sessionId,
+         subjectclass_id: CTX.subjectclassId,
+@@ -1489,7 +1515,7 @@ function saveIndividualScore(input) {
+         if (r.status === 423) {
+             const d = await r.json().catch(() => ({}));
+             showToast(d.message || 'This scoresheet is locked.', 'warning');
+-            input.value = originalValue;
++            input.value = originalValue; validateInput(input);
+             return null;
+         }
+         return r.json();
+@@ -1534,13 +1560,13 @@ function saveIndividualScore(input) {
+             refreshAllPositions();
+         } else {
+             showToast(data.message || 'Error saving score', 'danger');
+-            input.value = originalValue;
++            input.value = originalValue; validateInput(input);
+         }
+     })
+     .catch(err => {
+         console.error(err);
+         showToast('Network error', 'danger');
+-        input.value = originalValue;
++        input.value = originalValue; validateInput(input);
+     });
+ }
+ 
+@@ -1672,9 +1698,10 @@ function ssClose() {
+ 
+ // ══ Bulk save ══
+ function bulkSaveScores() {
++    document.querySelectorAll('.score-input:not(:disabled)').forEach(i => validateInput(i, true));
+     const invalid = document.querySelectorAll('.score-input.is-invalid').length;
+     if (invalid) {
+-        Swal.fire({ icon:'warning', title:'Invalid Scores', text:`${invalid} score(s) are invalid.` });
++        Swal.fire({ icon:'warning', title:'Invalid Scores', text:`${invalid} score(s) are not valid. Enter a number from 0 to 100, or ABS if the student was absent.` });
+         return;
+     }
+ 
+@@ -1683,10 +1710,10 @@ function bulkSaveScores() {
+         if (row.dataset.isLocked === 'true') return;
+         scores.push({
+             id: row.dataset.id,
+-            ca1:  parseFloat(row.querySelector('.score-input[data-field="ca1"]')?.value)  || 0,
+-            ca2:  parseFloat(row.querySelector('.score-input[data-field="ca2"]')?.value)  || 0,
+-            ca3:  parseFloat(row.querySelector('.score-input[data-field="ca3"]')?.value)  || 0,
+-            exam: parseFloat(row.querySelector('.score-input[data-field="exam"]')?.value) || 0,
++            ca1:  scorePayload(cellVal(row, 'ca1')),
++            ca2:  scorePayload(cellVal(row, 'ca2')),
++            ca3:  scorePayload(cellVal(row, 'ca3')),
++            exam: scorePayload(cellVal(row, 'exam')),
+         });
+     });
+ 
+@@ -1849,10 +1876,11 @@ function openScoreEntryModal(broadsheetId, studentName, studentAdmission, studen
+     document.getElementById('modalStudentAvatar').src = studentAvatar;
+ 
+     // Build CA summary
+-    const ca1  = parseFloat(currentScores.ca1)  || 0;
+-    const ca2  = parseFloat(currentScores.ca2)  || 0;
+-    const ca3  = parseFloat(currentScores.ca3)  || 0;
+-    const exam = parseFloat(currentScores.exam) || 0;
++    const ca1  = scoreNum(currentScores.ca1);
++    const ca2  = scoreNum(currentScores.ca2);
++    const ca3  = scoreNum(currentScores.ca3);
++    const exam = scoreNum(currentScores.exam);
++    const shown = f => isAbs(currentScores[f]) ? 'ABS' : scoreNum(currentScores[f]);
+ 
+     const caAvg = (ca1 + ca2 + ca3) / 3;
+     const total = Math.round(((caAvg + exam) / 2) * 10) / 10;
+@@ -1865,23 +1893,24 @@ function openScoreEntryModal(broadsheetId, studentName, studentAdmission, studen
+ 
+     let html = '';
+     [
+-        { field: 'ca1',  label: 'CA1',  max: 100, value: ca1 },
+-        { field: 'ca2',  label: 'CA2',  max: 100, value: ca2 },
+-        { field: 'ca3',  label: 'CA3',  max: 100, value: ca3 },
+-        { field: 'exam', label: 'Exam', max: 100, value: exam },
++        { field: 'ca1',  label: 'CA1',  max: 100, value: shown('ca1') },
++        { field: 'ca2',  label: 'CA2',  max: 100, value: shown('ca2') },
++        { field: 'ca3',  label: 'CA3',  max: 100, value: shown('ca3') },
++        { field: 'exam', label: 'Exam', max: 100, value: shown('exam') },
+     ].forEach(item => {
+         html += `
+             <div class="assessment-score-row">
+                 <div>
+                     <strong>${item.label}</strong>
+-                    <small class="text-muted ms-2">(Max: ${item.max})</small>
++                    <small class="text-muted ms-2">(Max: ${item.max}, or ABS if absent)</small>
+                 </div>
+-                <input type="number"
+-                       class="form-control score-input-large"
++                <input type="text"
++                       class="form-control score-input-large ${item.value === 'ABS' ? 'is-absent' : ''}"
+                        data-field="${item.field}"
+                        data-max="${item.max}"
+                        value="${item.value}"
+-                       min="0" max="${item.max}" step="0.1"
++                       maxlength="6" autocomplete="off"
++                       oninput="this.classList.toggle('is-absent', isAbs(this.value))"
+                        style="width: 100px;">
+             </div>`;
+     });
+@@ -1903,9 +1932,11 @@ function saveModalScores() {
+     inputs.forEach(input => {
+         const field = input.dataset.field;
+         const maxScore = parseFloat(input.dataset.max) || 100;
+-        let value = parseFloat(input.value) || 0;
+-        if (value > maxScore || value < 0) {
+-            Swal.fire({ icon: 'error', title: 'Invalid Score', text: `Score for ${field} must be between 0 and ${maxScore}.` });
++        if (isAbs(input.value)) { payload[field] = 'ABS'; return; }
++        const raw = String(input.value ?? '').trim();
++        const value = parseFloat(raw) || 0;
++        if ((raw !== '' && !/^\d*\.?\d+$|^\d+\.$/.test(raw)) || value > maxScore || value < 0) {
++            Swal.fire({ icon: 'error', title: 'Invalid Score', text: `Score for ${field.toUpperCase()} must be between 0 and ${maxScore}, or ABS if the student was absent.` });
+             hasError = true;
+             return;
+         }
+@@ -1941,7 +1972,7 @@ function saveModalScores() {
+         if (row) {
+             ['ca1','ca2','ca3','exam'].forEach(field => {
+                 const inp = row.querySelector(`.score-input[data-field="${field}"]`);
+-                if (inp) { inp.value = payload[field]; inp.dataset.original = payload[field]; }
++                if (inp) { inp.value = payload[field]; inp.dataset.original = payload[field]; validateInput(inp); }
+             });
+             updateRowGrades(row);
+         }
+@@ -2089,7 +2120,7 @@ function tipPosition(inp) {
+ function tipRefresh(inp) {
+     if (!inp) return;
+     const row = inp.closest('tr');
+-    const val = parseFloat(inp.value) || 0;
++    const val = scoreNum(inp.value);
+     const max = parseFloat(inp.dataset.max) || 100;
+     const asmtName = inp.dataset.assessmentName || 'Score';
+ 
+@@ -2107,7 +2138,7 @@ function tipRefresh(inp) {
+     document.getElementById('stAvatar').src = row.dataset.avatar || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
+     document.getElementById('stName').textContent = row.dataset.name || '—';
+     document.getElementById('stMeta').textContent = (row.dataset.admissionno || '—') + ' · ' + asmtName + ' (max ' + max + ')';
+-    document.getElementById('stVal').textContent = val % 1 === 0 ? String(val) : val.toFixed(1);
++    document.getElementById('stVal').textContent = isAbs(inp.value) ? 'ABS (absent)' : (val % 1 === 0 ? String(val) : val.toFixed(1));
+     document.getElementById('stTotal').textContent = total.toFixed(1);
+     const gEl = document.getElementById('stGrade');
+     gEl.textContent = grade;
+@@ -2246,10 +2277,7 @@ function tipHide() {
+         const row = document.querySelector(`tr[data-id="${broadsheetId}"]`);
+         const currentScores = { ca1: 0, ca2: 0, ca3: 0, exam: 0 };
+         if (row) {
+-            currentScores.ca1  = parseFloat(row.querySelector('.score-input[data-field="ca1"]')?.value)  || 0;
+-            currentScores.ca2  = parseFloat(row.querySelector('.score-input[data-field="ca2"]')?.value)  || 0;
+-            currentScores.ca3  = parseFloat(row.querySelector('.score-input[data-field="ca3"]')?.value)  || 0;
+-            currentScores.exam = parseFloat(row.querySelector('.score-input[data-field="exam"]')?.value) || 0;
++            ['ca1','ca2','ca3','exam'].forEach(f => { currentScores[f] = cellVal(row, f) ?? 0; });
+         }
+ 
+         openScoreEntryModal(
+@@ -2275,14 +2303,14 @@ function tipHide() {
+         });
+         inp.addEventListener('blur', function() {
+             setTimeout(() => { if (tipInput === this) tipHide(); }, 80);
+-            if (!validateInput(this)) { this.value = this.dataset.original || 0; return; }
++            if (!validateInput(this, true)) { this.value = this.dataset.original || 0; validateInput(this); return; }
+             saveIndividualScore(this);
+         });
+         inp.addEventListener('keydown', function(e) {
+             if (e.key === 'Escape') { e.preventDefault(); tipHide(); this.blur(); return; }
+             if (e.key !== 'Enter') return;
+             e.preventDefault();
+-            if (validateInput(this)) saveIndividualScore(this);
++            if (validateInput(this, true)) saveIndividualScore(this);
+             const all = Array.from(document.querySelectorAll('.score-input:not(:disabled)'));
+             const idx = all.indexOf(this);
+             if (idx < all.length - 1) all[idx + 1].focus();
+diff --git a/resources/views/studentreports/class_results_pdf.blade.php b/resources/views/studentreports/class_results_pdf.blade.php
+index 63c3e0e..946282c 100644
+--- a/resources/views/studentreports/class_results_pdf.blade.php
++++ b/resources/views/studentreports/class_results_pdf.blade.php
+@@ -723,6 +723,9 @@
+                             @endforelse
+                         </tbody>
+                     </table>
++                    @if(collect($studentData['scores'] ?? [])->contains(fn($sc) => in_array('ABS', [$sc->ca1_display ?? null, $sc->ca2_display ?? null, $sc->ca3_display ?? null, $sc->exam_display ?? null], true)))
++                        <div style="font-size:8px;margin-top:2px;"><span class="abs-text">ABS</span> = Absent (scored as 0)</div>
++                    @endif
+                 </div>
+ 
+                 <!-- Remarks Section -->
+diff --git a/resources/views/subjectscoresheet/index.blade.php b/resources/views/subjectscoresheet/index.blade.php
+index fe4820d..b98c194 100644
+--- a/resources/views/subjectscoresheet/index.blade.php
++++ b/resources/views/subjectscoresheet/index.blade.php
+@@ -37,6 +37,9 @@
+ .score-input.is-invalid { border-color: var(--ss-danger)  !important; background: #fef2f2; }
+ .score-input.is-saved   { border-color: var(--ss-success) !important; background: #f0fdf4; }
+ .score-input:disabled   { background: #f3f4f6; cursor: not-allowed; opacity: 0.7; }
++.score-input.is-absent  { color: #b91c1c; font-weight: 700; letter-spacing: .5px; background: #fff7ed; border-color: #fdba74; }
++.score-input.is-absent.is-saved { border-color: var(--ss-success) !important; }
++.abs-hint kbd { background: #fff7ed; color: #b91c1c; border: 1px solid #fdba74; font-weight: 700; padding: 0 4px; }
+ 
+ /* ══════════════════════════════════════════════════════════════════════
+    TABLE STYLING
+@@ -722,17 +725,19 @@ class="rounded-circle student-image"
+                             @foreach (['ca1','ca2','ca3','exam'] as $field)
+                                 @php
+                                     $rawVal     = $broadsheet->$field ?? null;
+-                                    $displayVal = $rawVal === null ? '' : (float) $rawVal;
++                                    $isAbsent   = $broadsheet->isAbsentFor($field);
++                                    $displayVal = $isAbsent ? 'ABS' : ($rawVal === null ? '' : (float) $rawVal);
+                                 @endphp
+                                 <td class="col-{{ $field }} text-center">
+-                                    <input type="number" class="score-input"
++                                    <input type="text" class="score-input {{ $isAbsent ? 'is-absent' : '' }}"
+                                            data-field="{{ $field }}"
+                                            data-max="100"
+                                            data-id="{{ $broadsheet->id }}"
+                                            data-original="{{ $displayVal }}"
+                                            data-raw="{{ $rawVal === null ? 'NULL' : $rawVal }}"
+                                            value="{{ $displayVal }}"
+-                                           min="0" max="100" step="0.1"
++                                           maxlength="6" autocomplete="off"
++                                           title="Enter a score (0–100), or ABS if the student was absent"
+                                            {{ $isRowLocked ? 'disabled' : '' }}>
+                                 </td>
+                             @endforeach
+@@ -863,6 +868,7 @@ class="rounded-circle student-image"
+                         </a>
+                     </div>
+                     <div class="d-flex align-items-center gap-2">
++                        <small class="text-muted abs-hint"><i class="ri-user-unfollow-line me-1"></i>Student absent? Type <kbd>ABS</kbd> (or <kbd>A</kbd>) instead of 0</small>
+                         <small class="text-muted"><i class="ri-keyboard-line me-1"></i>Ctrl+S to save</small>
+                         <button class="btn btn-success btn-sm px-4" id="bulkUpdateScores"
+                             {{ (isset($teacherEditingEnabled) && !$teacherEditingEnabled) || isset($globalLock) ? 'disabled' : '' }}>
+@@ -1087,11 +1093,26 @@ function applyGrade(badge, grade) {
+     setTimeout(() => badge.classList.remove('updated'), 500);
+ }
+ 
+-function validateInput(inp) {
++/* ── Absent ("ABS") handling ─────────────────────────────────────────
++   Staff type ABS (or A / ABSENT) in a score cell when the student was
++   absent. It counts as 0 in every calculation, but is saved and shown as
++   ABS so it is not confused with a real score of 0.                       */
++const isAbs = v => /^\s*(abs|absent|a)\s*$/i.test(String(v ?? ''));
++const scoreNum = v => isAbs(v) ? 0 : (parseFloat(v) || 0);
++const scoreKey = v => isAbs(v) ? 'ABS' : String(scoreNum(v));
++const scorePayload = v => isAbs(v) ? 'ABS' : scoreNum(v);
++
++function validateInput(inp, normalize = false) {
++    const raw = String(inp.value ?? '').trim();
++    const abs = isAbs(raw);
++    if (abs && normalize) inp.value = 'ABS';
++    inp.classList.toggle('is-absent', abs);
++    if (abs || raw === '') { inp.classList.remove('is-invalid'); return true; }
++
+     const max = parseFloat(inp.dataset.max) || 100;
+-    const val = parseFloat(inp.value)       || 0;
+-    inp.classList.toggle('is-invalid', val > max || val < 0);
+-    return val <= max && val >= 0;
++    const ok  = /^\d*\.?\d+$|^\d+\.$/.test(raw) && parseFloat(raw) >= 0 && parseFloat(raw) <= max;
++    inp.classList.toggle('is-invalid', !ok);
++    return ok;
+ }
+ 
+ /* ══════════════════════════════════════════════════════════════════════
+@@ -1141,7 +1162,7 @@ function updateRowGrades(row) {
+ 
+     let ca1 = 0, ca2 = 0, ca3 = 0, exam = 0;
+     row.querySelectorAll('.score-input').forEach(inp => {
+-        const v = parseFloat(inp.value) || 0;
++        const v = scoreNum(inp.value);
+         switch (inp.dataset.field) {
+             case 'ca1':  ca1  = v; break;
+             case 'ca2':  ca2  = v; break;
+@@ -1217,7 +1238,7 @@ function saveIndividualScore(input) {
+     // Collect all 4 CA fields from the row
+     const payload = { ca1: 0, ca2: 0, ca3: 0, exam: 0 };
+     row.querySelectorAll('.score-input').forEach(inp => {
+-        payload[inp.dataset.field] = parseFloat(inp.value) || 0;
++        payload[inp.dataset.field] = scorePayload(inp.value);
+     });
+ 
+     fetch(window.routes.update.replace('__ID__', input.dataset.id), {
+@@ -1372,9 +1393,10 @@ function bulkSave() {
+         return;
+     }
+ 
++    document.querySelectorAll('.score-input:not(:disabled)').forEach(i => validateInput(i, true));
+     const invalid = document.querySelectorAll('.score-input.is-invalid').length;
+     if (invalid) {
+-        Swal.fire({ icon:'warning', title:'Invalid Scores', text:`${invalid} score(s) exceed their maximum.` });
++        Swal.fire({ icon:'warning', title:'Invalid Scores', text:`${invalid} score(s) are not valid. Enter a number from 0 to 100, or ABS if the student was absent.` });
+         return;
+     }
+ 
+@@ -1383,7 +1405,7 @@ function bulkSave() {
+         if (row.dataset.isLocked === 'true') return;
+         const obj = { id: row.dataset.id, ca1: 0, ca2: 0, ca3: 0, exam: 0 };
+         row.querySelectorAll('.score-input').forEach(inp => {
+-            obj[inp.dataset.field] = parseFloat(inp.value) || 0;
++            obj[inp.dataset.field] = scorePayload(inp.value);
+         });
+         scores.push(obj);
+     });
+@@ -1599,11 +1621,9 @@ function applySearch() {
+ 
+         inp.addEventListener('blur', function () {
+             setTimeout(() => { if (tipInput === this) tipHide(); }, 80);
+-            if (!validateInput(this)) return;
++            if (!validateInput(this, true)) return;
+             if (window.isEditingDisabled) return;
+-            const orig = parseFloat(this.dataset.original) || 0;
+-            const curr = parseFloat(this.value)            || 0;
+-            if (Math.abs(curr - orig) > 0.001) {
++            if (scoreKey(this.dataset.original) !== scoreKey(this.value)) {
+                 this.dataset.original = this.value;
+                 saveIndividualScore(this);
+             }
+@@ -1614,7 +1634,10 @@ function applySearch() {
+             if (e.key !== 'Enter')  return;
+             e.preventDefault();
+             if (window.isEditingDisabled) return;
+-            if (validateInput(this)) saveIndividualScore(this);
++            if (validateInput(this, true)) {
++                this.dataset.original = this.value;
++                saveIndividualScore(this);
++            }
+             const all = Array.from(document.querySelectorAll('.score-input:not(:disabled)'));
+             const idx = all.indexOf(this);
+             if (idx < all.length - 1) all[idx + 1].focus();
+@@ -1838,14 +1861,14 @@ function tipPosition(inp) {
+ function tipRefresh(inp) {
+     if (!inp) return;
+     const row = inp.closest('tr');
+-    const val = parseFloat(inp.value) || 0;
++    const val = scoreNum(inp.value);
+     const max = parseFloat(inp.dataset.max) || 100;
+     const fieldName = (inp.dataset.field || '').toUpperCase();
+ 
+     // Live compute total + cum
+     let ca1 = 0, ca2 = 0, ca3 = 0, exam = 0;
+     row.querySelectorAll('.score-input').forEach(i => {
+-        const v = parseFloat(i.value) || 0;
++        const v = scoreNum(i.value);
+         switch (i.dataset.field) {
+             case 'ca1':  ca1  = v; break;
+             case 'ca2':  ca2  = v; break;
+@@ -1866,7 +1889,7 @@ function tipRefresh(inp) {
+     document.getElementById('stAvatar').src        = row.dataset.avatar || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
+     document.getElementById('stName').textContent  = row.dataset.name || '—';
+     document.getElementById('stMeta').textContent  = (row.dataset.admissionno || '—') + ' · ' + fieldName + ' (max ' + max + ')';
+-    document.getElementById('stVal').textContent   = val % 1 === 0 ? String(val) : val.toFixed(1);
++    document.getElementById('stVal').textContent   = isAbs(inp.value) ? 'ABS (absent)' : (val % 1 === 0 ? String(val) : val.toFixed(1));
+     document.getElementById('stTotal').textContent = fmtN(total);
+     const gEl = document.getElementById('stGrade'); gEl.textContent = grade; gEl.style.color = col;
+     document.getElementById('stProgLabel').textContent = fmtN(total) + ' / 100 marks';
+diff --git a/resources/views/subjectscoresheet/scores-pdf.blade.php b/resources/views/subjectscoresheet/scores-pdf.blade.php
+index a8ea38d..c021884 100644
+--- a/resources/views/subjectscoresheet/scores-pdf.blade.php
++++ b/resources/views/subjectscoresheet/scores-pdf.blade.php
+@@ -269,7 +269,11 @@ class="student-photo"
+                 <td>{{ $student->admissionno ?? '-' }}</td>
+                 <td class="name-col"><strong>{{ $student->lname ?? '' }}</strong> {{ $student->fname ?? '' }} {{ $student->mname ?? '' }}</td>
+                 @foreach(['ca1'=>'CA1','ca2'=>'CA2','ca3'=>'CA3','exam'=>'Exam'] as $k => $lbl)
+-                    <td>{{ number_format($student->{$k} ?? 0, 1) }}</td>
++                    @if(method_exists($student, 'isAbsentFor') && $student->isAbsentFor($k))
++                        <td style="color:#b91c1c;font-weight:700;">ABS</td>
++                    @else
++                        <td>{{ number_format($student->{$k} ?? 0, 1) }}</td>
++                    @endif
+                 @endforeach
+                 <td style="font-weight:700;">{{ number_format($rowTotal, 1) }}</td>
+                 <td>{{ number_format($student->bf ?? 0, 1) }}</td>
+@@ -304,6 +308,9 @@ class="student-photo"
+     </tfoot>
+     @endif
+ </table>
++@if($broadsheets->contains(fn($b) => method_exists($b, 'absentFieldList') && count($b->absentFieldList()) > 0))
++    <div style="font-size:8.5px;color:#555;margin-top:3px;"><strong style="color:#b91c1c;">ABS</strong> = student was absent (counted as 0 in the total).</div>
++@endif
+ 
+ {{-- ── SIGNATURES ─────────────────────────────────────────────────── --}}
+ <div class="sig-section">

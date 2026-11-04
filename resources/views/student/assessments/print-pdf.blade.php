@@ -748,10 +748,11 @@
                                                 $found = $score->assessment_scores->firstWhere('assessment_id', $assessment->id);
                                                 $assessmentScore = $found ? $found->score : 0;
                                             }
+                                            $isAbsentScore = isset($found) && $found && method_exists($found, 'isAbsent') && $found->isAbsent();
                                             $isLow = $assessmentScore < ($assessment->max_score * 0.5);
                                         @endphp
                                         <td @if($isLow && is_numeric($assessmentScore)) class="highlight-red" @endif>
-                                            {{ $assessmentScore !== null && $assessmentScore !== '' ? number_format($assessmentScore, 1) : '-' }}
+                                            {{ $isAbsentScore ? 'ABS' : ($assessmentScore !== null && $assessmentScore !== '' ? number_format($assessmentScore, 1) : '-') }}
                                         </td>
                                     @endif
                                 @endforeach

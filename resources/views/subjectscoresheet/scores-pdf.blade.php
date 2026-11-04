@@ -274,7 +274,11 @@
                 <td class="name-col"><strong>{{ $student->lname ?? '' }}</strong> {{ $student->fname ?? '' }} {{ $student->mname ?? '' }}</td>
                 @foreach($assessments as $assessment)
                     @php $so = $student->assessmentScores->where('assessment_id', $assessment->id)->first(); @endphp
-                    <td>{{ $so ? number_format($so->score, 1) : '0.0' }}</td>
+                    @if($so && $so->isAbsent())
+                        <td style="color:#b91c1c;font-weight:700;">ABS</td>
+                    @else
+                        <td>{{ $so ? number_format($so->score, 1) : '0.0' }}</td>
+                    @endif
                 @endforeach
                 <td style="font-weight:700;">{{ number_format($rowTotal, 1) }}</td>
                 <td>{{ number_format($student->bf ?? 0, 1) }}</td>
@@ -310,6 +314,9 @@
     </tfoot>
     @endif
 </table>
+@if(collect($broadsheets)->contains(fn($b) => collect($b->assessmentScores ?? [])->contains(fn($s) => $s->isAbsent())))
+    <div style="font-size:8.5px;color:#555;margin-top:3px;"><strong style="color:#b91c1c;">ABS</strong> = student was absent (counted as 0 in the total).</div>
+@endif
 
 {{-- ── SIGNATURES ─────────────────────────────────────────────────── --}}
 <div class="sig-section">
