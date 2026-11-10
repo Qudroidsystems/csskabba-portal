@@ -384,6 +384,12 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/', [SessionCloneController::class, 'index'])->name('index');
         Route::post('/preview', [SessionCloneController::class, 'preview'])->name('preview');
         Route::post('/run', [SessionCloneController::class, 'clone'])->name('clone');
+
+        // Snapshots: every clone run can be reviewed, downloaded and undone
+        Route::get('/history', [SessionCloneController::class, 'history'])->name('history');
+        Route::get('/history/{batch}', [SessionCloneController::class, 'showBatch'])->whereNumber('batch')->name('history.show');
+        Route::get('/history/{batch}/download', [SessionCloneController::class, 'downloadBatch'])->whereNumber('batch')->name('history.download');
+        Route::post('/history/{batch}/revert', [SessionCloneController::class, 'revertBatch'])->whereNumber('batch')->name('history.revert');
     });
 
     // ===================================================================

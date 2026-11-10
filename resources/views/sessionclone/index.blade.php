@@ -124,6 +124,19 @@
 .btn-cl-success:hover { background:#15803d; color:#fff; }
 .btn-cl:disabled { opacity:.55; }
 
+.hist-table { width:100%; font-size:12.5px; }
+.hist-table th { font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--cl-muted); font-weight:700; padding:10px 12px; border-bottom:2px solid var(--cl-border); background:var(--cl-bg); white-space:nowrap; }
+.hist-table td { padding:10px 12px; border-bottom:1px solid #eef2f7; vertical-align:top; }
+.hist-table tr { animation:rowIn .3s ease both; }
+.hist-mod { display:inline-block; font-size:10.5px; background:#eef2ff; color:#3730a3; border-radius:6px; padding:2px 7px; margin:1px 2px 1px 0; }
+.st-badge { font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; white-space:nowrap; }
+.st-completed { background:#dcfce7; color:#15803d; }
+.st-reverted { background:#f1f5f9; color:#64748b; }
+.st-partially_reverted { background:#fef3c7; color:#b45309; }
+.btn-xs { font-size:11.5px; padding:4px 10px; border-radius:8px; font-weight:600; }
+.kept-list { text-align:left; max-height:220px; overflow:auto; font-size:12px; margin-top:10px; border:1px solid #fde68a; background:#fffbeb; border-radius:8px; padding:8px 10px; }
+.kept-list div { padding:3px 0; border-bottom:1px dashed #fde68a; }
+.kept-list div:last-child { border-bottom:none; }
 .empty-preview { text-align:center; padding:36px 10px; color:var(--cl-muted); }
 .empty-preview i { font-size:44px; color:#cbd5e1; }
 </style>
@@ -152,6 +165,7 @@
         <i class="ri-information-line me-1"></i>
         Cloning only <strong>adds</strong> records. Anything already set up in the target term is left untouched and skipped,
         so you can safely run it more than once. Students, scores and payments are never copied.
+        Every clone is saved as a <strong>snapshot</strong> that you can review, download or <strong>undo</strong> from Clone History below.
     </div>
 
     <div class="row">
@@ -302,7 +316,42 @@
         </div>
     </div>
 
+    {{-- Clone history / snapshots --}}
+    <div class="cl-card" style="animation-delay:.25s">
+        <div class="cl-card-header">
+            <i class="ri-history-line text-primary fs-5"></i><h5>Clone History &amp; Undo</h5>
+            <button class="btn btn-light btn-xs ms-auto" id="btnRefreshHistory"><i class="ri-refresh-line"></i> Refresh</button>
+        </div>
+        <div class="cl-card-body p-0">
+            <div class="table-responsive">
+                <table class="hist-table">
+                    <thead>
+                        <tr>
+                            <th>#</th><th>Date</th><th>Clone</th><th>What was copied</th><th>Records</th><th>Status</th><th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody">
+                        <tr><td colspan="7" class="text-center text-muted py-4">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </div>
+</div>
+
+{{-- Snapshot details modal --}}
+<div class="modal fade" id="snapshotModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius:14px; overflow:hidden;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1e3a5f,#2563eb); color:#fff;">
+                <h5 class="modal-title text-white"><i class="ri-camera-line me-1"></i> Snapshot <span id="snapId"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="snapBody"></div>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -311,6 +360,8 @@ $(function () {
     const CSRF        = '{{ csrf_token() }}';
     const PREVIEW_URL = '{{ route('sessionclone.preview') }}';
     const CLONE_URL   = '{{ route('sessionclone.clone') }}';
+    const HISTORY_URL = '{{ route('sessionclone.history') }}';
+    const BATCH_URL   = '{{ url('setup-clone/history') }}';
     const TERMS       = @json($terms->pluck('term', 'id'));
     let mode          = 'term';
     let previewed     = false;
@@ -514,9 +565,108 @@ $(function () {
                 previewed = false;
                 $('#btnClone').prop('disabled', true);
                 Swal.fire({ icon: 'success', title: 'Done!', text: res.message, confirmButtonColor: '#16a34a' });
+                loadHistory();
             }).fail(fail);
         });
     });
+
+    /* ---------------- Clone history / snapshots ---------------- */
+    const STATUS_TEXT = { completed: 'Active', partially_reverted: 'Partly undone', reverted: 'Undone' };
+
+    function loadHistory() {
+        $.get(HISTORY_URL).done(res => {
+            if (!res.ready) {
+                $('#historyBody').html('<tr><td colspan="7" class="text-center text-danger py-4"><i class="ri-error-warning-line"></i> Snapshot tables not found. Run <code>php artisan migrate</code>.</td></tr>');
+                return;
+            }
+            if (!res.data.length) {
+                $('#historyBody').html('<tr><td colspan="7" class="text-center text-muted py-4">No clones yet. Each clone you run will appear here as a snapshot you can undo.</td></tr>');
+                return;
+            }
+            $('#historyBody').html(res.data.map((b, i) => `
+                <tr style="animation-delay:${Math.min(i, 15) * 0.03}s">
+                    <td class="fw-bold text-muted">#${b.id}</td>
+                    <td class="text-nowrap">${esc(b.created_at)}<div class="small text-muted">${esc(b.user)}</div></td>
+                    <td>${esc(b.route)}</td>
+                    <td>${b.modules.map(m => `<span class="hist-mod">${esc(m)}</span>`).join('')}</td>
+                    <td class="text-nowrap"><strong>${b.created}</strong> created
+                        ${b.status !== 'completed' ? `<div class="small text-muted">${b.remaining} still in place</div>` : ''}</td>
+                    <td><span class="st-badge st-${b.status}">${STATUS_TEXT[b.status] || b.status}</span>
+                        ${b.reverted_at ? `<div class="small text-muted mt-1">${esc(b.reverted_at)}${b.reverted_by ? ' · ' + esc(b.reverted_by) : ''}</div>` : ''}</td>
+                    <td class="text-end text-nowrap">
+                        <button class="btn btn-light btn-xs btn-view" data-id="${b.id}" title="View snapshot"><i class="ri-eye-line"></i></button>
+                        <a class="btn btn-light btn-xs" href="${BATCH_URL}/${b.id}/download" title="Download snapshot (JSON)"><i class="ri-download-2-line"></i></a>
+                        ${b.status !== 'reverted' ? `<button class="btn btn-outline-danger btn-xs btn-undo" data-id="${b.id}"><i class="ri-arrow-go-back-line"></i> Undo</button>` : ''}
+                    </td>
+                </tr>`).join(''));
+        }).fail(() => {
+            $('#historyBody').html('<tr><td colspan="7" class="text-center text-danger py-4">Could not load clone history.</td></tr>');
+        });
+    }
+
+    $('#btnRefreshHistory').on('click', loadHistory);
+
+    $('#historyBody').on('click', '.btn-view', function () {
+        const id = $(this).data('id');
+        $('#snapId').text('#' + id);
+        $('#snapBody').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('snapshotModal')).show();
+        $.get(`${BATCH_URL}/${id}`).done(res => {
+            const groups = {};
+            res.items.forEach(it => (groups[it.module] = groups[it.module] || []).push(it));
+            $('#snapBody').html(Object.keys(groups).map(mod => `
+                <h6 class="fw-bold mt-2" style="color:#1e3a5f">${esc(mod)} <span class="text-muted fw-normal">(${groups[mod].length})</span></h6>
+                ${groups[mod].map(it => `
+                    <div class="res-line">
+                        <span class="tag ${it.reverted ? 'exists' : 'new'}">${it.reverted ? 'UNDONE' : 'IN PLACE'}</span>
+                        <span>${esc(it.label)}</span>
+                        ${it.kept_reason ? `<span class="trm text-warning">${esc(it.kept_reason)}</span>` : `<span class="trm">ID ${it.record_id}</span>`}
+                    </div>`).join('')}`).join('') || '<p class="text-muted">No items recorded.</p>');
+        }).fail(() => $('#snapBody').html('<p class="text-danger">Could not load snapshot.</p>'));
+    });
+
+    $('#historyBody').on('click', '.btn-undo', function () {
+        const id = $(this).data('id');
+        loading(true, 'Checking what can be undone…');
+        $.post(`${BATCH_URL}/${id}/revert`, { _token: CSRF, dry_run: 1 }).done(res => {
+            loading(false);
+            if (res.remove === 0) {
+                Swal.fire({
+                    icon: 'info', title: 'Nothing to undo right now',
+                    html: `${esc(res.message)}${keptHtml(res.kept)}`,
+                    confirmButtonColor: '#2563eb'
+                });
+                return;
+            }
+            Swal.fire({
+                icon: 'warning',
+                title: `Undo clone #${id}?`,
+                html: `<div>${esc(res.message)}</div>${keptHtml(res.kept)}
+                       <div class="small text-muted mt-2">Only records created by this clone are affected.</div>`,
+                showCancelButton: true,
+                confirmButtonText: `Yes, remove ${res.remove} record(s)`,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+            }).then(r => {
+                if (!r.isConfirmed) return;
+                loading(true, 'Undoing clone…');
+                $.post(`${BATCH_URL}/${id}/revert`, { _token: CSRF }).done(done => {
+                    loading(false);
+                    Swal.fire({ icon: 'success', title: 'Clone undone', html: `${esc(done.message)}${keptHtml(done.kept)}`, confirmButtonColor: '#16a34a' });
+                    loadHistory();
+                    invalidate();
+                }).fail(fail);
+            });
+        }).fail(fail);
+    });
+
+    function keptHtml(kept) {
+        if (!kept || !kept.length) return '';
+        return `<div class="kept-list"><strong>Kept (in use):</strong>${kept.map(k =>
+            `<div>${esc(k.module)}: ${esc(k.label)}<br><span class="text-muted">${esc(k.reason)}</span></div>`).join('')}</div>`;
+    }
+
+    loadHistory();
 
     // initial state
     $('#target_session').prop('disabled', true);

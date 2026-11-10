@@ -21,6 +21,10 @@ use Illuminate\Support\Facades\Validator;
  *
  * Cloning is strictly ADDITIVE: nothing in the target is updated or deleted.
  * Rows that already exist in the target are skipped, so the operation can be re-run safely.
+ *
+ * Every run is saved as a snapshot (session_clone_batches + session_clone_batch_items)
+ * holding a copy of each inserted row, so a run can be reviewed, downloaded as JSON
+ * and reverted. Revert keeps any record that has since been put to use.
  */
 class SessionCloneController extends Controller
 {
@@ -135,23 +139,62 @@ class SessionCloneController extends Controller
             return $payload;
         }
 
+        if (!$this->snapshotTablesReady()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Snapshot tables are missing. Run "php artisan migrate" first so every clone can be reverted.',
+            ], 422);
+        }
+
         DB::beginTransaction();
         try {
-            $result = $this->run($payload, dryRun: false);
+            // 1. Open a snapshot batch for this run
+            $batchId = DB::table('session_clone_batches')->insertGetId([
+                'user_id'           => auth()->id(),
+                'mode'              => $payload['mode'],
+                'source_session_id' => $payload['source_session'],
+                'source_term'       => $payload['source_term_raw'],
+                'target_session_id' => $payload['target_session'],
+                'target_term'       => $payload['target_term_raw'],
+                'modules'           => json_encode($payload['modules']),
+                'status'            => 'completed',
+                'created_at'        => now(),
+                'updated_at'        => now(),
+            ]);
+            $payload['batch_id'] = $batchId;
+
+            // 2. Run the clone; every insert is recorded against the batch
+            $result  = $this->run($payload, dryRun: false);
+            $created = $result['totals']['create'];
+
+            if ($created === 0) {
+                // Nothing was written — don't keep an empty snapshot
+                DB::table('session_clone_batches')->where('id', $batchId)->delete();
+                $batchId = null;
+            } else {
+                DB::table('session_clone_batches')->where('id', $batchId)->update([
+                    'totals'        => json_encode($result['totals']),
+                    'module_totals' => json_encode(collect($result['modules'])->map(fn ($m) => [
+                        'key' => $m['key'], 'label' => $m['label'], 'create' => $m['create'], 'skip' => $m['skip'],
+                    ])->values()),
+                    'updated_at'    => now(),
+                ]);
+            }
+
             DB::commit();
 
             Log::info('Session/term setup cloned', [
-                'by'      => auth()->id(),
-                'payload' => $payload,
-                'totals'  => $result['totals'],
+                'by'       => auth()->id(),
+                'batch_id' => $batchId,
+                'payload'  => $payload,
+                'totals'   => $result['totals'],
             ]);
 
-            $created = $result['totals']['create'];
-
             return response()->json([
-                'success' => true,
-                'message' => $created > 0
-                    ? "{$created} record(s) cloned successfully."
+                'success'  => true,
+                'batch_id' => $batchId,
+                'message'  => $created > 0
+                    ? "{$created} record(s) cloned successfully. A snapshot (#{$batchId}) was saved — you can undo this from Clone History."
                     : 'Nothing new to clone — the target already has everything.',
             ] + $result);
         } catch (\Throwable $e) {
@@ -163,6 +206,358 @@ class SessionCloneController extends Controller
                 'message' => 'Cloning failed and no changes were saved: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Snapshot history & revert                                         */
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * List of clone runs (most recent first).
+     */
+    public function history(): JsonResponse
+    {
+        if (!$this->snapshotTablesReady()) {
+            return response()->json(['success' => true, 'ready' => false, 'data' => []]);
+        }
+
+        $sessions = Schoolsession::pluck('session', 'id');
+        $terms    = Schoolterm::pluck('term', 'id');
+
+        $rows = DB::table('session_clone_batches as b')
+            ->leftJoin('users as u', 'u.id', '=', 'b.user_id')
+            ->leftJoin('users as r', 'r.id', '=', 'b.reverted_by')
+            ->select('b.*', 'u.name as user_name', 'r.name as reverted_by_name')
+            ->orderByDesc('b.id')
+            ->limit(100)
+            ->get();
+
+        $remaining = DB::table('session_clone_batch_items')
+            ->whereIn('batch_id', $rows->pluck('id'))
+            ->whereNull('reverted_at')
+            ->selectRaw('batch_id, COUNT(*) as c')
+            ->groupBy('batch_id')
+            ->pluck('c', 'batch_id');
+
+        $data = $rows->map(function ($b) use ($sessions, $terms, $remaining) {
+            $totals = json_decode($b->totals ?? '{}', true) ?: [];
+
+            return [
+                'id'           => $b->id,
+                'created_at'   => \Carbon\Carbon::parse($b->created_at)->format('d M Y, g:i A'),
+                'user'         => $b->user_name ?? 'Unknown',
+                'route'        => $this->routeText($b, $sessions, $terms),
+                'modules'      => collect(json_decode($b->module_totals ?? '[]', true))
+                                    ->filter(fn ($m) => ($m['create'] ?? 0) > 0)
+                                    ->map(fn ($m) => $m['label'] . ' (' . $m['create'] . ')')
+                                    ->values(),
+                'created'      => (int) ($totals['create'] ?? 0),
+                'remaining'    => (int) ($remaining[$b->id] ?? 0),
+                'status'       => $b->status,
+                'reverted_at'  => $b->reverted_at ? \Carbon\Carbon::parse($b->reverted_at)->format('d M Y, g:i A') : null,
+                'reverted_by'  => $b->reverted_by_name,
+            ];
+        });
+
+        return response()->json(['success' => true, 'ready' => true, 'data' => $data]);
+    }
+
+    /**
+     * Items recorded in one snapshot.
+     */
+    public function showBatch(int $batch): JsonResponse
+    {
+        $b = DB::table('session_clone_batches')->find($batch);
+        if (!$b) {
+            return response()->json(['success' => false, 'message' => 'Snapshot not found.'], 404);
+        }
+
+        $items = DB::table('session_clone_batch_items')
+            ->where('batch_id', $batch)
+            ->orderBy('id')
+            ->get(['id', 'module', 'table_name', 'record_id', 'label', 'reverted_at', 'kept_reason']);
+
+        return response()->json([
+            'success' => true,
+            'batch'   => ['id' => $b->id, 'status' => $b->status],
+            'items'   => $items->map(fn ($i) => [
+                'module'      => self::MODULES[$i->module]['label'] ?? $i->module,
+                'label'       => $i->label,
+                'record_id'   => $i->record_id,
+                'reverted'    => (bool) $i->reverted_at,
+                'kept_reason' => $i->kept_reason,
+            ]),
+        ]);
+    }
+
+    /**
+     * Download the full snapshot (batch + every inserted row) as JSON.
+     */
+    public function downloadBatch(int $batch)
+    {
+        $b = DB::table('session_clone_batches')->find($batch);
+        abort_unless($b, 404);
+
+        $items = DB::table('session_clone_batch_items')->where('batch_id', $batch)->orderBy('id')->get();
+
+        $payload = [
+            'batch' => array_merge((array) $b, [
+                'modules'        => json_decode($b->modules, true),
+                'totals'         => json_decode($b->totals ?? 'null', true),
+                'module_totals'  => json_decode($b->module_totals ?? 'null', true),
+                'revert_summary' => json_decode($b->revert_summary ?? 'null', true),
+            ]),
+            'items' => $items->map(fn ($i) => array_merge((array) $i, [
+                'snapshot' => json_decode($i->snapshot, true),
+            ])),
+            'exported_at' => now()->toDateTimeString(),
+        ];
+
+        return response()->streamDownload(
+            fn () => print(json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)),
+            "clone-snapshot-{$batch}.json",
+            ['Content-Type' => 'application/json']
+        );
+    }
+
+    /**
+     * Revert (undo) a clone run.
+     *
+     * Deletes the records the run created, newest-dependency first. A record is
+     * KEPT if it has been used since the clone (e.g. a subject class that now has
+     * registered students or scores, or a class bill with invoices/payments).
+     * Pass dry_run=1 to see what would happen without changing anything.
+     */
+    public function revertBatch(Request $request, int $batch): JsonResponse
+    {
+        if (!$this->snapshotTablesReady()) {
+            return response()->json(['success' => false, 'message' => 'Snapshot tables are missing.'], 422);
+        }
+
+        $b = DB::table('session_clone_batches')->find($batch);
+        if (!$b) {
+            return response()->json(['success' => false, 'message' => 'Snapshot not found.'], 404);
+        }
+        if ($b->status === 'reverted') {
+            return response()->json(['success' => false, 'message' => 'This clone has already been fully reverted.'], 422);
+        }
+
+        $dry = $request->boolean('dry_run');
+
+        DB::beginTransaction();
+        try {
+            $summary = $this->performRevert($b, $dry);
+
+            if ($dry) {
+                DB::rollBack();
+            } else {
+                $stillThere = DB::table('session_clone_batch_items')
+                    ->where('batch_id', $batch)->whereNull('reverted_at')->count();
+
+                DB::table('session_clone_batches')->where('id', $batch)->update([
+                    'status'         => $stillThere === 0 ? 'reverted' : 'partially_reverted',
+                    'reverted_at'    => now(),
+                    'reverted_by'    => auth()->id(),
+                    'revert_summary' => json_encode($summary),
+                    'updated_at'     => now(),
+                ]);
+                DB::commit();
+
+                Log::info('Session clone reverted', ['batch' => $batch, 'by' => auth()->id(), 'summary' => $summary]);
+            }
+
+            $msg = $dry
+                ? "{$summary['remove']} record(s) will be removed" . ($summary['keep'] ? ", {$summary['keep']} will be kept because they are now in use." : '.')
+                : "{$summary['remove']} record(s) removed" . ($summary['keep'] ? ", {$summary['keep']} kept because they are in use." : '.');
+
+            return response()->json(['success' => true, 'dry_run' => $dry, 'message' => $msg] + $summary);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Session clone revert failed', ['batch' => $batch, 'error' => $e->getMessage()]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Revert failed and nothing was changed: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Core revert routine. Runs inside a transaction; in dry-run the caller rolls back.
+     */
+    private function performRevert(object $batch, bool $dry): array
+    {
+        $items = DB::table('session_clone_batch_items')
+            ->where('batch_id', $batch->id)
+            ->whereNull('reverted_at')
+            ->get();
+
+        // Dependants first: subject classes before the subject teachers they point to
+        $order = ['subject_classes', 'class_teachers', 'compulsory_subjects', 'school_bills', 'promotion_settings', 'subject_teachers'];
+        $items = $items->sortBy(fn ($i) => array_search($i->module, $order, true) === false ? 99 : array_search($i->module, $order, true));
+
+        $refColumns = $this->referenceColumns();
+        $out = ['remove' => 0, 'keep' => 0, 'missing' => 0, 'modules' => [], 'kept' => []];
+        // ids removed (or, in dry-run, that would be removed) during this pass, per table
+        $removed = [];
+
+        foreach ($items as $item) {
+            $label = self::MODULES[$item->module]['label'] ?? $item->module;
+            $out['modules'][$item->module] ??= ['label' => $label, 'remove' => 0, 'keep' => 0];
+
+            $exists = DB::table($item->table_name)->where('id', $item->record_id)->exists();
+            if (!$exists) {
+                // Already deleted manually — just mark it done
+                $out['missing']++;
+                if (!$dry) {
+                    DB::table('session_clone_batch_items')->where('id', $item->id)
+                        ->update(['reverted_at' => now(), 'kept_reason' => null, 'updated_at' => now()]);
+                }
+                continue;
+            }
+
+            $reason = $this->inUseReason($item, $refColumns, $removed);
+
+            if ($reason !== null) {
+                $out['keep']++;
+                $out['modules'][$item->module]['keep']++;
+                if (count($out['kept']) < 100) {
+                    $out['kept'][] = ['label' => $item->label, 'module' => $label, 'reason' => $reason];
+                }
+                if (!$dry) {
+                    DB::table('session_clone_batch_items')->where('id', $item->id)
+                        ->update(['kept_reason' => $reason, 'updated_at' => now()]);
+                }
+                continue;
+            }
+
+            // Dry-run never touches the real rows (some legacy tables may not be
+            // transactional); later dependency checks use $removed instead.
+            $removed[$item->table_name][] = $item->record_id;
+
+            if (!$dry) {
+                DB::table($item->table_name)->where('id', $item->record_id)->delete();
+                DB::table('session_clone_batch_items')->where('id', $item->id)
+                    ->update(['reverted_at' => now(), 'kept_reason' => null, 'updated_at' => now()]);
+            }
+
+            $out['remove']++;
+            $out['modules'][$item->module]['remove']++;
+        }
+
+        $out['modules'] = array_values($out['modules']);
+
+        return $out;
+    }
+
+    /**
+     * Returns a reason string if the cloned record is now referenced elsewhere, otherwise null.
+     */
+    private function inUseReason(object $item, array $refColumns, array $removed = []): ?string
+    {
+        $id = $item->record_id;
+
+        switch ($item->table_name) {
+            case 'subjectclass':
+                foreach ($refColumns['subjectclass'] as [$table, $col]) {
+                    if (DB::table($table)->where($col, $id)->exists()) {
+                        return "In use — has records in {$table}";
+                    }
+                }
+                return null;
+
+            case 'subjectteacher':
+                foreach ($refColumns['subjectteacher'] as [$table, $col]) {
+                    $q = DB::table($table)->where($col, $id);
+                    if (!empty($removed[$table])) {
+                        $q->whereNotIn('id', $removed[$table]); // ignore rows this revert removes
+                    }
+                    if ($q->exists()) {
+                        return $table === 'subjectclass'
+                            ? 'Still linked to a subject class that is in use'
+                            : "In use — has records in {$table}";
+                    }
+                }
+                return null;
+
+            case 'school_bill_class_term_session':
+                $snap = json_decode($item->snapshot, true) ?: [];
+                foreach (['student_bill_payment', 'student_bill_invoice'] as $t) {
+                    if (Schema::hasTable($t) && DB::table($t)
+                            ->where('school_bill_id', $snap['bill_id'] ?? 0)
+                            ->where('class_id', $snap['class_id'] ?? 0)
+                            ->where('termid_id', $snap['termid_id'] ?? 0)
+                            ->where('session_id', $snap['session_id'] ?? 0)
+                            ->exists()) {
+                        return $t === 'student_bill_payment'
+                            ? 'In use — payments have been recorded against this bill'
+                            : 'In use — invoices have been generated for this bill';
+                    }
+                }
+                return null;
+
+            case 'promotion_settings':
+                foreach ($refColumns['promotion_settings'] as [$table, $col]) {
+                    if (DB::table($table)->where($col, $id)->exists()) {
+                        return "In use — referenced by {$table}";
+                    }
+                }
+                return null;
+
+            default:
+                return null; // class teachers, compulsory subjects: safe to remove
+        }
+    }
+
+    /**
+     * Discover every column in the database that points at a subject class,
+     * subject teacher or promotion setting (broadsheets, registrations, locks,
+     * lesson notes, exam papers, …) so new modules are covered automatically.
+     */
+    private function referenceColumns(): array
+    {
+        $map = [
+            'subjectclass'       => ['subjectclass_id', 'subjectclassid'],
+            'subjectteacher'     => ['subjectteacherid', 'subjectteacher_id'],
+            'promotion_settings' => ['promotion_setting_id', 'promotion_settings_id'],
+        ];
+
+        $all = collect(DB::select(
+            'SELECT TABLE_NAME AS t, COLUMN_NAME AS c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE()'
+        ));
+
+        $out = [];
+        foreach ($map as $target => $cols) {
+            $out[$target] = $all
+                ->filter(fn ($r) => in_array(strtolower($r->c), $cols, true)
+                    && $r->t !== $target
+                    && !str_starts_with($r->t, 'session_clone_'))
+                ->map(fn ($r) => [$r->t, $r->c])
+                ->values()
+                ->all();
+        }
+
+        return $out;
+    }
+
+    private function snapshotTablesReady(): bool
+    {
+        return Schema::hasTable('session_clone_batches') && Schema::hasTable('session_clone_batch_items');
+    }
+
+    private function routeText(object $b, $sessions, $terms): string
+    {
+        $ss = $sessions[$b->source_session_id] ?? ('Session ' . $b->source_session_id);
+        $ts = $sessions[$b->target_session_id] ?? ('Session ' . $b->target_session_id);
+
+        if ($b->source_term === 'all') {
+            return "{$ss} → {$ts} (all terms)";
+        }
+
+        $st = $terms[$b->source_term] ?? ('Term ' . $b->source_term);
+        $tt = $terms[$b->target_term] ?? ('Term ' . $b->target_term);
+
+        return "{$st} {$ss} → {$tt} {$ts}";
     }
 
     /* ------------------------------------------------------------------ */
@@ -235,11 +630,16 @@ class SessionCloneController extends Controller
         $modules = array_values(array_filter(array_keys(self::MODULES), fn ($k) => in_array($k, $modules, true)));
         $modules = array_values(array_filter($modules, fn ($k) => Schema::hasTable(self::MODULES[$k]['table'])));
 
+        $mode = $allTerms ? 'session_all' : ($sourceSession === $targetSession ? 'term' : 'session');
+
         return [true, [
-            'source_session' => $sourceSession,
-            'target_session' => $targetSession,
-            'pairs'          => $pairs,
-            'modules'        => $modules,
+            'mode'            => $mode,
+            'source_session'  => $sourceSession,
+            'target_session'  => $targetSession,
+            'source_term_raw' => $allTerms ? 'all' : (string) $request->input('source_term'),
+            'target_term_raw' => $allTerms ? null : (string) $request->input('target_term'),
+            'pairs'           => $pairs,
+            'modules'         => $modules,
         ]];
     }
 
@@ -274,6 +674,7 @@ class SessionCloneController extends Controller
                 'tgt_session' => $p['target_session'],
                 'tgt_term'    => (string) $tgtTerm,
                 'dry'         => $dryRun,
+                'batch_id'    => $p['batch_id'] ?? null,
                 // old subjectteacher id => new (or already-existing) subjectteacher id
                 'st_map'      => [],
                 // dry-run placeholders for subjectteacher rows that would be created
@@ -353,6 +754,7 @@ class SessionCloneController extends Controller
                     'termid'    => $ctx['tgt_term'],
                 ]);
                 $newId = DB::table('subjectteacher')->insertGetId($data);
+                $this->track($ctx, 'subject_teachers', 'subjectteacher', $newId, $data, $label);
                 $ctx['st_map'][$row->id] = $newId;
                 $existing->put($key, (object) ['id' => $newId, 'staffid' => $row->staffid, 'subjectid' => $row->subjectid]);
             }
@@ -427,7 +829,9 @@ class SessionCloneController extends Controller
                     }
                 }
 
-                DB::table('subjectclass')->insert($this->copyRow('subjectclass', $row, $overrides));
+                $data  = $this->copyRow('subjectclass', $row, $overrides);
+                $newId = DB::table('subjectclass')->insertGetId($data);
+                $this->track($ctx, 'subject_classes', 'subjectclass', $newId, $data, $label);
             }
 
             $existing[$key] = true;
@@ -469,10 +873,12 @@ class SessionCloneController extends Controller
             }
 
             if (!$ctx['dry']) {
-                DB::table('classteacher')->insert($this->copyRow('classteacher', $row, [
+                $data  = $this->copyRow('classteacher', $row, [
                     'sessionid' => $ctx['tgt_session'],
                     'termid'    => $ctx['tgt_term'],
-                ]));
+                ]);
+                $newId = DB::table('classteacher')->insertGetId($data);
+                $this->track($ctx, 'class_teachers', 'classteacher', $newId, $data, $label);
             }
 
             $taken[(string) $row->schoolclassid] = true;
@@ -501,7 +907,7 @@ class SessionCloneController extends Controller
             ->mapWithKeys(fn ($r) => [$r->schoolclassid . '|' . $r->subjectId => true]);
 
         return $this->simpleClone(
-            $ctx, $rows, 'compulsory_subject_classes',
+            $ctx, 'compulsory_subjects', $rows, 'compulsory_subject_classes',
             fn ($r) => $r->schoolclassid . '|' . $r->subjectId,
             $existing,
             ['sessionid' => $ctx['tgt_session'], 'termid' => $ctx['tgt_term']],
@@ -533,7 +939,7 @@ class SessionCloneController extends Controller
         }
 
         return $this->simpleClone(
-            $ctx, $rows, 'school_bill_class_term_session',
+            $ctx, 'school_bills', $rows, 'school_bill_class_term_session',
             fn ($r) => $r->bill_id . '|' . $r->class_id,
             $existing,
             $overrides,
@@ -559,7 +965,7 @@ class SessionCloneController extends Controller
             ->mapWithKeys(fn ($r) => [$r->schoolclass_id . '|' . strtolower((string) $r->rule_set_name) => true]);
 
         return $this->simpleClone(
-            $ctx, $rows, 'promotion_settings',
+            $ctx, 'promotion_settings', $rows, 'promotion_settings',
             fn ($r) => $r->schoolclass_id . '|' . strtolower((string) $r->rule_set_name),
             $existing,
             ['session_id' => $ctx['tgt_session'], 'term_id' => $ctx['tgt_term']],
@@ -574,6 +980,7 @@ class SessionCloneController extends Controller
      */
     private function simpleClone(
         array $ctx,
+        string $module,
         $rows,
         string $table,
         callable $keyFn,
@@ -595,7 +1002,9 @@ class SessionCloneController extends Controller
             }
 
             if (!$ctx['dry']) {
-                DB::table($table)->insert($this->copyRow($table, $row, $overrides));
+                $data  = $this->copyRow($table, $row, $overrides);
+                $newId = DB::table($table)->insertGetId($data);
+                $this->track($ctx, $module, $table, $newId, $data, $label);
             }
 
             $seen[$key] = true;
@@ -639,6 +1048,27 @@ class SessionCloneController extends Controller
         }
 
         return $data;
+    }
+
+    /**
+     * Record an inserted row against the current snapshot batch.
+     */
+    private function track(array $ctx, string $module, string $table, int $id, array $data, string $label): void
+    {
+        if (empty($ctx['batch_id'])) {
+            return;
+        }
+
+        DB::table('session_clone_batch_items')->insert([
+            'batch_id'   => $ctx['batch_id'],
+            'module'     => $module,
+            'table_name' => $table,
+            'record_id'  => $id,
+            'label'      => mb_substr($label, 0, 250),
+            'snapshot'   => json_encode(array_merge(['id' => $id], $data), JSON_UNESCAPED_UNICODE),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 
     private function columns(string $table): array
