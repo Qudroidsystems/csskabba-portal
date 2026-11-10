@@ -1425,6 +1425,7 @@
                                 <ul class="nav nav-sm flex-column">
                                     @can('View session')     <li class="nav-item"><a href="{{ route('session.index') }}"    class="nav-link">School Session</a></li> @endcan
                                     @can('View term')        <li class="nav-item"><a href="{{ route('term.index') }}"       class="nav-link">School Term</a></li>    @endcan
+                                    @can('View term')        <li class="nav-item"><a href="{{ route('sessionclone.index') }}" class="nav-link">Clone Session / Term Setup</a></li> @endcan
                                     @can('View schoolhouse') <li class="nav-item"><a href="{{ route('schoolhouse.index') }}" class="nav-link">School House</a></li> @endcan
                                 </ul>
                             </div>

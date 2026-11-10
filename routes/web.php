@@ -64,6 +64,7 @@ use App\Http\Controllers\SchoolHouseController;
 use App\Http\Controllers\SchoolPaymentController;
 use App\Http\Controllers\SchoolsessionController;
 use App\Http\Controllers\SchooltermController;
+use App\Http\Controllers\SessionCloneController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\StaffAttendanceController;
 use App\Http\Controllers\StaffController;
@@ -377,6 +378,13 @@ Route::group(['middleware' => ['auth']], function () {
     Route::patch('term/{term}/promotional', [SchooltermController::class, 'updatePromotional'])->name('term.promotional.update');
     Route::post('term/deleteterm', [SchooltermController::class, 'deleteterm'])->name('term.deleteterm');
     Route::post('term/updateterm', [SchooltermController::class, 'updateterm'])->name('term.updateterm');
+
+    // Clone session/term setup (subject teachers, subject classes, class teachers, etc.)
+    Route::prefix('setup-clone')->name('sessionclone.')->group(function () {
+        Route::get('/', [SessionCloneController::class, 'index'])->name('index');
+        Route::post('/preview', [SessionCloneController::class, 'preview'])->name('preview');
+        Route::post('/run', [SessionCloneController::class, 'clone'])->name('clone');
+    });
 
     // ===================================================================
     // SCHOOL ARM / CLASS / CLUB / SPORT / HOUSE

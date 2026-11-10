@@ -436,6 +436,7 @@ class SearchController extends Controller
             ['title' => 'School Information', 'url' => route('school-information.index'), 'icon' => 'mdi-domain', 'category' => 'School Settings'],
             ['title' => 'School Session', 'url' => route('session.index'), 'icon' => 'mdi-calendar-range', 'category' => 'School Settings'],
             ['title' => 'School Term', 'url' => route('term.index'), 'icon' => 'mdi-calendar', 'category' => 'School Settings'],
+            ['title' => 'Clone Session / Term Setup', 'url' => route('sessionclone.index'), 'icon' => 'mdi-content-copy', 'category' => 'School Settings'],
             ['title' => 'School House', 'url' => route('schoolhouse.index'), 'icon' => 'mdi-home-group', 'category' => 'School Settings'],
             ['title' => 'Class Arm', 'url' => route('schoolarm.index'), 'icon' => 'mdi-table-chair', 'category' => 'School Settings'],
             ['title' => 'Class Category', 'url' => route('classcategories.index'), 'icon' => 'mdi-format-list-bulleted', 'category' => 'School Settings'],
