@@ -148,6 +148,7 @@
     </div>
 </div>
 
+<div class="main-content">
 <div class="page-content clone-page">
 <div class="container-fluid">
 
@@ -344,6 +345,7 @@
 
 </div>
 </div>
+</div>{{-- /.main-content --}}
 
 {{-- Snapshot details modal --}}
 <div class="modal fade" id="snapshotModal" tabindex="-1">
