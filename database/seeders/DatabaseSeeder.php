@@ -556,6 +556,9 @@ class DatabaseSeeder extends Seeder
             'CertificatePermissionSeeder' =>
                 '🎓 Seeding certificate module permissions...',
 
+            'SessionClonePermissionSeeder' =>
+                '🧬 Seeding session/term clone permissions...',
+
             'CertificateDefaultTemplateSeeder' =>
                 '🏅 Adding the default college certificate template...',
 

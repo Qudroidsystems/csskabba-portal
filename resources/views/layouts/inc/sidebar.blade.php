@@ -817,7 +817,7 @@
             </div>
             <!--end:Menu item-->
             @endcan
-            @can('term-list')
+            @can('View session clone')
             <!--begin:Menu item-->
             <div  class="menu-item" >
               <a class="menu-link  {{ request()->is('setup-clone*')

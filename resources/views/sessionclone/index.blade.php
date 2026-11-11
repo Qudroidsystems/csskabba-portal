@@ -290,9 +290,13 @@
                         <button class="btn btn-cl btn-cl-primary" id="btnPreview">
                             <i class="ri-eye-line me-1"></i> Preview
                         </button>
+                        @can('Run session clone')
                         <button class="btn btn-cl btn-cl-success" id="btnClone" disabled>
                             <i class="ri-file-copy-2-line me-1"></i> Clone Now
                         </button>
+                        @else
+                        <span class="small text-muted align-self-center"><i class="ri-lock-line"></i> You can preview, but you don't have permission to run a clone.</span>
+                        @endcan
                     </div>
                 </div>
             </div>
@@ -362,6 +366,7 @@ $(function () {
     const CLONE_URL   = '{{ route('sessionclone.clone') }}';
     const HISTORY_URL = '{{ route('sessionclone.history') }}';
     const BATCH_URL   = '{{ url('setup-clone/history') }}';
+    const CAN_REVERT  = @json(auth()->user()->can('Revert session clone'));
     const TERMS       = @json($terms->pluck('term', 'id'));
     let mode          = 'term';
     let previewed     = false;
@@ -596,7 +601,7 @@ $(function () {
                     <td class="text-end text-nowrap">
                         <button class="btn btn-light btn-xs btn-view" data-id="${b.id}" title="View snapshot"><i class="ri-eye-line"></i></button>
                         <a class="btn btn-light btn-xs" href="${BATCH_URL}/${b.id}/download" title="Download snapshot (JSON)"><i class="ri-download-2-line"></i></a>
-                        ${b.status !== 'reverted' ? `<button class="btn btn-outline-danger btn-xs btn-undo" data-id="${b.id}"><i class="ri-arrow-go-back-line"></i> Undo</button>` : ''}
+                        ${b.status !== 'reverted' && CAN_REVERT ? `<button class="btn btn-outline-danger btn-xs btn-undo" data-id="${b.id}"><i class="ri-arrow-go-back-line"></i> Undo</button>` : ''}
                     </td>
                 </tr>`).join(''));
         }).fail(() => {

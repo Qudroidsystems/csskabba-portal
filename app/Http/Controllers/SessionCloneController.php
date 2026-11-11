@@ -79,6 +79,14 @@ class SessionCloneController extends Controller
     /** @var array<string, array<int,string>> */
     private array $columnCache = [];
 
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware('permission:View session clone')->only(['index', 'preview', 'history', 'showBatch', 'downloadBatch']);
+        $this->middleware('permission:Run session clone')->only(['clone']);
+        $this->middleware('permission:Revert session clone')->only(['revertBatch']);
+    }
+
     /* ------------------------------------------------------------------ */
     /*  Pages                                                             */
     /* ------------------------------------------------------------------ */
