@@ -926,15 +926,25 @@ class SessionCloneController extends Controller
 
     private function cloneSchoolBills(array &$ctx): array
     {
-        $rows = DB::table('school_bill_class_term_session as b')
+        $q = DB::table('school_bill_class_term_session as b')
             ->leftJoin('school_bill as sb', 'sb.id', '=', 'b.bill_id')
             ->leftJoin('schoolclass as c', 'c.id', '=', 'b.class_id')
             ->leftJoin('schoolarm as a', 'a.id', '=', 'c.arm')
             ->where('b.session_id', $ctx['src_session'])
-            ->where('b.termid_id', $ctx['src_term'])
-            ->select('b.*', 'sb.title as _bill', 'sb.bill_amount as _amount', 'c.schoolclass as _class', 'a.arm as _arm')
+            ->where('b.termid_id', $ctx['src_term']);
+
+        // Never copy soft-deleted class bills, or bills that have themselves been deleted
+        if ($this->hasColumn('school_bill_class_term_session', 'deleted_at')) {
+            $q->whereNull('b.deleted_at');
+        }
+        if (Schema::hasColumn('school_bill', 'deleted_at')) {
+            $q->whereNull('sb.deleted_at');
+        }
+
+        $rows = $q->select('b.*', 'sb.title as _bill', 'sb.bill_amount as _amount', 'c.schoolclass as _class', 'a.arm as _arm')
             ->get();
 
+        // Includes soft-deleted rows on purpose: the unique index (bill, class, term, session) covers them too
         $existing = DB::table('school_bill_class_term_session')
             ->where('session_id', $ctx['tgt_session'])
             ->where('termid_id', $ctx['tgt_term'])
