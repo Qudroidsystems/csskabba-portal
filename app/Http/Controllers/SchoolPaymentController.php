@@ -572,6 +572,8 @@ class SchoolPaymentController extends Controller
                 ->whereNull('school_bill_class_term_session.deleted_at')
                 ->join('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
                 ->where(function ($q) use ($studentdata) {
+                    // No old/new status recorded: show every bill for the class.
+                    if (empty($studentdata->statusId)) { $q->whereRaw('1 = 1'); return; }
                     $q->whereNull('school_bill.statusId')
                       ->orWhere('school_bill.statusId', '')
                       ->orWhere('school_bill.statusId', 0)
@@ -1400,6 +1402,8 @@ class SchoolPaymentController extends Controller
                 ->whereNull('school_bill_class_term_session.deleted_at')
                 ->join('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
                 ->where(function ($q) use ($student) {
+                    // No old/new status recorded: show every bill for the class.
+                    if (empty($student->statusId)) { $q->whereRaw('1 = 1'); return; }
                     $q->whereNull('school_bill.statusId')
                       ->orWhere('school_bill.statusId', '')
                       ->orWhere('school_bill.statusId', 0)
@@ -1588,13 +1592,25 @@ class SchoolPaymentController extends Controller
 
             $safeFilename = 'invoice_' . preg_replace('/[\/\\\\]/', '-', $student->admissionNo ?? $studentId) . '_' . date('Ymd_His') . '.pdf';
 
-            $pdf = PDF::loadView('schoolpayment.studentinvoicepdf', $data)
-                ->setOptions([
-                    'defaultFont' => 'DejaVu Sans',
-                    'isRemoteEnabled' => false,
-                    'isHtml5ParserEnabled' => true,
-                    'isPhpEnabled' => false,
-                ]);
+            // The template sizes itself to fill one A4 page. If DomPDF still needs a
+            // second page (unusual content), re-render a little smaller until it fits.
+            $fitAdjust = 1.0;
+            for ($attempt = 0; $attempt < 5; $attempt++) {
+                $pdf = app('dompdf.wrapper')
+                    ->setOptions([
+                        'defaultFont' => 'DejaVu Sans',
+                        'isRemoteEnabled' => false,
+                        'isHtml5ParserEnabled' => true,
+                        'isPhpEnabled' => false,
+                    ])
+                    ->setPaper('a4', 'portrait')
+                    ->loadView('schoolpayment.studentinvoicepdf', $data + ['fitAdjust' => $fitAdjust]);
+                $pdf->render();
+                if ($pdf->getDomPDF()->getCanvas()->get_page_count() <= 1) {
+                    break;
+                }
+                $fitAdjust *= 0.9;
+            }
             return $pdf->download($safeFilename);
         }
 
@@ -1653,6 +1669,8 @@ class SchoolPaymentController extends Controller
             ->whereNull('school_bill_class_term_session.deleted_at')
             ->join('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
             ->where(function ($q) use ($student) {
+                // No old/new status recorded: show every bill for the class.
+                if (empty($student->statusId)) { $q->whereRaw('1 = 1'); return; }
                 $q->whereNull('school_bill.statusId')
                   ->orWhere('school_bill.statusId', '')
                   ->orWhere('school_bill.statusId', 0)
