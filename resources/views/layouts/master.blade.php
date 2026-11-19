@@ -772,6 +772,13 @@
                     </li>
                     @endif
 
+                    {{-- YEARBOOK (students, parents & staff: view; the upload link for their own entry is on the page) --}}
+                    @if(Route::has('site.yearbooks') && !auth()->user()->can('Manage yearbook'))
+                    <li class="nav-item">
+                        <a href="{{ route('site.yearbooks') }}" class="nav-link menu-link"><i class="ri-book-open-line"></i> <span>Yearbook &amp; Alumni</span></a>
+                    </li>
+                    @endif
+
                     @can('View parent')
                         <li class="nav-item">
                             <a href="#sidebarParent" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarParent">
@@ -1125,6 +1132,18 @@
                                 @if($mmActive)<span class="badge bg-danger ms-1">ON</span>@endif
                             </a>
                         </li>
+                    @endcan
+
+                    @can('Manage yearbook')
+                    @if(Route::has('yearbook.admin.index'))
+                        <li class="nav-item">
+                            <a href="{{ route('yearbook.admin.index') }}" class="nav-link {{ request()->routeIs('yearbook.admin.*', 'alumni.admin.*') ? 'active' : '' }}">
+                                <i class="ri-book-open-line"></i> <span>Yearbook &amp; Alumni</span>
+                                @php $ybWait = 0; try { $ybWait = \App\Models\Website\YearbookEntry::whereNotNull('pending_at')->count() + \App\Models\Website\Alumnus::where(fn ($q) => $q->where('status', 'pending')->orWhereNotNull('pending_at'))->count(); } catch (\Throwable $e) {} @endphp
+                                @if($ybWait)<span class="badge bg-warning text-dark ms-1">{{ $ybWait }}</span>@endif
+                            </a>
+                        </li>
+                    @endif
                     @endcan
 
                     @can('Manage website')
